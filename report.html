@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LLR Portal - Compliance Reports Engine</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background: #f4f6f9; font-family: system-ui, -apple-system, sans-serif; }
+        .card { border-radius: 12px; border: none; }
+        .sticky-thead { position: sticky; top: 0; z-index: 1020; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
+        .table-responsive { max-height: 580px; overflow-y: auto; border-radius: 8px; }
+        
+        /* Interactive Card Button Styling */
+        .report-selector-btn {
+            background: #ffffff;
+            border: 2px solid transparent;
+            border-radius: 12px;
+            transition: all 0.2s ease-in-out;
+            cursor: pointer;
+            text-align: left;
+            width: 100%;
+            padding: 1.25rem;
+        }
+        .report-selector-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
+            border-color: #e2e8f0;
+        }
+        .report-selector-btn.active {
+            border-color: #212529;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
+            background: #f8fafc;
+        }
+
+        /* Form Controls Clean Ups */
+        .custom-ctrl-box {
+            background: #ffffff;
+            border-radius: 12px;
+            padding: 1rem;
+            height: 100%;
+        }
+
+        /* Advanced Print Styles Matrix */
+        @media print {
+            body { background: #ffffff !important; color: #000000 !important; font-size: 11pt !important; }
+            .navbar, 
+            #refreshReportBtn, 
+            .report-selector-btn, 
+            .custom-ctrl-box,
+            .card-header .btn,
+            #exclusionToggleWrapper,
+            .row.g-3.mb-4,
+            .d-flex.flex-column.flex-md-row { 
+                display: none !important; 
+            }
+            
+            .container, .card, .card-body { 
+                width: 100% !important; 
+                max-width: 100% !important;
+                padding: 0 !important; 
+                margin: 0 !important; 
+                box-shadow: none !important;
+                border: none !important;
+            }
+            .table-responsive { 
+                max-height: none !important; 
+                overflow: visible !important; 
+            }
+            
+            table { width: 100% !important; border-collapse: collapse !important; page-break-inside: auto; }
+            tr { page-break-inside: avoid; page-break-after: auto; }
+            thead { 
+                display: table-header-group !important; 
+                background-color: #f8f9fa !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+            th, td { border: 1px solid #dee2e6 !important; padding: 8px !important; font-size: 9.5pt !important; }
+            
+            body::before {
+                content: "LLR Portal - Official Compliance Registry Audit Report | Generated on: " attr(data-print-date);
+                display: block;
+                font-size: 9pt;
+                font-weight: bold;
+                text-align: center;
+                margin-bottom: 20px;
+                border-bottom: 2px solid #212529;
+                padding-bottom: 5px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4 shadow-sm">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="index.html">🚗 LLR Portal</a>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto gap-2">
+                    <li class="nav-item"><a class="nav-link" href="index.html">🏠 Home</a></li>
+                    <li class="nav-item"><a class="nav-link" href="extractor.html">📄 Data Extraction</a></li>
+                    <li class="nav-item"><a class="nav-link" href="records.html">📋 Records </a></li>
+                    <li class="nav-item"><a class="nav-link active" href="report.html">📊 Reports </a></li>
+                    <li class="nav-item"><a class="nav-link" href="dashboard.html">📈 Dashboard</a></li>
+                    <li class="nav-item active"><a class="nav-link " href="print-engine.html">🖨️ Print Console</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container pb-5">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+            <div>
+                <h4 class="fw-bold text-dark mb-1">Compliance Reporting Engine</h4>
+                <p class="text-muted small mb-0">Filter and audit 31-day milestones, monthly lifespans, or vehicle classifications.</p>
+            </div>
+            
+            <div class="d-flex align-items-center gap-3">
+                <div class="form-check form-switch bg-white px-4 py-2 rounded-3 shadow-sm border border-light" id="exclusionToggleWrapper">
+                    <input class="form-check-input" type="checkbox" id="neglectDlIssuedCheckbox" checked style="cursor: pointer;">
+                    <label class="form-check-label small fw-bold text-secondary" for="neglectDlIssuedCheckbox" style="cursor: pointer; user-select: none;">
+                        🛡️ Hide 'DL Issued' Records
+                    </label>
+                </div>
+                <button id="refreshReportBtn" class="btn btn-dark shadow-sm fw-semibold px-3">🔄 Sync Data Rows</button>
+            </div>
+        </div>
+
+        <div class="row g-3 mb-4">
+            <div class="col-md-3">
+                <button id="btnFilter31Days" class="report-selector-btn shadow-sm position-relative active">
+                    <span class="position-absolute top-0 end-0 translate-middle badge rounded-pill bg-danger d-none" id="badge31Days" style="font-size: 0.8rem; padding: 0.45em 0.65em;">0</span>
+                    <h6 class="text-muted small fw-bold text-uppercase mb-1">📅 Milestone Met</h6>
+                    <span class="fw-bold text-dark d-block fs-5">Passed 31 Days</span>
+                    <small class="text-muted text-xs">Passed 31 days from issue date</small>
+                </button>
+            </div>
+            
+            <div class="col-md-3">
+                <button id="btnFilterCurrentMonth" class="report-selector-btn shadow-sm position-relative">
+                    <span class="position-absolute top-0 end-0 translate-middle badge rounded-pill bg-warning text-dark d-none" id="badgeCurrentMonth" style="font-size: 0.8rem; padding: 0.45em 0.65em;">0</span>
+                    <h6 class="text-muted small fw-bold text-uppercase mb-1">🚨 Critical Scope</h6>
+                    <span class="fw-bold text-dark d-block fs-5">Expiring This Month</span>
+                    <small class="text-muted text-xs">Immediate renewal alert track</small>
+                </button>
+            </div>
+            
+            <div class="col-md-3">
+                <div class="custom-ctrl-box shadow-sm border border-light d-flex flex-column justify-content-center">
+                    <h6 class="text-muted small fw-bold text-uppercase mb-1.5 ps-1">🚗 Class Classification</h6>
+                    <select id="selectVehicleClassFilter" class="form-select border-0 bg-light fw-bold text-dark">
+                        <option value="ALL">Show All Vehicle Classes</option>
+                        <option value="MCWOG">MCWOG Only</option>
+                        <option value="MCWG">MCWG Only</option>
+                        <option value="LMV">LMV Only</option>
+                        <option value="TRANS">TRANS Only</option>
+                        <option value="MCWOG_OR_MCWG_AND_LMV">MCWOG/MCWG with LMV</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="col-md-3">
+                <div class="custom-ctrl-box shadow-sm border border-light">
+                    <h6 class="text-muted small fw-bold text-uppercase mb-1 ps-1">🔍 Custom Range (31 Days Checked)</h6>
+                    <div class="d-flex gap-1 align-items-center mt-1">
+                        <input type="date" id="rangeStartDate" class="form-control form-control-sm border-light bg-light font-monospace fw-medium">
+                        <span class="small text-muted">to</span>
+                        <input type="date" id="rangeEndDate" class="form-control form-control-sm border-light bg-light font-monospace fw-medium">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center py-3">
+                <h5 class="mb-0 fw-bold text-light" id="reportTableTitle">Processing Audit Workspace Matrix...</h5>
+                <button id="printReportBtn" class="btn btn-sm btn-light fw-bold px-3 shadow-sm">🖨️ Execute Print Protocol</button>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover table-striped align-middle mb-0">
+                        <thead class="table-light sticky-thead">
+                            <tr>
+                                <th class="ps-3">LLR Number</th>
+                                <th>Applicant Name</th>
+                                <th>Vehicle Class</th>
+                                <th>Mobile Number</th>
+                                <th>Issue Date</th>
+                                <th>Expiry Date</th>
+                                <th class="pe-3">Calculated Status Timeline</th>
+                            </tr>
+                        </thead>
+                        <tbody id="reportTableBody">
+                            <tr>
+                                <td colspan="7" class="text-center py-5 text-muted small">
+                                    <div class="spinner-border spinner-border-sm text-dark me-2"></div>
+                                    Syncing database registries from remote cell matrix structure...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/env.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/reportManager.js"></script>
+</body>
+</html>

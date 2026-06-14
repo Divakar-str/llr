@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LLR Portal - Records CRUD Board</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background: #f4f6f9; } 
+        .card { border-radius: 12px; border: none; }
+        .table-responsive { max-height: 650px; overflow-y: auto; }
+        .nav-pills .nav-link.active { background-color: #212529; }
+        
+        /* Premium Skeleton Animation Shimmer Effect */
+        .shimmer-line {
+            height: 16px;
+            background: linear-gradient(90deg, #e9ecef 25%, #f8f9fa 50%, #e9ecef 75%);
+            background-size: 200% 100%;
+            animation: loading-shimmer 1.5s infinite linear;
+            border-radius: 4px;
+            display: inline-block;
+            width: 100%;
+        }
+        @keyframes loading-shimmer {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+        
+        /* Sticky Header Z-Index Correction */
+        .sticky-thead {
+            position: sticky;
+            top: 0;
+            z-index: 1020;
+            box-shadow: 0 2px 2px -1px rgba(0,0,0,0.05);
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4 shadow-sm">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="index.html">🚗 LLR Portal</a>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto gap-2">
+                     <li class="nav-item"><a class="nav-link" href="index.html">🏠 Home</a></li>
+                    <li class="nav-item"><a class="nav-link" href="extractor.html">📄 Data Extraction</a></li>
+                    <li class="nav-item"><a class="nav-link active"  href="records.html">📋 Records </a></li>
+                    <li class="nav-item"><a class="nav-link "  href="report.html">📊 Reports</a></li>
+                    <li class="nav-item"><a class="nav-link" href="dashboard.html">📈 Dashboard</a></li>
+                    <li class="nav-item active"><a class="nav-link "  href="print-engine.html">🖨️ Print Console</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container pb-5">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+            <div>
+                <h4 class="fw-bold text-dark mb-1">Database Management Hub</h4>
+                <p class="text-muted small mb-0">Monitor live sync records repository entries, update rows, or append entries manually.</p>
+            </div>
+            
+            <ul class="nav nav-pills shadow-sm p-1 bg-white rounded-3" id="crudTabPanel" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active fw-semibold" id="view-table-tab" data-bs-toggle="tab" data-bs-target="#viewTablePane" type="button" role="tab">📋 View Registry</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link fw-semibold text-success" id="add-record-tab" data-bs-toggle="tab" data-bs-target="#addRecordPane" type="button" role="tab">➕ Add New LLR</button>
+                </li>
+            </ul>
+        </div>
+
+        <div class="tab-content" id="crudTabContent">
+            
+            <div class="tab-pane fade show active" id="viewTablePane" role="tabpanel">
+                <div class="d-flex justify-content-between align-items-center gap-2 mb-3">
+                    <input type="text" id="tableSearchInput" class="form-control shadow-sm" placeholder="Search records registry..." style="max-width: 320px;">
+                    <button id="refreshDataBtn" class="btn btn-dark shadow-sm fw-semibold px-3">🔄 Refresh Data</button>
+                </div>
+
+                <div class="card shadow-sm border-0">
+                    <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center py-3">
+                        <h5 class="mb-0 fw-bold text-light">Live Sheet Database Registry</h5>
+                        <span id="recordCountBadge" class="badge bg-primary text-white fw-bold px-3 py-2">Loading records...</span>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover align-middle mb-0" id="dbMasterTable">
+                                <thead class="table-light sticky-thead">
+                                    <tr>
+                                        <th class="ps-3">LLR Number</th>
+                                        <th>Applicant Name</th>
+                                        <th>Date of Birth</th>
+                                        <th>Vehicle Class</th>
+                                        <th>Mobile Number</th>
+                                        <th>Issue Date</th>
+                                        <th>Expiry Date</th>
+                                        
+                                        <th>DL Status</th>
+                                        <th class="text-center pe-3">Actions Pipeline</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="recordsTableBody">
+                                    <script>
+                                        const tbody = document.currentScript.parentElement;
+                                        let skeletons = '';
+                                        for(let i=0; i<5; i++) {
+                                            skeletons += `
+                                                <tr>
+                                                    <td class="ps-3"><div class="shimmer-line" style="width: 85%;"></div></td>
+                                                    <td><div class="shimmer-line" style="width: 70%;"></div></td>
+                                                    <td><div class="shimmer-line" style="width: 60%;"></div></td>
+                                                    <td><div class="shimmer-line" style="width: 50%;"></div></td>
+                                                    <td><div class="shimmer-line" style="width: 65%;"></div></td>
+                                                    <td><div class="shimmer-line" style="width: 60%;"></div></td>
+                                                    <td><div class="shimmer-line" style="width: 60%;"></div></td>
+                                                    <td><div class="shimmer-line" style="width: 75%;"></div></td>
+                                                    <td><div class="shimmer-line" style="width: 40%;"></div></td>
+                                                    <td class="text-center"><div class="shimmer-line" style="width: 80px;"></div></td>
+                                                </tr>`;
+                                        }
+                                        document.write(skeletons);
+                                    </script>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tab-pane fade" id="addRecordPane" role="tabpanel">
+                <div class="card shadow-sm border-0">
+                    <div class="card-header bg-success text-white py-3">
+                        <h5 class="mb-0 fw-bold">➕ Manual License Registration Subsystem</h5>
+                    </div>
+                    <form id="manualInsertForm" novalidate class="needs-validation">
+                        <div class="card-body p-4">
+                            <input type="hidden" name="action" value="insert">
+
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label small fw-bold">LLR Number <span class="text-danger">*</span></label>
+                                    <input type="text" name="llr_number" id="addLlrNumber" class="form-control" placeholder="e.g. TN52/0004108/2026" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label small fw-bold">Applicant Full Name <span class="text-danger">*</span></label>
+                                    <input type="text" name="name" id="addName" class="form-control" placeholder="FIRSTNAME LASTNAME" required>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label small fw-bold">Date of Birth <span class="text-danger">*</span></label>
+                                    <input type="text" name="date_of_birth" id="addDob" class="form-control" placeholder="DD-MM-YYYY" required>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label small fw-bold text-primary">Vehicle Class Rule Base <span class="text-danger">*</span></label>
+                                    <select name="vehicle_class" id="addVehicleClass" class="form-select border-primary" required>
+                                        <option value="MCWOG">MCWOG</option>
+                                        <option value="MCWG">MCWG</option>
+                                        <option value="LMV" selected>LMV</option>
+                                        <option value="TRANS">TRANS</option>
+                                        <option value="MCWG, LMV">MCWG, LMV</option>
+                                        <option value="MCWOG, LMV">MCWOG, LMV</option>
+                                        <option value="MCWG, LMV, TRANS">MCWG, LMV, TRANS</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label small fw-bold">Mobile Number <span class="text-danger">*</span></label>
+                                    <input type="tel" name="mobile_number" id="addMobile" class="form-control" maxlength="10" placeholder="10-digit number" required>
+                                </div>
+                                
+                                <hr class="my-3 text-muted">
+                                
+                                <div class="col-md-4">
+                                    <label class="form-label small fw-bold">LLR Issue Date</label>
+                                    <input type="text" name="issue_date" id="addIssueDate" class="form-control" placeholder="DD-MM-YYYY">
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label small fw-bold">LLR Expiry Date</label>
+                                    <input type="text" name="expiry_date" id="addExpiryDate" class="form-control" placeholder="DD-MM-YYYY">
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label small fw-bold">Approved Date</label>
+                                    <input type="text" name="approved_date" id="addApprovedDate" class="form-control" placeholder="DD-MM-YYYY">
+                                </div>
+
+                                <div class="col-md-4">
+                                    <label class="form-label small fw-bold">Fees Number</label>
+                                    <input type="text" name="fees_number" id="addFeesNumber" class="form-control" placeholder="e.g. U26...">
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label small fw-bold">Fee Cost Amount</label>
+                                    <input type="text" name="fee" id="addFee" class="form-control" placeholder="e.g. 230">
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label small fw-bold">Blood Group</label>
+                                    <input type="text" name="blood_group" id="addBloodGroup" class="form-control" placeholder="O+ve">
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label class="form-label small fw-bold">Relative Type</label>
+                                    <select name="relative_type" id="addRelativeType" class="form-select">
+                                        <option value="Father">Father</option>
+                                        <option value="Husband">Husband</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label small fw-bold">Relative Name</label>
+                                    <input type="text" name="relative_name" id="addRelativeName" class="form-control">
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label class="form-label small fw-bold">Present Address</label>
+                                    <textarea name="present_address" id="addPresentAddress" class="form-control" rows="2"></textarea>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label small fw-bold">Permanent Address</label>
+                                    <textarea name="permanent_address" id="addPermanentAddress" class="form-control" rows="2"></textarea>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label class="form-label small fw-bold">Identification Mark 1</label>
+                                    <input type="text" name="identification_mark_1" id="addIdMark1" class="form-control">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label small fw-bold">Identification Mark 2</label>
+                                    <input type="text" name="identification_mark_2" id="addIdMark2" class="form-control">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label small fw-bold">Emergency Mobile</label>
+                                    <input type="tel" name="emergency_mobile" id="addEmergencyMobile" class="form-control" maxlength="10">
+                                </div>
+
+                                <div class="col-md-3">
+                                    <label class="form-label small fw-bold text-success">DL Issued Status</label>
+                                    <select name="dl_issued" id="addDlIssued" class="form-select border-success">
+                                        <option value="No" selected>No (Pending)</option>
+                                        <option value="Yes">Yes (Approved)</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label small fw-bold">Permanent DL Number</label>
+                                    <input type="text" name="dl_number" id="addDlNumber" class="form-control" placeholder="e.g. TN52...">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-footer bg-light d-flex justify-content-end p-3">
+                            <button type="reset" class="btn btn-outline-secondary me-2">Clear Fields</button>
+                            <button type="submit" id="saveInsertBtn" class="btn btn-success px-5">Commit Entry to Sheet ✓</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="editRecordModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content shadow" style="border-radius: 14px;">
+                <div class="modal-header bg-dark text-white">
+                    <h5 class="modal-title fw-bold">✏️ Edit Row File Record</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form id="modalEditForm" novalidate class="needs-validation">
+                    <div class="modal-body p-4">
+                        <input type="hidden" name="action" value="update">
+                        <input type="hidden" id="editRowIndex" name="row_index">
+
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label small fw-bold">LLR Number</label>
+                                <input type="text" name="llr_number" id="editLlrNumber" class="form-control" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small fw-bold">Applicant Full Name</label>
+                                <input type="text" name="name" id="editName" class="form-control" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label small fw-bold">Date of Birth</label>
+                                <input type="text" name="date_of_birth" id="editDob" class="form-control" placeholder="DD-MM-YYYY" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label small fw-bold text-primary">Vehicle Class Rule Base</label>
+                                <select name="vehicle_class" id="editVehicleClass" class="form-select border-primary" required>
+                                    <option value="MCWOG">MCWOG</option>
+                                    <option value="MCWG">MCWG</option>
+                                    <option value="LMV">LMV</option>
+                                    <option value="TRANS">TRANS</option>
+                                    <option value="MCWG, LMV">MCWG, LMV</option>
+                                    <option value="MCWOG, LMV">MCWOG, LMV</option>
+                                    <option value="MCWG, LMV, TRANS">MCWG, LMV, TRANS</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label small fw-bold">Mobile Number</label>
+                                <input type="tel" name="mobile_number" id="editMobile" class="form-control" maxlength="10" required>
+                            </div>
+                            
+                            <hr class="my-2 text-muted">
+                            
+                            <div class="col-md-4">
+                                <label class="form-label small fw-bold">LLR Issue Date</label>
+                                <input type="text" name="issue_date" id="editIssueDate" class="form-control" placeholder="DD-MM-YYYY">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label small fw-bold">LLR Expiry Date</label>
+                                <input type="text" name="expiry_date" id="editExpiryDate" class="form-control" placeholder="DD-MM-YYYY">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label small fw-bold">Approved Date</label>
+                                <input type="text" name="approved_date" id="editApprovedDate" class="form-control" placeholder="DD-MM-YYYY">
+                            </div>
+
+                            <div class="col-md-4">
+                                <label class="form-label small fw-bold">Fees Number</label>
+                                <input type="text" name="fees_number" id="editFeesNumber" class="form-control">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label small fw-bold">Fee Cost Amount</label>
+                                <input type="text" name="fee" id="editFee" class="form-control">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label small fw-bold">Blood Group</label>
+                                <input type="text" name="blood_group" id="editBloodGroup" class="form-control">
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label small fw-bold">Relative Type</label>
+                                <select name="relative_type" id="editRelativeType" class="form-select">
+                                    <option value="Father">Father</option>
+                                    <option value="Husband">Husband</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small fw-bold">Relative Name</label>
+                                <input type="text" name="relative_name" id="editRelativeName" class="form-control">
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label small fw-bold">Present Address</label>
+                                <textarea name="present_address" id="editPresentAddress" class="form-control" rows="2"></textarea>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small fw-bold">Permanent Address</label>
+                                <textarea name="permanent_address" id="editPermanentAddress" class="form-control" rows="2"></textarea>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label small fw-bold">Identification Mark 1</label>
+                                <input type="text" name="identification_mark_1" id="editIdMark1" class="form-control">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small fw-bold">Identification Mark 2</label>
+                                <input type="text" name="identification_mark_2" id="editIdMark2" class="form-control">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small fw-bold">Emergency Mobile</label>
+                                <input type="tel" name="emergency_mobile" id="editEmergencyMobile" class="form-control" maxlength="10">
+                            </div>
+
+                            <div class="col-md-3">
+                                <label class="form-label small fw-bold text-success">DL Issued Status</label>
+                                <select name="dl_issued" id="editDlIssued" class="form-select border-success">
+                                    <option value="No">No (Pending)</option>
+                                    <option value="Yes">Yes (Approved)</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label small fw-bold">Permanent DL Number</label>
+                                <input type="text" name="dl_number" id="editDlNumber" class="form-control" placeholder="e.g. TN52...">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer bg-light d-flex justify-content-between">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel Changes</button>
+                        <button type="submit" id="saveEditBtn" class="btn btn-success px-4">Update Database Record ✓</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="/env.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/recordsManager.js"></script>
+</body>
+</html>

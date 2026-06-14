@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LLR Portal - Advanced Printing Console</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background: #f4f6f9; font-family: system-ui, -apple-system, sans-serif; }
+        .card { border-radius: 14px; border: none; }
+        .sticky-thead { position: sticky; top: 0; z-index: 1020; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
+        .table-responsive { max-height: 520px; overflow-y: auto; border-radius: 8px; }
+        .column-toggle-badge { cursor: pointer; user-select: none; transition: all 0.2s; }
+        
+        /* =========================================================================
+           ENTERPRISE PRINT MATRIX STYLESHEET
+           ========================================================================= */
+        @media print {
+            body { background: #ffffff !important; color: #000000 !important; font-size: 10pt !important; padding: 0; margin: 0; }
+            
+            /* 1. Eliminate interactive workspace dashboards completely from hardcopy prints */
+            .navbar,
+            .no-print-panel,
+            #refreshBtn,
+            .card-header .btn,
+            #columnSelectorCard,
+            .d-flex.flex-column.flex-md-row {
+                display: none !important;
+            }
+            
+            /* 2. Format page spacing configurations cleanly */
+            .container, .card, .card-body { 
+                width: 100% !important; 
+                max-width: 100% !important;
+                padding: 0 !important; 
+                margin: 0 !important; 
+                box-shadow: none !important;
+                border: none !important;
+            }
+            .table-responsive { max-height: none !important; overflow: visible !important; }
+            
+            /* 3. Strict grid lines reconstruction rules */
+            table { width: 100% !important; border-collapse: collapse !important; page-break-inside: auto; }
+            tr { page-break-inside: avoid; page-break-after: auto; }
+            thead { display: table-header-group !important; background-color: #f8f9fa !important; }
+            th, td { border: 1px solid #6c757d !important; padding: 6px 8px !important; font-size: 8.5pt !important; }
+            
+            /* Hide columns marked as disabled on the client runtime checker */
+            .col-hidden { display: none !important; }
+            
+            /* 4. Document Audit Trail Signatures Header */
+            body::before {
+                content: "LLR PORTAL — SECURITY REGISTRY MASTER AUDIT LEDGER\nGenerated: " attr(data-print-date) " | Scope: " attr(data-print-scope);
+                display: block;
+                font-size: 10pt;
+                font-weight: bold;
+                white-space: pre-wrap;
+                text-align: left;
+                margin-bottom: 25px;
+                border-bottom: 3px double #000000;
+                padding-bottom: 8px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4 shadow-sm">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="index.html">🚗 LLR Portal</a>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto gap-2">
+                    <li class="nav-item"><a class="nav-link" href="index.html">🏠 Home</a></li>
+                    <li class="nav-item"><a class="nav-link" href="extractor.html">📄 Data Extraction</a></li>
+                    <li class="nav-item"><a class="nav-link" href="records.html">📋 Records </a></li>
+                    <li class="nav-item"><a class="nav-link" href="report.html">📊 Reports </a></li>
+                    <li class="nav-item"><a class="nav-link  " href="dashboard.html">📈 Dashboard</a></li>
+                    <li class="nav-item active"><a class="nav-link active" href="print-engine.html">🖨️ Print Console</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container pb-5">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+            <div>
+                <h4 class="fw-bold text-dark mb-1">Advanced Printing Control Console</h4>
+                <p class="text-muted small mb-0">Build tailored physical manifests by selecting data parameters, structural column toggles, and multi-tier filters.</p>
+            </div>
+            <button id="refreshBtn" class="btn btn-dark shadow-sm fw-semibold px-4">🔄 Sync Database</button>
+        </div>
+
+        <div class="card shadow-sm border border-light p-4 mb-4 no-print-panel">
+            <h6 class="fw-bold text-dark mb-3">🛠️ Step 1: Configure Multi-Tier Filter Rules</h6>
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <label class="form-label small fw-bold text-secondary">Target Parameter Select</label>
+                    <select id="filterTypeDropdown" class="form-select bg-light border-0 fw-semibold text-dark">
+                        <option value="ALL">Print All Active Records</option>
+                        <option value="ISSUE_RANGE">Filter By Issue Date Range</option>
+                        <option value="EXPIRY_RANGE">Filter By Expiry Date Range</option>
+                        <option value="ELIMINATED_31DAYS">Crossed 31-Day Milestone (Valid Only)</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label small fw-bold text-secondary">Calendar Date Range Parameters</label>
+                    <div class="d-flex gap-2 align-items-center">
+                        <input type="date" id="filterStartDate" class="form-control bg-light border-0 font-monospace">
+                        <span class="small text-muted">to</span>
+                        <input type="date" id="filterEndDate" class="form-control bg-light border-0 font-monospace">
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small fw-bold text-secondary">Vehicle Classification Filter</label>
+                    <select id="filterVehicleClass" class="form-select bg-light border-0 fw-semibold text-dark">
+                        <option value="ALL">All transit classifications</option>
+                        <option value="MCWOG">MCWOG</option>
+                        <option value="MCWG">MCWG</option>
+                        <option value="LMV">LMV</option>
+                        <option value="TRANS">TRANS</option>
+                        <option value="COMBINED">Both (MCWOG/MCWG + LMV)</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small fw-bold text-secondary">DL Status Logic</label>
+                    <select id="filterDlStatus" class="form-select bg-light border-0 fw-semibold text-dark">
+                        <option value="ALL">Show All</option>
+                        <option value="PENDING" selected>Hide 'DL Issued'</option>
+                        <option value="ISSUED">Show 'DL Issued' Only</option>
+                    </select>
+                </div>
+                <div class="col-md-12 mt-3">
+                    <div class="input-group bg-light rounded-3">
+                        <span class="input-group-text bg-transparent border-0 text-muted">🔍</span>
+                        <input type="text" id="liveSearchQuery" class="form-control bg-transparent border-0 font-monospace" placeholder="Refine records array results by typing names, LLR registry files, or phone contacts...">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card shadow-sm border border-light p-4 mb-4 no-print-panel" id="columnSelectorCard">
+            <h6 class="fw-bold text-dark mb-2">📋 Step 2: Toggle Column Visibility Checklist</h6>
+            <p class="text-muted small mb-3">Uncheck components to drop them out of the generated data ledger sheets automatically.</p>
+            <div class="d-flex flex-wrap gap-2" id="columnCheckboxesContainer">
+                </div>
+        </div>
+
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center py-3">
+                <h5 class="mb-0 fw-bold text-light" id="previewTitle">Data Ledger Preview Manifest</h5>
+                <button id="triggerPrintBtn" class="btn btn-sm btn-light fw-bold px-4 shadow-sm">🖨️ Run Print Protocol</button>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover table-striped align-middle mb-0" id="printTargetTable">
+                        <thead class="table-light sticky-thead" id="tableHeaderSelectors">
+                            </thead>
+                        <tbody id="printTableBody">
+                            <tr>
+                                <td colspan="100" class="text-center py-5 text-muted small">
+                                    <div class="spinner-border spinner-border-sm text-dark me-2"></div>
+                                    Syncing database registries cell arrays data...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/env.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/printEngine.js"></script>
+</body>
+</html>
