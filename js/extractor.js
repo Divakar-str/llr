@@ -15,9 +15,14 @@ function formatToStandardDate(dateStr) {
     let normalized = dateStr.replace(/\//g, "-");
 
     // Extract purely the core date array elements, dropping trailing clock timestamps
-    let match = normalized.match(/(\d{2})-(\d{2})-(\d{4})/);
+    let match = normalized.match(/(\d{2,4})-(\d{2})-(\d{2,4})/);
     if (match) {
-        return `${match[1]}-${match[2]}-${match[3]}`;
+        let pieces = [match[1], match[2], match[3]];
+        // If it extracted in YYYY-MM-DD reverse order
+        if (pieces[0].length === 4) {
+            return `${pieces[2].padStart(2, '0')}-${pieces[1].padStart(2, '0')}-${pieces[0]}`;
+        }
+        return `${pieces[0].padStart(2, '0')}-${pieces[1].padStart(2, '0')}-${pieces[2]}`;
     }
     return normalized.trim();
 }
@@ -48,7 +53,7 @@ function executeTextParsingEngine() {
     const dobMatch = text.match(/(\d{2}[-\/]\d{2}[-\/]\d{4})/);
     data["date_of_birth"] = dobMatch ? formatToStandardDate(dobMatch[1]) : "-";
 
-    // 5. Blood Group (SAFE INITIALIZATION ORDER FIXED HERE)
+    // 5. Blood Group 
     const bloodMatch = text.match(/\b(A|B|AB|O|A1|A2|A1B|A2B)\s*([\+\-])/i);
     const bloodGroup = bloodMatch ? `${bloodMatch[1].toUpperCase()}${bloodMatch[2]}` : "-";
     data["blood_group"] = bloodGroup;
@@ -74,7 +79,7 @@ function executeTextParsingEngine() {
     data["relative_name"] = relativeName;
     data["relative_type"] = text.toUpperCase().includes("HUSBAND") ? "Husband" : "Father";
 
-    // 7. Dynamic Address Engine (Safely consumes bloodGroup now)
+    // 7. Dynamic Address Engine 
     let addressText = "-", idMark1 = "-";
     if (bloodGroup !== "-") {
         const bloodIndex = text.indexOf(bloodGroup) + bloodGroup.length;
@@ -139,35 +144,39 @@ function executeTextParsingEngine() {
     data["issue_date"] = formatToStandardDate(rawIssueDate);
     data["expiry_date"] = formatToStandardDate(rawExpiryDate);
 
-    // 11. Approved Date
-    const approvedMatch = text.match(/LLR\s+Approved\s+Date:\s*([\d\s\-:\/]*)/i);
+    // 11. Approved Date (FIXED FOR TIMESTAMP RANGE & CHARACTERS)
+    const approvedMatch = text.match(/LLR\s+Approved\s+Date:\s*([\d\s\-:\/A-Za-z]*)/i);
     let rawApprovedDate = "-";
 
     if (approvedMatch && approvedMatch[1].trim().length > 0) {
         let extractedStamp = approvedMatch[1].trim();
-
-        // Isolate the core date string component from any clock strings or timezone markers
-        // This regex extracts the first matching 8-10 digit calendar block with dashes, slashes, or hyphens
         let dateOnlyMatch = extractedStamp.match(/(\d{2,4}[-\/]\d{2}[-\/]\d{2,4})/);
         if (dateOnlyMatch) {
-            let coreDate = dateOnlyMatch[1].replace(/\//g, "-"); // Standardize slashes to hyphens
+            let coreDate = dateOnlyMatch[1].replace(/\//g, "-"); 
             let pieces = coreDate.split("-");
 
-            // Check if layout extracted in reverse order (YYYY-MM-DD) out of an ISO fallback string
             if (pieces[0].length === 4) {
                 rawApprovedDate = `${pieces[2].padStart(2, '0')}-${pieces[1].padStart(2, '0')}-${pieces[0]}`;
             } else {
-                // Keep structural integrity as standard DD-MM-YYYY
                 rawApprovedDate = `${pieces[0].padStart(2, '0')}-${pieces[1].padStart(2, '0')}-${pieces[2]}`;
             }
         }
     }
-
-    // Save cleanly to data payload
     data["approved_date"] = rawApprovedDate;
 
     // Dynamic external form binding pass
     if (typeof window.bindFormFields === "function") {
         window.bindFormFields(data);
     }
+
+    // DYNAMIC AUTO-FOCUS CONSOLE TRIGGER
+    setTimeout(() => {
+        const mobileInput = document.getElementById("editMobile") || 
+                            document.getElementById("addMobile") || 
+                            document.querySelector("input[type='tel']");
+        if (mobileInput) {
+            mobileInput.focus();
+            mobileInput.select(); // Selects any extracted numbers so user can quickly type over if needed
+        }
+    }, 80);
 }

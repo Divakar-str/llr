@@ -1,249 +1,260 @@
-// OPERATIONAL ANALYTICS CORE LIFECYCLE CONTROLLER
+// CONTROLLER LOGIC HUB FOR SYSTEM OPERATION TELEMETRY MATRIX DYNAMICS
 const SHEET_API_URL = ENV.SHEET_API_URL;
 
-let chartInstancesCollection = {
-    vehicleChart: null,
-    validityChart: null
-};
+let localCacheTelemetryCollection = [];
 
-// SAFE TIMING TRACKER INTERACTION ENTRANCE INITIALIZATION LOOP
 document.addEventListener("DOMContentLoaded", () => {
-    // Verify structural dependency frameworks are loaded on window context safely first
-    if (typeof bootstrap !== 'undefined' && typeof Chart !== 'undefined') {
-        initializeDashboardApp();
-    } else {
-        console.warn("Libraries initialization lagging behind script. Polling engine fallback activated...");
-        const safetyPollerInterval = setInterval(() => {
-            if (typeof bootstrap !== 'undefined' && typeof Chart !== 'undefined') {
-                clearInterval(safetyPollerInterval);
-                initializeDashboardApp();
-            }
-        }, 100);
-    }
+    // Stamp local layout date target attributes onto document body root node for print structures
+    const rawToday = new Date();
+    const formattedToday = `${String(rawToday.getDate()).padStart(2, '0')}-${String(rawToday.getMonth() + 1).padStart(2, '0')}-${rawToday.getFullYear()}`;
+    document.body.setAttribute("data-print-date", formattedToday);
+
+    // Wire up telemetry execution trigger clicks handles hooks
+    fetchActiveTelemetryDashboardData();
+    document.getElementById("refreshDashboardBtn").addEventListener("click", fetchActiveTelemetryDashboardData);
+    document.getElementById("exportCsvBtn").addEventListener("click", executeSpreadsheetDataExporterRoutine);
+    document.getElementById("printPdfBtn").addEventListener("click", () => window.print());
+    document.getElementById("dashStartDate").addEventListener("change", evaluateRealtimeTimeframeFilters);
+    document.getElementById("dashEndDate").addEventListener("change", evaluateRealtimeTimeframeFilters);
+    
+    document.getElementById("clearDashFilterBtn").addEventListener("click", () => {
+        document.getElementById("dashStartDate").value = "";
+        document.getElementById("dashEndDate").value = "";
+        processAndRenderTelemetry(localCacheTelemetryCollection);
+    });
 });
 
-function initializeDashboardApp() {
-    executeMetricsPipelineSync();
-    const refreshBtn = document.getElementById("refreshDashboardBtn");
-    if (refreshBtn) {
-        refreshBtn.addEventListener("click", executeMetricsPipelineSync);
-    }
-}
-
-/**
- * MANDATORY FIXED DD-MM-YYYY DATE PARSER:
- * Decouples elements row values by index mapping arrays to completely eliminate
- * system runtime zone offsets and cross-browser calculation interpretation anomalies.
- */
 function parseStringToJsDate(dateStr) {
-    if (!dateStr || dateStr === "-" || dateStr.toString().trim() === "") return null;
+    if (!dateStr || dateStr === "-") return null;
+    let cleanStr = dateStr.toString().split(" ")[0].trim().replace(/\//g, "-");
     
-    let cleanStr = dateStr.toString().split(" ")[0].trim();
-    
-    // Check and neutralize accidental fallback ISO text dumps from Google (YYYY-MM-DD)
     if (cleanStr.includes("T")) {
-        let parts = cleanStr.split("T")[0].split("-");
+        cleanStr = cleanStr.split("T")[0];
+        let parts = cleanStr.split("-");
         if (parts.length === 3 && parts[0].length === 4) {
             return new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
         }
     }
     
-    // Enforce uniform hyphen tracking configurations
-    cleanStr = cleanStr.replace(/\//g, "-");
     let elements = cleanStr.split("-");
-    
-    // STRICT INDEX MAPPING: [0]=Day, [1]=Month, [2]=Year
     if (elements.length === 3 && elements[2].length === 4) {
-        let day = parseInt(elements[0], 10);
-        let month = parseInt(elements[1], 10) - 1; // JS 0-Indexed Month Rules (0=Jan, 6=July)
-        let year = parseInt(elements[2], 10);
-        
-        let dateObj = new Date(year, month, day);
-        if (!isNaN(dateObj.getTime())) return dateObj;
+        return new Date(parseInt(elements[2], 10), parseInt(elements[1], 10) - 1, parseInt(elements[0], 10));
     }
-    
     return null;
 }
 
-/**
- * MASTER DATA RETRIEVAL ROUTINE: Pulls sheet values and triggers evaluation pipelines
- */
-async function executeMetricsPipelineSync() {
-    const refreshBtn = document.getElementById("refreshDashboardBtn");
-    if (refreshBtn) {
-        refreshBtn.disabled = true;
-        refreshBtn.innerText = "Syncing Telemetry...";
-    }
+async function fetchActiveTelemetryDashboardData() {
+    const tableBody = document.getElementById("criticalActionTableBody");
+    tableBody.innerHTML = `<tr><td colspan="5" class="text-center py-5 text-muted small"><div class="spinner-border spinner-border-sm text-dark me-2"></div>Syncing live database telemetry metrics parameters...</td></tr>`;
 
     try {
-        const networkResponse = await fetch(SHEET_API_URL);
-        if (!networkResponse.ok) throw new Error(`HTTP status failure response code: ${networkResponse.status}`);
+        const response = await fetch(SHEET_API_URL);
+        if (!response.ok) throw new Error(`HTTP data stream link connection breakdown: ${response.status}`);
         
-        const payloadData = await networkResponse.json();
-        if (payloadData.status !== "success") throw new Error(payloadData.message || "Telemetry mismatch exception.");
-
-        const activeRowsArray = payloadData.data || [];
-        processComplianceMetricsEngine(activeRowsArray);
-
-    } catch (faultTrace) {
-        console.error("Dashboard engine failed to compile metrics visual assets:", faultTrace);
-        alert("Failed to sync structural monitoring metrics matrix rows: " + faultTrace.message);
-    } finally {
-        if (refreshBtn) {
-            refreshBtn.disabled = false;
-            refreshBtn.innerText = "🔄 Refresh Telemetry";
+        const parseResult = await response.json();
+        if (parseResult.status === "success") {
+            localCacheTelemetryCollection = parseResult.data || [];
+            processAndRenderTelemetry(localCacheTelemetryCollection);
+        } else {
+            throw new Error(parseResult.message || "Database engine tracking matrices logs mapping refused.");
         }
+    } catch (fault) {
+        console.error("Dashboard calculation stack trace fault error:", fault);
+        tableBody.innerHTML = `<tr><td colspan="5" class="text-center text-danger py-4 fw-bold">❌ Telemetry Offline<br><span class="small fw-normal text-muted">${fault.message}</span></td></tr>`;
     }
 }
 
-/**
- * COMPLIANCE METRICS PROCESSOR: Runs time-horizon analysis over rows array sets
- */
-function processComplianceMetricsEngine(records) {
+function evaluateRealtimeTimeframeFilters() {
+    const startRangeStr = document.getElementById("dashStartDate").value;
+    const endRangeStr = document.getElementById("dashEndDate").value;
+
+    if (!startRangeStr || !endRangeStr) return;
+
+    const startThreshold = new Date(startRangeStr).setHours(0,0,0,0);
+    const endThreshold = new Date(endRangeStr).setHours(23,59,59,999);
+
+    const isolatedFilteredDataset = localCacheTelemetryCollection.filter(row => {
+        const currentIssueDate = parseStringToJsDate(row.issue_date);
+        return currentIssueDate && currentIssueDate.getTime() >= startThreshold && currentIssueDate.getTime() <= endThreshold;
+    });
+
+    processAndRenderTelemetry(isolatedFilteredDataset);
+}
+
+// =========================================================================
+// OPERATIONAL ANALYTICS AND COMPILATION RENDER PROCESSING MATRIX
+// =========================================================================
+function processAndRenderTelemetry(targetDatasetArray) {
     const rightNow = new Date();
-    // Normalize rightNow to midnight to keep day calculation math exact
-    rightNow.setHours(0,0,0,0);
     
-    let totalCount = records.length;
-    let expiredCount = 0;
-    let expiringSoonCount = 0;
-    let activeDlCount = 0;
+    let totalLlrCount = targetDatasetArray.length;
+    let expiredCount = 0, expiringSoonCount = 0, dlIssuedCount = 0;
     
-    let mapVehicleCounts = { "MCWOG": 0, "MCWG": 0, "LMV": 0, "TRANS": 0 };
-    let highPriorityRecordsArray = [];
+    let vehicleClassDistributionMap = {};
+    let attentionPriorityList = [];
+    
+    // Initialize Category 1 Workload arrays allocation slots strictly
+    let weeklyDaysCountersMap = { "Sunday": 0, "Monday": 0, "Tuesday": 0, "Wednesday": 0, "Thursday": 0, "Friday": 0, "Saturday": 0 };
 
-    records.forEach(item => {
-        if (item.dl_issued === "Yes") activeDlCount++;
+    targetDatasetArray.forEach(item => {
+        if (item.dl_issued === "Yes") dlIssuedCount++;
 
-        // Evaluate calendar parameters based on strict index matching output maps
-        const expiryDateObj = parseStringToJsDate(item.expiry_date);
-        let timelineStatusLabel = "";
-        let badgeStyleClass = "";
-        let isCritical = false;
+        // Unify split category inversion patterns safely alphabetical remapping
+        let rawClass = item.vehicle_class ? item.vehicle_class.toString().trim() : "Unclassed";
+        if (rawClass.includes(",")) {
+            rawClass = rawClass.split(",").map(str => str.trim()).sort().join(", "); 
+        }
+        vehicleClassDistributionMap[rawClass] = (vehicleClassDistributionMap[rawClass] || 0) + 1;
 
-        if (expiryDateObj) {
-            expiryDateObj.setHours(0,0,0,0);
-            const timeDeltaMs = expiryDateObj.getTime() - rightNow.getTime();
-            const daysRemaining = Math.ceil(timeDeltaMs / (1000 * 60 * 60 * 24));
+        // Process Weekly Workload Allocation distribution targets matches
+        const jsIssueDate = parseStringToJsDate(item.issue_date);
+        if (jsIssueDate) {
+            const dayNameIndex = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"][jsIssueDate.getDay()];
+            weeklyDaysCountersMap[dayNameIndex]++;
+        }
 
-            if (daysRemaining < 0) {
+        const jsExpiry = parseStringToJsDate(item.expiry_date);
+        if (jsExpiry) {
+            const msLeft = jsExpiry.getTime() - rightNow.getTime();
+            const daysLeft = Math.ceil(msLeft / (1000 * 60 * 60 * 24));
+
+            if (daysLeft < 0) {
                 expiredCount++;
-                timelineStatusLabel = `Expired (${Math.abs(daysRemaining)} Days Ago)`;
-                badgeStyleClass = "bg-danger text-white";
-                isCritical = true;
-            } else if (daysRemaining <= 30) {
-                expiringSoonCount++;
-                timelineStatusLabel = `Expiring in ${daysRemaining} Days`;
-                badgeStyleClass = "bg-warning text-dark";
-                isCritical = true;
-            }
-        }
-
-        if (isCritical) {
-            highPriorityRecordsArray.push({
-                llr_number: item.llr_number || "-",
-                name: item.name || "-",
-                mobile_number: item.mobile_number || "-",
-                expiry_date: item.expiry_date || "-",
-                statusLabel: timelineStatusLabel,
-                badgeClass: badgeStyleClass
-            });
-        }
-
-        // Aggregate classification counters metrics mapping
-        if (item.vehicle_class && item.vehicle_class !== "-") {
-            const categories = item.vehicle_class.split(",");
-            categories.forEach(tag => {
-                const cleanKey = tag.trim().toUpperCase();
-                if (cleanKey !== "" && mapVehicleCounts[cleanKey] !== undefined) {
-                    mapVehicleCounts[cleanKey]++;
+                if (item.dl_issued !== "Yes") {
+                    attentionPriorityList.push({ item, daysLeft, label: "EXPIRED" });
                 }
-            });
+            } else if (daysLeft <= 30) {
+                expiringSoonCount++;
+                if (item.dl_issued !== "Yes") {
+                    attentionPriorityList.push({ item, daysLeft, label: "CRITICAL" });
+                }
+            }
         }
     });
 
-    // Populate scorecard numerical displays
-    document.getElementById("metricTotalLlr").innerText = totalCount;
+    // Populate Matrix Counter Text Fields Values
+    document.getElementById("metricTotalLlr").innerText = totalLlrCount;
     document.getElementById("metricExpired").innerText = expiredCount;
     document.getElementById("metricExpiringSoon").innerText = expiringSoonCount;
-    document.getElementById("metricDlIssued").innerText = activeDlCount;
+    document.getElementById("metricDlIssued").innerText = dlIssuedCount;
 
-    // Render data tables lists and update canvas blocks
-    populateAttentionBoardTable(highPriorityRecordsArray);
-    buildGraphicalTelemetryCharts(mapVehicleCounts, expiredCount, expiringSoonCount, (totalCount - expiredCount - expiringSoonCount));
-}
-
-function populateAttentionBoardTable(criticalRecords) {
-    const tableBody = document.getElementById("criticalActionTableBody");
+    // 1. RENDER ACTIVITY GRID MATRIX BAR CHART CHANNELS (Category 1 Volume)
+    const workloadGridContainer = document.getElementById("weeklyWorkloadGrid");
+    workloadGridContainer.innerHTML = "";
     
-    if (criticalRecords.length === 0) {
-        tableBody.innerHTML = `<tr><td colspan="5" class="text-center text-success py-4 fw-semibold">✓ All documents are fully compliant and healthy!</td></tr>`;
+    // Discover peak workday index to scale relative widths cleanly
+    const peakDayVolumeMax = Math.max(...Object.values(weeklyDaysCountersMap), 1);
+    
+    Object.entries(weeklyDaysCountersMap).forEach(([dayName, dayTotalCount]) => {
+        const percentageWorkloadWidth = Math.round((dayTotalCount / peakDayVolumeMax) * 100);
+        workloadGridContainer.innerHTML += `
+            <div class="matrix-grid-row">
+                <div class="matrix-day-label">${dayName.substring(0, 3)}</div>
+                <div class="matrix-bar-track">
+                    <div class="matrix-bar-fill" style="width: ${percentageWorkloadWidth}%;"></div>
+                    <div class="matrix-bar-value">${dayTotalCount} forms</div>
+                </div>
+            </div>`;
+    });
+
+    // 2. RENDER SHIFT DISTRIBUTIONS PROGRESS METRIC SHARE (Category 6)
+    const distContainer = document.getElementById("distributionContainer");
+    distContainer.innerHTML = "";
+
+    if (Object.keys(vehicleClassDistributionMap).length === 0) {
+        distContainer.innerHTML = `<div class="text-muted text-center small py-4">No categories recorded inside current timeframe bounds.</div>`;
+    } else {
+        Object.entries(vehicleClassDistributionMap).forEach(([className, totalVolume]) => {
+            const percentageUsedShare = totalLlrCount > 0 ? Math.round((totalVolume / totalLlrCount) * 100) : 0;
+            distContainer.innerHTML += `
+                <div class="distribution-row">
+                    <div class="d-flex justify-content-between small fw-bold text-dark">
+                        <span><i class="bi bi-car-front-fill me-1 text-secondary"></i> ${className}</span>
+                        <span class="text-secondary">${totalVolume} items (${percentageUsedShare}%)</span>
+                    </div>
+                    <div class="distribution-progress-track">
+                        <div class="distribution-progress-bar" style="width: ${percentageUsedShare}%;"></div>
+                    </div>
+                </div>`;
+        });
+    }
+
+    // 3. RENDER PURE CSS CONIC DONUT RING CHART MATRIX
+    const validityContainer = document.getElementById("validityBalanceContainer");
+    const functionalValidTotal = totalLlrCount - expiredCount;
+    const generalValidPercentage = totalLlrCount > 0 ? Math.round((functionalValidTotal / totalLlrCount) * 100) : 0;
+    const exceptionExpiredPercentage = totalLlrCount > 0 ? 100 - generalValidPercentage : 0;
+    const conicDegreesEndValue = Math.round((generalValidPercentage / 100) * 360);
+
+    validityContainer.innerHTML = `
+        <div class="validity-donut-chart" style="background: conic-gradient(#198754 0deg ${conicDegreesEndValue}deg, #dc3545 ${conicDegreesEndValue}deg 360deg)">
+            <div class="validity-donut-center">
+                <span>${generalValidPercentage}%</span>
+                <span class="text-muted text-uppercase fw-bold" style="font-size: 0.65rem; letter-spacing: 0.05em;">Valid Balance</span>
+            </div>
+        </div>
+        <div class="d-flex justify-content-center gap-4 mt-2">
+            <div class="small fw-bold text-success"><i class="bi bi-circle-fill me-1"></i> Valid (${generalValidPercentage}%)</div>
+            <div class="small fw-bold text-danger"><i class="bi bi-circle-fill me-1"></i> Expired (${exceptionExpiredPercentage}%)</div>
+        </div>`;
+
+    // 4. HYDRATE HIGH PRIORITY EXPRIATION DATA ROWS TABLE
+    const tableBody = document.getElementById("criticalActionTableBody");
+    if (attentionPriorityList.length === 0) {
+        tableBody.innerHTML = `<tr><td colspan="5" class="text-center text-muted py-4 small">Everything clear! No high-priority expiration actions flagged.</td></tr>`;
         return;
     }
 
-    let compiledHtmlRows = "";
-    criticalRecords.forEach(row => {
-        compiledHtmlRows += `
+    attentionPriorityList.sort((first, second) => first.daysLeft - second.daysLeft);
+
+    let rowsHtml = "";
+    attentionPriorityList.forEach(node => {
+        let statusStringLabel = "";
+        if (node.label === "EXPIRED") {
+            statusStringLabel = `<span class="text-danger fw-bold font-monospace">Expired (${Math.abs(node.daysLeft)}d ago)</span>`;
+        } else {
+            statusStringLabel = `<span class="text-warning fw-bold font-monospace">Critical (${node.daysLeft}d left)</span>`;
+        }
+
+        rowsHtml += `
             <tr>
-                <td class="ps-3 fw-bold text-dark">${row.llr_number}</td>
-                <td class="fw-medium">${row.name}</td>
-                <td class="small font-monospace">${row.mobile_number}</td>
-                <td class="small text-secondary">${row.expiry_date}</td>
-                <td class="pe-3"><span class="badge ${row.badgeClass} fw-bold px-2.5 py-1.5">${row.statusLabel}</span></td>
+                <td class="ps-4 fw-bold text-dark small">${node.item.llr_number || "-"}</td>
+                <td class="fw-semibold text-secondary">${node.item.name || "-"}</td>
+                <td class="small font-monospace">${node.item.mobile_number || "-"}</td>
+                <td class="small text-muted">${node.item.expiry_date || "-"}</td>
+                <td class="pe-4 text-end small">${statusStringLabel}</td>
             </tr>`;
     });
-    tableBody.innerHTML = compiledHtmlRows;
+    tableBody.innerHTML = rowsHtml;
 }
 
-function buildGraphicalTelemetryCharts(vehicleMap, expired, expiring, healthy) {
-    if (chartInstancesCollection.vehicleChart) chartInstancesCollection.vehicleChart.destroy();
-    if (chartInstancesCollection.validityChart) chartInstancesCollection.validityChart.destroy();
+// =========================================================================
+// SPREADSHEET INGESTION EXPORTER SYSTEM AUTOMATED FILE DOWNLOADER
+// =========================================================================
+function executeSpreadsheetDataExporterRoutine() {
+    if (localCacheTelemetryCollection.length === 0) {
+        alert("Action Aborted: No valid data fields loaded available to export.");
+        return;
+    }
 
-    const vehicleLabels = Object.keys(vehicleMap);
-    const vehicleValues = Object.values(vehicleMap);
+    let csvContent = "data:text/csv;charset=utf-8,";
+    csvContent += "LLR Number,Applicant Name,Vehicle Class,Mobile Number,Expiry Date,DL Issued Status\n";
 
-    // --- CHART A: VEHICLE SPLITS BAR VISUALIZATION ---
-    const vehicleCtx = document.getElementById('chartVehicleDistribution').getContext('2d');
-    chartInstancesCollection.vehicleChart = new Chart(vehicleCtx, {
-        type: 'bar',
-        data: {
-            labels: vehicleLabels,
-            datasets: [{
-                label: 'Active Registrations Volume',
-                data: vehicleValues,
-                backgroundColor: 'rgba(33, 37, 41, 0.78)',
-                borderColor: '#212529',
-                borderWidth: 1.5,
-                borderRadius: 4
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: { legend: { display: false } },
-            scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
-        }
+    localCacheTelemetryCollection.forEach(row => {
+        const llr = row.llr_number || "-";
+        const name = row.name || "-";
+        const vClass = row.vehicle_class || "-";
+        const mobile = row.mobile_number || "-";
+        const expiry = row.expiry_date || "-";
+        const dl = row.dl_issued || "No";
+        csvContent += `"${llr}","${name}","${vClass}","${mobile}","${expiry}","${dl}"\n`;
     });
 
-    // --- CHART B: COMPLIANCE RATIO DONUT VISUALIZATION ---
-    const validityCtx = document.getElementById('chartValidityRatio').getContext('2d');
-    chartInstancesCollection.validityChart = new Chart(validityCtx, {
-        type: 'doughnut',
-        data: {
-            labels: ['Expired', 'Expiring Soon', 'Valid / Safe'],
-            datasets: [{
-                data: [expired, expiring, healthy],
-                backgroundColor: ['#dc3545', '#ffc107', '#198754'],
-                borderColor: ['#fff', '#fff', '#fff'],
-                borderWidth: 2
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: { position: 'bottom', labels: { boxWidth: 10, padding: 12, font: { size: 11, weight: 'bold' } } }
-            }
-        }
-    });
+    const encodedUri = encodeURI(csvContent);
+    const downloadAnchor = document.createElement("a");
+    downloadAnchor.setAttribute("href", encodedUri);
+    downloadAnchor.setAttribute("download", `LLR_Global_Analytics_Telemetry_${document.body.getAttribute("data-print-date")}.csv`);
+    document.body.appendChild(downloadAnchor);
+    downloadAnchor.click();
+    document.body.removeChild(downloadAnchor);
 }

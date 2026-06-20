@@ -5,24 +5,47 @@ let localCacheRecordsCollection = [];
 let bootstrapModalInstance = null;
 
 document.addEventListener("DOMContentLoaded", () => {
-    // Initialize the Bootstrap modal overlay block component
     bootstrapModalInstance = new bootstrap.Modal(document.getElementById('editRecordModal'));
     
-    // Wire up runtime user interactive event triggers
+    // Wire up runtime event triggers
     fetchActiveSheetCollectionData();
     document.getElementById("refreshDataBtn").addEventListener("click", fetchActiveSheetCollectionData);
-    document.getElementById("tableSearchInput").addEventListener("input", runLiveClientTableFiltering);
+    document.getElementById("tableSearchInput").addEventListener("input", runLiveClientFiltersPipeline);
+    document.getElementById("filterStartDate").addEventListener("change", runLiveClientFiltersPipeline);
+    document.getElementById("filterEndDate").addEventListener("change", runLiveClientFiltersPipeline);
     document.getElementById("modalEditForm").addEventListener("submit", commitRowAuditsToServer);
 });
 
 /**
- * UTILITY HELPER: Cleans up messy ISO timestamps served by Google API
- * e.g., "2026-11-11T18:30:00.000Z" -> "11-11-2026"
+ * PARSER UTILITY: Standardizes DD-MM-YYYY string formats to Javascript evaluatable date timestamps
  */
+function parseStringToJsDate(dateStr) {
+    if (!dateStr || dateStr === "-") return null;
+    
+    // Handle incoming formats containing an ISO 'T' timestamp string layout
+    let cleanStr = dateStr.toString().split(" ")[0].trim();
+    if (cleanStr.includes("T")) {
+        cleanStr = cleanStr.split("T")[0];
+        let parts = cleanStr.split("-");
+        if (parts.length === 3 && parts[0].length === 4) {
+            return new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+        }
+    }
+    
+    cleanStr = cleanStr.replace(/\//g, "-");
+    let elements = cleanStr.split("-");
+    if (elements.length === 3) {
+        // Evaluate if pattern is layout structure components match (DD-MM-YYYY)
+        if (elements[2].length === 4) {
+            return new Date(parseInt(elements[2], 10), parseInt(elements[1], 10) - 1, parseInt(elements[0], 10));
+        }
+    }
+    return null;
+}
+
 function cleanIncomingDate(dateStr) {
     if (!dateStr || dateStr === "-" || dateStr.toString().trim() === "") return "-";
     
-    // Check if the string pattern represents an ISO string timestamp block containing 'T'
     if (dateStr.toString().includes("T")) {
         try {
             const dateObj = new Date(dateStr);
@@ -33,30 +56,39 @@ function cleanIncomingDate(dateStr) {
                 return `${day}-${month}-${year}`;
             }
         } catch (e) {
-            console.error("Internal timestamp parsing recovery bypass:", e);
+            console.error("Date normalization error recovery:", e);
         }
     }
-    
-    // Fallback normalization: strip clock strings out if present and enforce hyphens
     return dateStr.toString().replace(/\//g, "-").split(" ")[0].trim();
 }
 
-// =========================================================================
-// READ OPERATION: Queries records out from your script engine instance
-// =========================================================================
 async function fetchActiveSheetCollectionData() {
     const tableBody = document.getElementById("recordsTableBody");
     const badge = document.getElementById("recordCountBadge");
     
-    // Keep badge processing state tracking readable
     badge.innerText = "Syncing...";
+    
+    // Render loading shimmer templates block
+    let skeletons = '';
+    for(let i=0; i<5; i++) {
+        skeletons += `
+            <tr>
+                <td class="ps-4"><div class="shimmer-line" style="width: 85%;"></div></td>
+                <td><div class="shimmer-line" style="width: 70%;"></div></td>
+                <td><div class="shimmer-line" style="width: 60%;"></div></td>
+                <td><div class="shimmer-line" style="width: 50%;"></div></td>
+                <td><div class="shimmer-line" style="width: 65%;"></div></td>
+                <td><div class="shimmer-line" style="width: 60%;"></div></td>
+                <td><div class="shimmer-line" style="width: 60%;"></div></td>
+                <td><div class="shimmer-line" style="width: 40%;"></div></td>
+                <td class="text-center pe-4"><div class="shimmer-line" style="width: 80px;"></div></td>
+            </tr>`;
+    }
+    tableBody.innerHTML = skeletons;
 
     try {
         const queryResponse = await fetch(SHEET_API_URL);
-        
-        if (!queryResponse.ok) {
-            throw new Error(`HTTP network error code encountered: ${queryResponse.status}`);
-        }
+        if (!queryResponse.ok) throw new Error(`HTTP data connection pipeline down: ${queryResponse.status}`);
         
         const parseResult = await queryResponse.json();
 
@@ -65,34 +97,30 @@ async function fetchActiveSheetCollectionData() {
             badge.innerText = `${localCacheRecordsCollection.length} Records Loaded`;
             renderGridTableRows(localCacheRecordsCollection);
         } else {
-            throw new Error(parseResult.message || "Failed to compile sheet cell arrays data logs.");
+            throw new Error(parseResult.message || "Engine denied tracking logs sync parameters mapping.");
         }
     } catch (fault) {
         console.error("API Read Execution Failure Stack:", fault);
         tableBody.innerHTML = `
             <tr>
-                <td colspan="10" class="text-center text-danger py-5 fw-bold">
+                <td colspan="9" class="text-center text-danger py-5 fw-bold">
                     ❌ Data Fetch Connection Pipeline Interrupted<br>
-                    <span class="small fw-normal text-muted">${fault.message}. Check browser console or env.js parameter keys.</span>
+                    <span class="small fw-normal text-muted">${fault.message}. Check your env.js setups.</span>
                 </td>
             </tr>`;
-        badge.innerText = "Error Fetching Data";
+        badge.innerText = "Error Syncing";
     }
 }
 
-/**
- * DATA RENDER ENGINE: Generates row components strictly ordered to layout expectations:
- * llr_number -> name -> date_of_birth -> vehicle_class -> mobile_number -> issue_date -> expiry_date -> approved_date -> dl_issued -> pipeline_actions
- */
 function renderGridTableRows(recordsArray) {
     const tableBody = document.getElementById("recordsTableBody");
     
     if (recordsArray.length === 0) {
         tableBody.innerHTML = `
             <tr>
-                <td colspan="10" class="text-center text-muted py-5">
-                    <h5 class="mt-2 fw-semibold text-secondary">No Records Found</h5>
-                    <p class="small text-muted mb-0">Your Google Sheets database contains no valid operational row data logs.</p>
+                <td colspan="9" class="text-center text-muted py-5">
+                    <h5 class="mt-2 fw-semibold text-secondary">No Matching Records</h5>
+                    <p class="small text-muted mb-0">No entries matched your combined text queries or date boundaries parameters.</p>
                 </td>
             </tr>`;
         return;
@@ -104,53 +132,64 @@ function renderGridTableRows(recordsArray) {
         
         compiledHtmlRows += `
             <tr id="row-ref-${item.row_index}">
-                <td class="ps-3 fw-bold text-dark">${item.llr_number || "-"}</td>
+                <td class="ps-4 fw-bold text-dark">${item.llr_number || "-"}</td>
                 <td class="fw-semibold text-secondary">${item.name || "-"}</td>
                 <td class="small font-monospace text-muted">${cleanIncomingDate(item.date_of_birth)}</td>
                 <td><span class="badge bg-primary px-2.5 py-1.5">${item.vehicle_class || "-"}</span></td>
                 <td class="small font-monospace fw-medium">${item.mobile_number || "-"}</td>
                 <td class="small text-secondary">${cleanIncomingDate(item.issue_date)}</td>
                 <td class="small text-secondary">${cleanIncomingDate(item.expiry_date)}</td>
-                
                 <td><span class="badge ${dlBadgeClass}">${item.dl_issued || "No"}</span></td>
-                <td class="text-center pe-3">
-                    <button class="btn btn-sm btn-outline-primary fw-semibold me-1" onclick="triggerInPlaceEditModal(${item.row_index})">Edit</button>
-                    <button class="btn btn-sm btn-outline-danger fw-semibold" onclick="triggerRowDeletionRequest(${item.row_index})">Delete</button>
+                <td class="text-center pe-4">
+                    <button class="btn btn-sm btn-outline-primary fw-semibold me-1" onclick="triggerInPlaceEditModal(${item.row_index})"><i class="bi bi-pencil-square"></i></button>
+                    <button class="btn btn-sm btn-outline-danger fw-semibold" onclick="triggerRowDeletionRequest(${item.row_index})"><i class="bi bi-trash3-fill"></i></button>
                 </td>
-            </tr>
-        `;
+            </tr>`;
     });
     tableBody.innerHTML = compiledHtmlRows;
 }
 
 // =========================================================================
-// REAL-TIME CLIENT SEARCH ENGINE (Filters instantly as you type)
+// REAL-TIME COMBINED FILTER PIPELINE (Processes search & issue dates)
 // =========================================================================
-function runLiveClientTableFiltering(event) {
-    const term = event.target.value.toLowerCase().trim();
-    if (!term) {
-        renderGridTableRows(localCacheRecordsCollection);
-        return;
+function runLiveClientFiltersPipeline() {
+    const textTerm = document.getElementById("tableSearchInput").value.toLowerCase().trim();
+    const startRangeStr = document.getElementById("filterStartDate").value;
+    const endRangeStr = document.getElementById("filterEndDate").value;
+
+    let processedDataset = localCacheRecordsCollection;
+
+    // 1. Apply Text Query Filtering Layout Passthrough
+    if (textTerm) {
+        processedDataset = processedDataset.filter(row => {
+            return (row.llr_number && row.llr_number.toLowerCase().includes(textTerm)) ||
+                   (row.fees_number && row.fees_number.toLowerCase().includes(textTerm)) ||
+                   (row.name && row.name.toLowerCase().includes(textTerm)) ||
+                   (row.vehicle_class && row.vehicle_class.toLowerCase().includes(textTerm)) ||
+                   (row.mobile_number && row.mobile_number.toString().includes(textTerm));
+        });
     }
 
-    const matchedCollection = localCacheRecordsCollection.filter(row => {
-        return (row.llr_number && row.llr_number.toLowerCase().includes(term)) ||
-               (row.fees_number && row.fees_number.toLowerCase().includes(term)) ||
-               (row.name && row.name.toLowerCase().includes(term)) ||
-               (row.vehicle_class && row.vehicle_class.toLowerCase().includes(term)) ||
-               (row.mobile_number && row.mobile_number.toString().includes(term));
-    });
-    renderGridTableRows(matchedCollection);
+    // 2. Apply Strict Issue Date Dynamic Timeline Bounds Check
+    if (startRangeStr && endRangeStr) {
+        const startThreshold = new Date(startRangeStr); startThreshold.setHours(0,0,0,0);
+        const endThreshold = new Date(endRangeStr); endThreshold.setHours(23,59,59,999);
+
+        processedDataset = processedDataset.filter(row => {
+            const currentIssueDate = parseStringToJsDate(row.issue_date);
+            if (!currentIssueDate) return false;
+            return currentIssueDate.getTime() >= startThreshold.getTime() && currentIssueDate.getTime() <= endThreshold.getTime();
+        });
+    }
+
+    document.getElementById("recordCountBadge").innerText = `${processedDataset.length} Records Found`;
+    renderGridTableRows(processedDataset);
 }
 
-// =========================================================================
-// UPDATE OPERATION: Opens overlay popup form and populates current fields
-// =========================================================================
 window.triggerInPlaceEditModal = function(rowIndex) {
     const activeTargetRow = localCacheRecordsCollection.find(item => item.row_index === rowIndex);
     if (!activeTargetRow) return;
 
-    // Directly hydrate form elements values inside modal inputs securely
     document.getElementById("editRowIndex").value = activeTargetRow.row_index;
     document.getElementById("editLlrNumber").value = activeTargetRow.llr_number || "";
     document.getElementById("editName").value = activeTargetRow.name || "";
@@ -180,80 +219,57 @@ window.triggerInPlaceEditModal = function(rowIndex) {
 
 async function commitRowAuditsToServer(event) {
     event.preventDefault();
-    
-    const targetForm = event.target;
     const saveButton = document.getElementById("saveEditBtn");
-    const updatePayload = new FormData(targetForm);
+    const updatePayload = new FormData(event.target);
 
-    // Lock save button input states during runtime upload lifecycle processing transitions
     saveButton.disabled = true;
     saveButton.innerText = "Saving Changes...";
 
     try {
-        const response = await fetch(SHEET_API_URL, {
-            method: "POST",
-            body: updatePayload
-        });
-        
-        if (!response.ok) {
-            throw new Error(`HTTP write failure encountered status code: ${response.status}`);
-        }
+        const response = await fetch(SHEET_API_URL, { method: "POST", body: updatePayload });
+        if (!response.ok) throw new Error(`HTTP write failure: ${response.status}`);
         
         const statusReport = await response.json();
-
         if (statusReport.status === "success") {
-            alert("✓ Database sheet entry row parameters updated and synchronized cleanly!");
+            alert("✓ Database sheet row parameters updated successfully!");
             bootstrapModalInstance.hide();
-            await fetchActiveSheetCollectionData(); // Force live re-sync grid database mapping matrix array
+            await fetchActiveSheetCollectionData();
         } else {
-            throw new Error(statusReport.message || "An unexpected error broke backend data mapping streams.");
+            throw new Error(statusReport.message || "Backend data stream mismatch.");
         }
     } catch (err) {
-        console.error("Mutation Error Logging Pipeline Trace:", err);
-        alert("❌ Execution processing interrupted during save routines:\n" + err.message);
+        alert("❌ Error saving configurations:\n" + err.message);
     } finally {
         saveButton.disabled = false;
         saveButton.innerText = "Update Database Record ✓";
     }
 }
 
-// =========================================================================
-// DELETE OPERATION: Removes the record row out of the spreadsheet layout grid
-// =========================================================================
 window.triggerRowDeletionRequest = async function(rowIndex) {
-    if (!confirm("⚠️ WARNING:\nAre you absolutely certain you want to purge this record entry out of spreadsheet matrix indexes permanently? This cannot be undone.")) return;
+    if (!confirm("Are you certain you want to purge this record entry permanently?")) return;
 
     const deletionPacket = new FormData();
     deletionPacket.append("action", "delete");
     deletionPacket.append("row_index", rowIndex);
 
     try {
-        const response = await fetch(SHEET_API_URL, {
-            method: "POST",
-            body: deletionPacket
-        });
-        
-        if (!response.ok) {
-            throw new Error(`HTTP deletion connection fault exception status code: ${response.status}`);
-        }
+        const response = await fetch(SHEET_API_URL, { method: "POST", body: deletionPacket });
+        if (!response.ok) throw new Error(`HTTP fault exception: ${response.status}`);
         
         const payloadStatus = await response.json();
-
         if (payloadStatus.status === "success") {
-            alert("✓ Entry deleted successfully out of database repository files mapping rows!");
-            await fetchActiveSheetCollectionData(); // Refresh structural row identifiers alignment maps cleanly
+            alert("✓ Entry deleted successfully out of database repository rows!");
+            await fetchActiveSheetCollectionData();
         } else {
-            throw new Error(payloadStatus.message || "Spreadsheet interface engine denied data removal request.");
+            throw new Error(payloadStatus.message || "Engine denied data removal.");
         }
     } catch (faultErr) {
-        console.error("Deletion Pipeline Failure:", faultErr);
-        alert("❌ Failed to execute row exclusion routing:\n" + faultErr.message);
+        alert("❌ Failed to delete row:\n" + faultErr.message);
     }
 };
 
-
 // =========================================================================
-// INSERT OPERATION: Validates and pushes a completely new manual entry
+// INSERT OPERATION: Manual Ingestion Logic Subsystem
 // =========================================================================
 document.addEventListener("DOMContentLoaded", () => {
     const manualForm = document.getElementById("manualInsertForm");
@@ -264,11 +280,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
 async function commitManualInsertToServer(event) {
     event.preventDefault();
-    
     const targetForm = event.target;
     const saveButton = document.getElementById("saveInsertBtn");
     
-    // Front-end Sanity Validation Checks
     const llrValue = document.getElementById("addLlrNumber").value.trim();
     const mobileValue = document.getElementById("addMobile").value.trim();
     
@@ -282,41 +296,27 @@ async function commitManualInsertToServer(event) {
     }
 
     const insertPayload = new FormData(targetForm);
-    
-    // Debounce Flag Lockout: Block double clicks instantly
     saveButton.disabled = true;
-    saveButton.innerText = "Synchronizing Registry Record Matrix...";
+    saveButton.innerText = "Synchronizing Matrix...";
 
     try {
-        const response = await fetch(SHEET_API_URL, {
-            method: "POST",
-            body: insertPayload
-        });
-        
-        if (!response.ok) {
-            throw new Error(`HTTP data pipeline error status: ${response.status}`);
-        }
+        const response = await fetch(SHEET_API_URL, { method: "POST", body: insertPayload });
+        if (!response.ok) throw new Error(`HTTP error status: ${response.status}`);
         
         const result = await response.json();
-
         if (result.status === "success") {
-            alert(`✓ Record written successfully! Added at spreadsheet row index: ${result.row}`);
+            alert(`✓ Record added successfully at row index: ${result.row}`);
+            targetForm.reset();
             
-            targetForm.reset(); // Wipe inputs clean
-            
-            // Auto-navigate user back to the View Registry pane layout cleanly
             const viewTabTrigger = new bootstrap.Tab(document.getElementById('view-table-tab'));
             viewTabTrigger.show();
-            
-            await fetchActiveSheetCollectionData(); // Trigger fresh background re-sync
-            
+            await fetchActiveSheetCollectionData();
         } else if (result.status === "duplicate") {
             alert(`⚠️ Duplicate Entry Error:\n${result.message}`);
         } else {
-            throw new Error(result.message || "An unhandled execution mismatch occurred on server.");
+            throw new Error(result.message || "Server exception execution error.");
         }
     } catch (err) {
-        console.error("Manual Entry Creation Failure:", err);
         alert(`❌ Write Blocked:\n${err.message}`);
     } finally {
         saveButton.disabled = false;

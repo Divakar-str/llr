@@ -1,0 +1,268 @@
+/* DESIGN INTERFACE SHEET FOR OPERATIONAL COMPLIANCE TELEMETRY STYLES */
+body { 
+    background: #f8fafc; 
+    font-family: system-ui, -apple-system, sans-serif;
+    overflow-x: hidden;
+} 
+
+.card { 
+    border-radius: 24px; 
+    border: 1px solid #e2e8f0;
+    background: #ffffff;
+}
+
+/* Structural Metric Grid Blocks */
+.metric-card {
+    border-radius: 20px;
+    border: 1px solid #e2e8f0;
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    background: #ffffff;
+}
+.metric-card h2 {
+    font-size: 1.85rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+}
+.metric-icon-circle {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    background: #f1f5f9;
+    color: #475569;
+}
+
+/* Category 1: Custom Activity Matrix Grid System Blocks Layout */
+.weekly-matrix-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+    width: 100%;
+}
+.matrix-grid-row {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.5rem 0;
+}
+.matrix-day-label {
+    width: 90px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #475569;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+}
+.matrix-bar-track {
+    flex-grow: 1;
+    background: #e2e8f0;
+    height: 24px;
+    border-radius: 8px;
+    overflow: hidden;
+    position: relative;
+}
+.matrix-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #1e293b, #0f172a);
+    border-radius: 8px;
+    width: 0%;
+    transition: width 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.matrix-bar-value {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #ff0000;
+    z-index: 5;
+}
+
+/* Custom Inward Dynamic Charts Components Track Lines Layout */
+.distribution-row {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    padding: 0.85rem 1rem;
+    border-radius: 14px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+}
+.distribution-progress-track {
+    height: 8px;
+    background: #e2e8f0;
+    border-radius: 10px;
+    overflow: hidden;
+    width: 100%;
+}
+.distribution-progress-bar {
+    height: 100%;
+    border-radius: 10px;
+    background: #0f172a;
+    transition: width 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Conic Matrix Balance Indicator Chart Layer */
+.validity-donut-chart {
+    width: 160px;
+    height: 160px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 1.5rem auto;
+    position: relative;
+    box-shadow: inset 0 0 0 16px #e2e8f0;
+}
+.validity-donut-center {
+    width: 128px;
+    height: 128px;
+    background: #ffffff;
+    border-radius: 50%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.04);
+}
+.validity-donut-center span:first-child {
+    font-size: 1.6rem;
+    font-weight: 900;
+    color: #0f172a;
+    letter-spacing: -0.02em;
+}
+
+/* Sticky Rows Data Head Matrix Adjustments */
+.table-responsive { 
+    max-height: 400px; 
+    overflow-y: auto; 
+    border-radius: 16px;
+}
+.sticky-thead { 
+    position: sticky; 
+    top: 0; 
+    z-index: 1020; 
+}
+.sticky-thead th {
+    background-color: #f8fafc !important;
+    color: #334155 !important;
+    font-weight: 700;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    border-bottom: 2px solid #e2e8f0 !important;
+    padding: 1rem 0.75rem !important;
+}
+
+/* High-Contrast Interactive Push Target Components Buttons */
+.btn-dark-custom {
+    background: #0f172a;
+    color: #ffffff;
+    border: none;
+    border-radius: 12px;
+    font-weight: 600;
+    padding: 0.65rem 1.4rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.25s ease;
+}
+.btn-dark-custom:hover {
+    background: #1e293b;
+    color: #ffffff;
+}
+
+.btn-outline-custom {
+    background: #ffffff;
+    color: #475569;
+    border: 1px solid #cbd5e1;
+    border-radius: 12px;
+    font-weight: 600;
+    padding: 0.65rem 1.25rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.2s ease;
+}
+.btn-outline-custom:hover {
+    background: #f8fafc;
+    color: #0f172a;
+    border-color: #94a3b8;
+}
+
+.form-label {
+    color: #475569;
+    font-weight: 700;
+    font-size: 0.85rem;
+    margin-bottom: 0.4rem;
+}
+
+/* Motion State Layers Settings */
+.animated-pane {
+    animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+@keyframes slideUp {
+    from { opacity: 0; transform: translateY(15px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* =========================================================================
+   OFFICIAL STAMPED PRINT / PDF MEDIA REGULATION RULES LAYOUT
+   ========================================================================= */
+@media print {
+    body { background: #ffffff !important; color: #000000 !important; font-size: 11pt !important; }
+    #global-nav-container,
+    .d-flex.gap-2.justify-content-stretch,
+    .filter-console-block,
+    .matrix-bar-value { 
+        display: none !important; 
+    }
+    
+    .container, .card, .card-body { 
+        width: 100% !important; 
+        max-width: 100% !important;
+        padding: 0 !important; 
+        margin: 0 !important; 
+        box-shadow: none !important;
+        border: none !important;
+    }
+    
+    /* Layer grids cleanly down the printed layout sheet page rows */
+    .row { display: block !important; width: 100% !important; }
+    .col-6, .col-md-3, .col-12, .col-md-7, .col-md-5 { 
+        width: 100% !important; 
+        margin-bottom: 20px !important;
+        display: block !important;
+    }
+    
+    .chart-card-container, .table-card-container {
+        page-break-inside: avoid !important;
+    }
+    
+    .matrix-bar-track {
+        border: 1px solid #475569 !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+    
+    .table-responsive { max-height: none !important; overflow: visible !important; }
+    table { width: 100% !important; border-collapse: collapse !important; }
+    tr { page-break-inside: avoid; }
+    thead { display: table-header-group !important; background-color: #f8f9fa !important; }
+    th, td { border: 1px solid #cbd5e1 !important; padding: 8px !important; font-size: 10pt !important; text-align: left !important; }
+    
+    body::before {
+        content: "Official Stamped LLR Operational Compliance Audit Telemetry | Generated on: " attr(data-print-date);
+        display: block;
+        font-size: 11pt;
+        font-weight: bold;
+        text-align: center;
+        margin-bottom: 25px;
+        border-bottom: 2px solid #0f172a;
+        padding-bottom: 8px;
+    }
+}

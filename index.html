@@ -3,84 +3,219 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LLR Management System - Home</title>
+    <title>LLR Portal - Home</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
-        body { background: #f4f6f9; }
-        .card { border-radius: 12px; transition: transform 0.2s; }
-        .menu-card:hover { transform: translateY(-3px); }
+        body { 
+            background: #fdfdfd; 
+            font-family: system-ui, -apple-system, sans-serif;
+            overflow-x: hidden;
+        }
+        
+        /* Classy Minimal Header */
+        .portal-header {
+            padding: 4.5rem 1rem;
+            background: #ffffff;
+            border-bottom: 1px solid #f1f5f9;
+            position: relative;
+        }
+        .portal-header h1 {
+            font-weight: 800;
+            letter-spacing: -0.03em;
+            color: #0f172a;
+            opacity: 0;
+            transform: translateY(-10px);
+            animation: fadeInDown 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+        .portal-header p {
+            color: #64748b;
+            font-size: 0.95rem;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            opacity: 0;
+            animation: fadeIn 0.8s ease forwards 0.3s;
+        }
+
+        /* Elegant Animated Navigation Blocks */
+        .nav-block {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 20px;
+            text-decoration: none;
+            position: relative;
+            overflow: hidden;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), 
+                        box-shadow 0.4s cubic-bezier(0.16, 1, 0.3, 1), 
+                        border-color 0.4s ease;
+        }
+        
+        /* Sequential Animation Delays */
+        .delay-1 { animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards 0.2s; }
+        .delay-2 { animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards 0.3s; }
+        .delay-3 { animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards 0.4s; }
+        .delay-4 { animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards 0.5s; }
+        .delay-5 { animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards 0.6s; }
+
+        /* Icon Animation */
+        .icon-circle {
+            font-size: 1.8rem;
+            width: 64px;
+            height: 64px;
+            background: #f8fafc;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        /* Clean Button Design */
+        .action-btn {
+            background: #0f172a;
+            color: #ffffff;
+            border: none;
+            border-radius: 12px;
+            font-weight: 600;
+            padding: 0.6rem 1rem;
+            width: 100%;
+            transition: background 0.2s ease, transform 0.1s ease;
+        }
+        .action-btn-outline {
+            background: transparent;
+            color: #0f172a;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            font-weight: 600;
+            padding: 0.6rem 1.2rem;
+            transition: all 0.2s ease;
+        }
+
+        /* Hover & Active Interactions */
+        @media (min-width: 768px) {
+            .nav-block:hover {
+                transform: translateY(-6px);
+                box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.03), 0 10px 10px -5px rgba(0, 0, 0, 0.02) !important;
+                border-color: #cbd5e1;
+            }
+            .nav-block:hover .icon-circle {
+                transform: scale(1.1) rotate(3deg);
+            }
+            .nav-block:hover .action-btn {
+                background: #1e293b;
+            }
+            .nav-block:hover .action-btn-outline {
+                background: #0f172a;
+                color: #ffffff;
+                border-color: #0f172a;
+            }
+        }
+
+        /* Mobile Click Response */
+        .nav-block:active {
+            transform: scale(0.98);
+            background: #f8fafc !important;
+        }
+
+        /* Keyframe Animations */
+        @keyframes fadeInDown {
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes fadeInUp {
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes fadeIn {
+            to { opacity: 1; }
+        }
     </style>
 </head>
 <body>
 
-    <!-- Shared Navigation Head Bar -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-5">
-        <div class="container">
-            <a class="navbar-brand fw-bold" href="index.html">🚗 LLR Portal</a>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto gap-2">
-                   <li class="nav-item"><a class="nav-link active" href="index.html">🏠 Home</a></li>
-                    <li class="nav-item"><a class="nav-link" href="extractor.html">📄 Data Extraction</a></li>
-                    <li class="nav-item"><a class="nav-link" href="records.html">📋 Records </a></li>
-                    <li class="nav-item"><a class="nav-link " href="report.html">📊 Reports</a></li>
-                    <li class="nav-item"><a class="nav-link" href="dashboard.html">📈 Dashboard</a></li>
-                    <li class="nav-item active"><a class="nav-link" href="print-engine.html">🖨️ Print Console</a></li>
+    <!-- Navigation Bar Container -->
+    <div id="global-nav-container"></div>
 
-                </ul>
-            </div>
+    <!-- Header Section -->
+    <header class="portal-header text-center">
+        <div class="container px-3">
+            <h1 class="display-6">LLR Manage</h1>
+            <p class="small text-muted font-monospace">Data Management</p>
         </div>
-    </nav>
+    </header>
 
-    <!-- Main Dashboard Body Grid -->
-    <main class="container">
-        <div class="text-center mb-5">
-            <h1 class="fw-bold text-dark">LLR Management System</h1>
-            <p class="text-muted fs-5">Extract, Verify and Manage Learner's Licence Records</p>
-        </div>
-
-        <div class="row g-4 mb-5">
-            <div class="col-md-4">
-                <div class="card shadow-sm h-100 menu-card">
-                    <div class="card-body text-center py-4">
-                        <h5 class="fw-bold mb-3">📄 Extract LLR</h5>
-                        <p class="text-muted small">Paste copied PDF text segments and extract data fields instantly.</p>
-                        <a href="extractor.html" class="btn btn-primary px-4 fw-semibold">Open Extractor</a>
+    <!-- Main Grid -->
+    <main class="container px-3 px-md-4 py-5">
+        <div class="row g-4">
+            
+            <!-- CARD 1: EXTRACTION -->
+            <div class="col-12 col-md-4">
+                <a href="extractor.html" class="card shadow-sm h-100 nav-block delay-1 p-4 d-flex flex-column align-items-center text-center">
+                    <div class="icon-circle mb-3">📄</div>
+                    <h4 class="fw-bold text-dark mb-1 fs-5">Data Extraction</h4>
+                    <span class="text-muted small font-monospace">Data Processing</span>
+                    <div class="mt-4 w-100">
+                        <button class="action-btn">Open Page →</button>
                     </div>
-                </div>
+                </a>
             </div>
 
-            <div class="col-md-4">
-                <div class="card shadow-sm h-100 menu-card">
-                    <div class="card-body text-center py-4">
-                        <h5 class="fw-bold mb-3">📋 Records CRUD</h5>
-                        <p class="text-muted small">View, search, edit, or remove verified entries from the local datastore.</p>
-                        <a href="records.html" class="btn btn-success px-4 fw-semibold">View Database</a>
+            <!-- CARD 2: RECORDS -->
+            <div class="col-12 col-md-4">
+                <a href="records.html" class="card shadow-sm h-100 nav-block delay-2 p-4 d-flex flex-column align-items-center text-center">
+                    <div class="icon-circle mb-3">📋</div>
+                    <h4 class="fw-bold text-dark mb-1 fs-5">Records Table</h4>
+                    <span class="text-muted small font-monospace">Data Records </span>
+                    <div class="mt-4 w-100">
+                        <button class="action-btn">Open Page →</button>
                     </div>
-                </div>
+                </a>
             </div>
 
-            <div class="col-md-4">
-                <div class="card shadow-sm h-100 menu-card">
-                    <div class="card-body text-center py-4">
-                        <h5 class="fw-bold mb-3">📊 Analytics Dashboard</h5>
-                        <p class="text-muted small">Track processing metrics, metrics timelines, and overall workflow status charts.</p>
-                        <a href="dashboard.html" class="btn btn-warning px-4 fw-semibold text-dark">Open Analytics</a>
+            <!-- CARD 3: REPORTS -->
+            <div class="col-12 col-md-4">
+                <a href="report.html" class="card shadow-sm h-100 nav-block delay-3 p-4 d-flex flex-column align-items-center text-center">
+                    <div class="icon-circle mb-3">📊</div>
+                    <h4 class="fw-bold text-dark mb-1 fs-5">Reports Page</h4>
+                    <span class="text-muted small font-monospace">Report Manage</span>
+                    <div class="mt-4 w-100">
+                        <button class="action-btn">Open Page →</button>
                     </div>
-                </div>
+                </a>
             </div>
-        </div>
 
-        <!-- System Workflow Summary -->
-        <div class="card border-0 bg-white shadow-sm">
-            <div class="card-body p-4">
-                <h5 class="fw-bold text-secondary mb-3">System Processing Pipeline</h5>
-                <p class="mb-0 text-muted fw-medium">
-                    Open PDF File <span class="text-primary">→</span> Copy Raw Text <span class="text-primary">→</span> Paste Into Engine <span class="text-primary">→</span> Automated Extraction <span class="text-primary">→</span> Manual Verification Audit <span class="text-primary">→</span> Live Database Sync
-                </p>
+            <!-- CARD 4: DASHBOARD -->
+            <div class="col-12 col-md-6">
+                <a href="dashboard.html" class="card shadow-sm nav-block delay-4 p-4 d-flex align-items-center justify-content-between text-start">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="icon-circle">📈</div>
+                        <div>
+                            <h4 class="fw-bold text-dark mb-0 fs-5">Dashboard View</h4>
+                            <span class="text-muted small font-monospace">dashboard</span>
+                        </div>
+                    </div>
+                    <button class="action-btn-outline px-4">Open →</button>
+                </a>
             </div>
+
+            <!-- CARD 5: PRINT ENGINE -->
+            <div class="col-12 col-md-6">
+                <a href="print-engine.html" class="card shadow-sm nav-block delay-5 p-4 d-flex align-items-center justify-content-between text-start">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="icon-circle">🖨️</div>
+                        <div>
+                            <h4 class="fw-bold text-dark mb-0 fs-5">Print Console</h4>
+                            <span class="text-muted small font-monospace">print Data</span>
+                        </div>
+                    </div>
+                    <button class="action-btn-outline px-4">Open →</button>
+                </a>
+            </div>
+
         </div>
     </main>
 
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/navLoader.js"></script>
 </body>
-
 </html>

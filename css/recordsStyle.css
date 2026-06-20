@@ -1,0 +1,164 @@
+/* CLASSY COMPLIANCE STYLE MANAGEMENT SHEET */
+body { 
+    background: #f8fafc; 
+    font-family: system-ui, -apple-system, sans-serif;
+    overflow-x: hidden;
+} 
+
+.card { 
+    border-radius: 24px; 
+    border: 1px solid #e2e8f0;
+    background: #ffffff;
+}
+
+.table-responsive { 
+    max-height: 620px; 
+    overflow-y: auto; 
+    border-radius: 16px;
+}
+
+/* Nav Pills Custom Design Elements */
+.nav-pills .nav-link {
+    color: #475569;
+    font-weight: 700;
+    font-size: 0.9rem;
+    border-radius: 12px;
+    padding: 0.6rem 1.2rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.nav-pills .nav-link.active { 
+    background-color: #0f172a; 
+    color: #ffffff;
+    box-shadow: 0 10px 15px -3px rgba(15, 23, 42, 0.12);
+}
+
+.nav-pills .nav-link:not(.active):hover {
+    background-color: #f1f5f9;
+    color: #0f172a;
+}
+
+/* High-Contrast Inputs Adjustments */
+.form-control, .form-select, .form-textarea {
+    border-radius: 12px;
+    padding: 0.65rem 0.85rem;
+    border: 1px solid #cbd5e1;
+    font-size: 0.95rem;
+    transition: all 0.25s ease-in-out;
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: #0f172a;
+    box-shadow: 0 0 0 4px rgba(15, 23, 42, 0.08);
+}
+
+.form-label {
+    color: #475569;
+    font-weight: 700;
+    font-size: 0.85rem;
+    margin-bottom: 0.4rem;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+.form-label i {
+    color: #94a3b8;
+}
+
+/* Sticky Data Header Restructuring Layouts */
+.sticky-thead {
+    position: sticky;
+    top: 0;
+    z-index: 1020;
+    background-color: #ffffff !important;
+}
+.sticky-thead th {
+    background-color: #f8fafc !important;
+    color: #334155 !important;
+    font-weight: 700;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    border-bottom: 2px solid #e2e8f0 !important;
+    padding: 1rem 0.75rem !important;
+}
+
+/* Interactive Components Control Actions */
+.btn-dark-custom {
+    background: #0f172a;
+    color: #ffffff;
+    border: none;
+    border-radius: 12px;
+    font-weight: 600;
+    padding: 0.65rem 1.25rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.25s ease;
+}
+.btn-dark-custom:hover {
+    background: #1e293b;
+    transform: translateY(-1px);
+}
+
+.btn-outline-custom {
+    background: transparent;
+    color: #475569;
+    border: 1px solid #cbd5e1;
+    border-radius: 12px;
+    font-weight: 600;
+    padding: 0.65rem 1.25rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.2s ease;
+}
+.btn-outline-custom:hover {
+    background: #f8fafc;
+    color: #0f172a;
+}
+
+.section-divider {
+    position: relative;
+    margin: 2rem 0 1.2rem 0;
+}
+.section-title {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #0f172a;
+    background: #ffffff;
+    padding-right: 0.75rem;
+    position: relative;
+    z-index: 2;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+.section-divider::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 50%;
+    width: 100%;
+    height: 1px;
+    background: #e2e8f0;
+    z-index: 1;
+}
+
+.date-input-node {
+    transition: transform 0.2s ease;
+}
+.date-input-node:focus-within {
+    transform: scale(1.01);
+}
+
+.animated-pane {
+    animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+@keyframes slideUp {
+    from { opacity: 0; transform: translateY(15px); }
+    to { opacity: 1; transform: translateY(0); }
+}
