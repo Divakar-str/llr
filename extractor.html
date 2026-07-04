@@ -5,19 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>LLR Portal - Data Extraction</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Bootstrap Icons Support -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
     <link href="./css/extractorStyle.css" rel="stylesheet">
 </head>
 <body>
 
-    <!-- Dynamic Layout Navbar Target Mount Container -->
     <div id="global-nav-container"></div>
 
-    <!-- Active Step Counter Node Matrix Panels -->
-    <div class="container mb-4">
+    <div class="container-fluid mb-4">
         <div class="card shadow-sm border-0">
-            <div class="card-body p-2.5">
+            <div class="card-body p-2">
                 <div class="row g-2" id="extractorSteps">
                     <div class="col-6">
                         <button class="step-pill active" id="pill-step1" disabled>
@@ -36,22 +33,20 @@
         </div>
     </div>
 
-    <!-- Central Interactive Workspace Console Layout Entry -->
     <div class="container pb-5" id="viewContainer">
         
-        <!-- MODULE STAGE CARD 1: TEXT RAW INGESTION ROUTINES PANEL -->
         <div id="step1View" class="card shadow-sm border-0 p-4 animated-view">
             <div class="d-flex align-items-center gap-3 mb-2">
                 <div class="fs-3 text-dark"><i class="bi bi-terminal-box"></i></div>
                 <div>
-                    <h5 class="fw-bold text-dark mb-0">Text Processing </h5>
-                    <p class="text-muted small mb-0">Convert unformatted PDF text segments into systematic records entries.</p>
+                    <h5 class="fw-bold text-dark mb-0">Text Processing Engine</h5>
+                    <p class="text-muted small mb-0">Convert raw, unformatted LLR document text segments into systematic profile registry database entries.</p>
                 </div>
             </div>
             <hr class="text-muted opacity-25 my-3">
             
-            <label class="form-label mb-2"><i class="bi bi-clipboard-text"></i> Paste Raw Copied LLR Document Text</label>
-            <textarea id="pdfText" class="form-control mb-4" rows="12" placeholder="Paste  data  directly inside this input  space..."></textarea>
+            <label for="pdfText" class="form-label mb-2"><i class="bi bi-clipboard-text"></i> Paste Raw Copied LLR Document Text</label>
+            <textarea id="pdfText" class="form-control mb-4" rows="12" placeholder="Paste data directly inside this input space..."></textarea>
             
             <div class="d-flex flex-column flex-sm-row gap-2">
                 <button id="extractBtn" class="btn btn-dark-custom order-1 order-sm-2">
@@ -65,133 +60,127 @@
             </div>
         </div>
 
-        <!-- MODULE STAGE CARD 2: VERIFICATION FORM WITH FULL EMBEDDED PACK CONSOLE ICONS -->
         <div id="step2View" class="card shadow-sm border-0 d-none p-4 animated-view">
             <div class="d-flex align-items-center gap-3 mb-2">
                 <div class="fs-3 text-dark"><i class="bi bi-shield-check"></i></div>
                 <div>
-                    <h5 class="fw-bold text-dark mb-0">LLR Data</h5>
-                    <p class="text-muted small mb-0">Extracted Data</p>
+                    <h5 class="fw-bold text-dark mb-0">LLR Verification Interface</h5>
+                    <p class="text-muted small mb-0">Review the extracted fields below and enter the contact tracking options to finalize submission.</p>
                 </div>
             </div>
             
             <form id="llrVerificationForm" novalidate>
-
-                <!-- ROW PROFILE SECTION 1: SYSTEM CORE ARRAYS METRICS -->
+                
                 <div class="section-divider">
                     <span class="section-title"><i class="bi bi-key-fill text-dark"></i> Document Credentials</span>
                 </div>
                 <div class="row g-3">
                     <div class="col-12 col-md-6">
-                        <label class="form-label"><i class="bi bi-vignette"></i> LLR Number</label>
+                        <label for="formLlrNumber" class="form-label"><i class="bi bi-vignette"></i> LLR Number</label>
                         <input type="text" id="formLlrNumber" name="llr_number" class="form-control">
                     </div>
                     <div class="col-12 col-md-6">
-                        <label class="form-label"><i class="bi bi-receipt"></i> Fees Number</label>
+                        <label for="formFeesNumber" class="form-label"><i class="bi bi-receipt"></i> Fees Number</label>
                         <input type="text" id="formFeesNumber" name="fees_number" class="form-control">
                     </div>
                     <div class="col-12 col-sm-4">
-                        <label class="form-label"><i class="bi bi-currency-rupee"></i> Fee Amount</label>
+                        <label for="formFee" class="form-label"><i class="bi bi-currency-rupee"></i> Fee Amount</label>
                         <input type="text" id="formFee" name="fee" class="form-control">
                     </div>
                     <div class="col-12 col-sm-4">
-                        <label class="form-label"><i class="bi bi-car-front-fill"></i> Vehicle Class</label>
+                        <label for="formVehicleClass" class="form-label"><i class="bi bi-car-front-fill"></i> Vehicle Class</label>
                         <input type="text" id="formVehicleClass" name="vehicle_class" class="form-control">
                     </div>
                     <div class="col-12 col-sm-4">
-                        <label class="form-label"><i class="bi bi-droplet-fill text-danger"></i> Blood Group</label>
+                        <label for="formBloodGroup" class="form-label"><i class="bi bi-droplet-fill text-danger"></i> Blood Group</label>
                         <input type="text" id="formBloodGroup" name="blood_group" class="form-control">
                     </div>
                 </div>
 
-                <!-- ROW PROFILE SECTION 2: PERSONAL BIOMETRIC DETAILS ARRAYS -->
                 <div class="section-divider">
                     <span class="section-title"><i class="bi bi-person-bounding-box text-dark"></i> Personal Details</span>
                 </div>
                 <div class="row g-3">
                     <div class="col-12 col-md-6">
-                        <label class="form-label"><i class="bi bi-person-fill"></i> Applicant Name</label>
+                        <label for="formName" class="form-label"><i class="bi bi-person-fill"></i> Applicant Name</label>
                         <input type="text" id="formName" name="name" class="form-control">
                     </div>
                     <div class="col-12 col-sm-6 col-md-3">
-                        <label class="form-label"><i class="bi bi-calendar-event"></i> Date of Birth</label>
+                        <label for="formDob" class="form-label"><i class="bi bi-calendar-event"></i> Date of Birth</label>
                         <input type="text" id="formDob" name="date_of_birth" class="form-control">
                     </div>
                     <div class="col-12 col-sm-6 col-md-3">
-                        <label class="form-label"><i class="bi bi-people-fill"></i> Relative Type</label>
+                        <label for="formRelativeType" class="form-label"><i class="bi bi-people-fill"></i> Relative Type</label>
                         <select id="formRelativeType" name="relative_type" class="form-select">
                             <option value="Father">Father</option>
                             <option value="Husband">Husband</option>
                         </select>
                     </div>
                     <div class="col-12 col-md-6">
-                        <label class="form-label"><i class="bi bi-person-lines-fill"></i> Relative Name</label>
+                        <label for="formRelativeName" class="form-label"><i class="bi bi-person-lines-fill"></i> Relative Name</label>
                         <input type="text" id="formRelativeName" name="relative_name" class="form-control">
                     </div>
                     <div class="col-12 col-sm-6 col-md-3">
-                        <label class="form-label text-dark fw-bold"><i class="bi bi-phone-fill text-dark"></i> Mobile Number <span class="text-danger">*</span></label>
-                        <input type="tel" id="formMobile" name="mobile_number" class="form-control border-secondary" placeholder="Enter 10 digit cell" maxlength="10">
+                        <label for="formMobile" class="form-label text-dark fw-bold"><i class="bi bi-phone-fill text-dark"></i> Mobile Number <span class="text-danger">*</span></label>
+                        <input type="tel" id="formMobile" name="mobile_number" class="form-control border-secondary" placeholder="Enter 10 digit number" maxlength="10" inputmode="numeric" pattern="[0-9]*" required>
                     </div>
                     <div class="col-12 col-sm-6 col-md-3">
-                        <label class="form-label"><i class="bi bi-telephone-plus-fill"></i> Emergency Mobile</label>
-                        <input type="tel" id="formEmergencyMobile" name="emergency_mobile" class="form-control" placeholder="Backup number" maxlength="10">
+                        <label for="formEmergencyMobile" class="form-label"><i class="bi bi-telephone-plus-fill"></i> Emergency Mobile</label>
+                        <input type="tel" id="formEmergencyMobile" name="emergency_mobile" class="form-control" placeholder="Backup number" maxlength="10" inputmode="numeric" pattern="[0-9]*">
                     </div>
                 </div>
 
-                <!-- ROW PROFILE SECTION 3: RESIDENTIAL BOUNDARIES STRINGS -->
                 <div class="section-divider">
                     <span class="section-title"><i class="bi bi-geo-alt-fill text-dark"></i> Addresses & Marks</span>
                 </div>
                 <div class="row g-3">
                     <div class="col-12 col-md-6">
-                        <label class="form-label"><i class="bi bi-house-door-fill"></i> Present Address</label>
+                        <label for="formPresentAddress" class="form-label"><i class="bi bi-house-door-fill"></i> Present Address</label>
                         <textarea id="formPresentAddress" name="present_address" class="form-control" rows="2"></textarea>
                     </div>
                     <div class="col-12 col-md-6">
-                        <label class="form-label"><i class="bi bi-building-fill"></i> Permanent Address</label>
+                        <label for="formPermanentAddress" class="form-label"><i class="bi bi-building-fill"></i> Permanent Address</label>
                         <textarea id="formPermanentAddress" name="permanent_address" class="form-control" rows="2"></textarea>
                     </div>
                     <div class="col-12 col-md-6">
-                        <label class="form-label"><i class="bi bi-patch-check-fill"></i> Identification Mark 1</label>
+                        <label for="formIdMark1" class="form-label"><i class="bi bi-patch-check-fill"></i> Identification Mark 1</label>
                         <input type="text" id="formIdMark1" name="identification_mark_1" class="form-control">
                     </div>
                     <div class="col-12 col-md-6">
-                        <label class="form-label"><i class="bi bi-patch-check"></i> Identification Mark 2</label>
+                        <label for="formIdMark2" class="form-label"><i class="bi bi-patch-check"></i> Identification Mark 2</label>
                         <input type="text" id="formIdMark2" name="identification_mark_2" class="form-control">
                     </div>
                 </div>
 
-                <!-- ROW PROFILE SECTION 4: TEMPORAL CALENDAR LIFESPANS SCALES -->
                 <div class="section-divider">
                     <span class="section-title"><i class="bi bi-hourglass-split text-dark"></i> Validity & Status</span>
                 </div>
                 <div class="row g-3 mb-4">
                     <div class="col-12 col-sm-6 col-md-3">
-                        <label class="form-label"><i class="bi bi-calendar-plus"></i> LLR Issue Date</label>
+                        <label for="formIssueDate" class="form-label"><i class="bi bi-calendar-plus"></i> LLR Issue Date</label>
                         <input type="text" id="formIssueDate" name="issue_date" class="form-control">
                     </div>
                     <div class="col-12 col-sm-6 col-md-3">
-                        <label class="form-label"><i class="bi bi-calendar-minus"></i> LLR Expiry Date</label>
+                        <label for="formExpiryDate" class="form-label"><i class="bi bi-calendar-minus"></i> LLR Expiry Date</label>
                         <input type="text" id="formExpiryDate" name="expiry_date" class="form-control">
                     </div>
                     <div class="col-12 col-sm-6 col-md-3">
-                        <label class="form-label"><i class="bi bi-clock-history"></i> Approved Time</label>
+                        <label for="formApprovedDate" class="form-label"><i class="bi bi-clock-history"></i> Approved Time</label>
                         <input type="text" id="formApprovedDate" name="approved_date" class="form-control">
                     </div>
                     <div class="col-12 col-sm-6 col-md-3">
-                        <label class="form-label text-dark fw-bold"><i class="bi bi-toggle-on"></i> DL Issued Status</label>
+                        <label for="formDlIssued" class="form-label text-dark fw-bold"><i class="bi bi-toggle-on"></i> DL Issued Status</label>
                         <select id="formDlIssued" name="dl_issued" class="form-select border-secondary">
                             <option value="No">No (Pending LLR)</option>
                             <option value="Yes">Yes (DL Approved)</option>
                         </select>
                     </div>
                     <div class="col-12 col-md-4">
-                        <label class="form-label"><i class="bi bi-card-heading"></i> Permanent DL Number</label>
+                        <label for="formDlNumber" class="form-label"><i class="bi bi-card-heading"></i> Permanent DL Number</label>
                         <input type="text" id="formDlNumber" name="dl_number" class="form-control" placeholder="e.g. TN5220260000000">
                     </div>
                 </div>
 
-                <!-- BOTTOM PROCESS FLOW FOR SUBMISSION TRACKING NODES -->
                 <div class="pt-4 border-top d-flex flex-column flex-sm-row justify-content-between gap-2">
                     <button type="button" id="backToStep1Btn" class="btn btn-outline-custom order-2 order-sm-1">
                         <i class="bi bi-chevron-left"></i>
@@ -206,7 +195,6 @@
         </div>
     </div>
 
-    <!-- Initialization Framework Core Dynamic Controller Scripts links -->
     <script src="env.js"></script>
     <script src="./js/extractor.js"></script>
     <script src="./js/formHandler.js"></script>

@@ -3,8 +3,11 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("backToStep1Btn").addEventListener("click", revertWizardToStep1);
 });
 
+/**
+ * Binds extracted data payload to the verification form inputs
+ * and handles wizard step navigation styling.
+ */
 window.bindFormFields = function(data) {
-   
     document.getElementById("formLlrNumber").value = data.llr_number || "-";
     document.getElementById("formFeesNumber").value = data.fees_number || "-";
     document.getElementById("formFee").value = data.fee || "-";
@@ -22,55 +25,66 @@ window.bindFormFields = function(data) {
     document.getElementById("formExpiryDate").value = data.expiry_date || "-";
     document.getElementById("formApprovedDate").value = data.approved_date || "-";
 
-    // Reset telephone fields and ensure clean entry states
+    // Reset customer telephone fields and temporary entry states
     document.getElementById("formMobile").value = "";
     document.getElementById("formEmergencyMobile").value = "";
     document.getElementById("formDlIssued").value = "No";
     document.getElementById("formDlNumber").value = "";
 
-    // Open view frames panels layout transitions
+    // Toggle viewport container display cards and navigation wizard progress pills
     document.getElementById("step1View").classList.add("d-none");
     document.getElementById("step2View").classList.remove("d-none");
     document.getElementById("pill-step1").classList.remove("active");
     document.getElementById("pill-step2").classList.add("active");
 };
 
+/**
+ * Returns wizard interface view states back to Step 1 (Paste Text).
+ */
 function revertWizardToStep1() {
     document.getElementById("step2View").classList.add("d-none");
     document.getElementById("step1View").classList.remove("d-none");
     document.getElementById("pill-step2").classList.remove("active");
     document.getElementById("pill-step1").classList.add("active");
-    
+         
+    // Clear user contact entries and driving license status states
     document.getElementById("formMobile").value = "";
     document.getElementById("formEmergencyMobile").value = "";
     document.getElementById("formDlIssued").value = "No";
     document.getElementById("formDlNumber").value = "";
 }
 
+/**
+ * Transmits the verified form dataset down to the deployed database sheet.
+ */
 async function syncAuditedPayloadToRemoteDatabase(event) {
     event.preventDefault();
-    
-    // Front-end sanity confirmation checks
+         
+    // Client-side phone data validation parameters validation
     const mobileValue = document.getElementById("formMobile").value.trim();
     if (mobileValue.length !== 10 || isNaN(mobileValue)) {
-        alert("Validation Fault: Please enter an active 10-digit primary Mobile Number before saving.");
+        alert("Please enter a valid 10-digit primary mobile number before saving.");
         return;
     }
 
     const targetForm = event.target;
     const submitButton = targetForm.querySelector('button[type="submit"]');
     const compiledFormPayload = new FormData(targetForm);
-    
-    // Force transmission parameter to map to 'insert' logic routine blocks explicitly
+         
+    // Direct backend router tracking keyword parameter mapping assignment
     compiledFormPayload.append("action", "insert");
-
-    // Dynamic environmental resolution variable reference point allocation mapping
+    
+    // Resolve registry service endpoint reference point from environmental configs
     const googleSheetEndpoint = ENV.SHEET_API_URL;
+    if (!googleSheetEndpoint) {
+        alert("Configuration Error: Database link could not be found. Please check your env.js file setup.");
+        return;
+    }
 
-    // Mutex Lockout: Disables submit button to prevent double clicks from sending data twice
+    // Mutex Lock: Disables submit button to prevent duplicate database write events
     submitButton.disabled = true;
-    submitButton.innerText = "Synchronizing Registry Records Matrix...";
-
+    submitButton.innerHTML = `<span>Saving to database...</span> <i class="bi bi-hourglass-split"></i>`;
+         
     try {
         const response = await fetch(googleSheetEndpoint, {
             method: "POST",
@@ -79,35 +93,33 @@ async function syncAuditedPayloadToRemoteDatabase(event) {
         });
 
         if (!response.ok) {
-            throw new Error(`HTTP Error Status Level Encountered: ${response.status}`);
+            throw new Error(`Server returned error status code: ${response.status}`);
         }
 
         const result = await response.json();
-
-        // Evaluate return codes from Google Apps Script
+         
+        // Process application validation execution status codes from remote sheets
         if (result.status === "success") {
-            alert(`✓ Record stored perfectly! Added inside Sheet row index positioning location: ${result.row}`);
+            alert(`✓ Data saved successfully! Added to sheet row index: ${result.row}`);
             
-            // Wipe forms clean and return view to text parsing step
+            // Clear layout terminal values and jump wizard workflow backwards
             document.getElementById("pdfText").value = "";
             targetForm.reset();
             revertWizardToStep1();
-            
+                     
         } else if (result.status === "duplicate") {
-            // DUPLICATE RECORD BLOCKED LOGIC TRAIL DISPATCH
-            alert(`⚠️ Duplicate Entry Error:\n${result.message}`);
-            // Keep user on the form page so they can review their entries or modify fields
-            
+            alert(`⚠️ Duplicate Entry Found:\n${result.message}`);
+            // Retains user layout instance context on screen for verification tweaks
+                     
         } else {
-            throw new Error(result.message || "An unhandled execution exception signature returned from server.");
+            throw new Error(result.message || "An unexpected system error occurred on the server.");
         }
-
     } catch (connectionFault) {
         console.error("Database Synchronization Error Stack:", connectionFault);
-        alert(`❌ Data Write Interrupted:\n${connectionFault.message}\n\nVerify that the target sheet is accessible and your deployment variable link matches.`);
+        alert(`❌ Saving Failed:\n${connectionFault.message}\n\nPlease check your internet connection or ensure your database sheet is online.`);
     } finally {
-        // Always re-enable the submit button once processing concludes
+        // Clear mutex controls lock tracking to allow form interactive triggers again
         submitButton.disabled = false;
-        submitButton.innerText = "Submit and Save to Database ✓";
+        submitButton.innerHTML = `<span>Save to Registry</span> <i class="bi bi-cloud-arrow-up-fill"></i>`;
     }
 }

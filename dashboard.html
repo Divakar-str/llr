@@ -3,177 +3,302 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LLR Portal - Operational Telemetry Dashboard</title>
-    <!-- Core UI Framework & Icon Component Libraries -->
+    <title>LLR Portal - Analytics Dashboard</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
     <link href="./css/dashboardStyle.css" rel="stylesheet">
 </head>
 <body>
 
-    <!-- Unified Centralized Navigation Target Container Mount -->
     <div id="global-nav-container"></div>
 
-    <div class="container px-3 px-md-4 pb-5">
+    <div id="loadingView" class="container dashboard-loading">
+        <div class="text-center">
+            <div class="spinner-border text-dark mb-3" role="status"></div>
+            <p class="text-muted fw-bold">Compiling registry dashboard metrics...</p>
+        </div>
+    </div>
+
+    <div id="dashboardView" class="container-fluid py-4 d-none">
         
-        <!-- Dashboard Top Control Header Ribbon Rows Layout -->
-        <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4 mt-3">
-            <div class="d-flex align-items-center gap-3">
-                <div class="fs-2 text-dark d-none d-sm-block"><i class="bi bi-pie-chart-fill"></i></div>
-                <div>
-                    <h4 class="fw-bold text-dark mb-0">System Analytics Dashboard</h4>
-                    <p class="text-muted small mb-0">Monitor processing distributions, weekly volumes, and high-priority action rows.</p>
-                </div>
-            </div>
-            <div class="d-flex gap-2 justify-content-stretch shadow-container">
-                <button id="exportCsvBtn" class="btn btn-outline-custom">
-                    <i class="bi bi-file-earmark-spreadsheet-fill"></i> Export CSV
-                </button>
-                <button id="printPdfBtn" class="btn btn-outline-custom">
-                    <i class="bi bi-file-earmark-pdf-fill text-danger"></i> Save PDF / Print
-                </button>
-                <button id="refreshDashboardBtn" class="btn btn-dark-custom shadow-sm">
-                    <i class="bi bi-arrow-clockwise"></i> Refresh 
-                </button>
-            </div>
-        </div>
-
-        <!-- CATEGORY 1: TIME-FRAME FILTERS AND TIMELINE PARAMETERS -->
-        <div class="card shadow-sm border-0 bg-white p-4 mb-4 filter-console-block">
-            <h6 class="fw-bold text-dark mb-3"><i class="bi bi-calendar-range text-muted me-1"></i> Custom Telemetry Timeframe Filter</h6>
-            <div class="row g-3">
-                <div class="col-12 col-sm-5">
-                    <label class="form-label small fw-bold text-secondary">Start Date Parameter</label>
-                    <input type="date" id="dashStartDate" class="form-control">
-                </div>
-                <div class="col-12 col-sm-5">
-                    <label class="form-label small fw-bold text-secondary">End Date Parameter</label>
-                    <input type="date" id="dashEndDate" class="form-control">
-                </div>
-                <div class="col-12 col-sm-2 d-flex align-items-end">
-                    <button id="clearDashFilterBtn" class="btn btn-outline-custom w-100 py-2">Clear Filter</button>
-                </div>
-            </div>
-        </div>
-
-        <!-- HIGH-IMPACT CORE COUNTERS GRID MATRIX -->
         <div class="row g-3 mb-4">
-            <div class="col-6 col-md-3">
-                <div class="metric-card shadow-sm p-3 border-start border-dark border-4">
-                    <div class="d-flex justify-content-between align-items-start">
-                        <div>
-                            <h6 class="text-muted small fw-bold text-uppercase mb-1">Total Records</h6>
-                            <h2 class="text-dark mb-0" id="metricTotalLlr">0</h2>
-                        </div>
-                        <div class="metric-icon-circle"><i class="bi bi-folder-fill"></i></div>
+            <div class="col-12 col-sm-6 col-md-3">
+                <div class="stat-card d-flex align-items-center justify-content-between">
+                    <div>
+                        <p class="text-muted small fw-bold mb-1">Total LLRs</p>
+                        <h3 class="fw-bold mb-0" id="statTotalLlr">0</h3>
                     </div>
+                    <div class="icon-box bg-light text-dark"><i class="bi bi-folder-fill"></i></div>
                 </div>
             </div>
-            <div class="col-6 col-md-3">
-                <div class="metric-card shadow-sm p-3 border-start border-danger border-4">
-                    <div class="d-flex justify-content-between align-items-start">
-                        <div>
-                            <h6 class="text-muted small fw-bold text-uppercase mb-1">Already Expired</h6>
-                            <h2 class="text-danger mb-0" id="metricExpired">0</h2>
-                        </div>
-                        <div class="metric-icon-circle bg-danger-subtle text-danger"><i class="bi bi-shield-x-fill"></i></div>
+            <div class="col-12 col-sm-6 col-md-3">
+                <div class="stat-card d-flex align-items-center justify-content-between">
+                    <div>
+                        <p class="text-muted small fw-bold mb-1">Active LLRs</p>
+                        <h3 class="fw-bold mb-0 text-success" id="statActiveLlr">0</h3>
                     </div>
+                    <div class="icon-box bg-success-subtle text-success"><i class="bi bi-shield-check"></i></div>
                 </div>
             </div>
-            <div class="col-6 col-md-3">
-                <div class="metric-card shadow-sm p-3 border-start border-warning border-4">
-                    <div class="d-flex justify-content-between align-items-start">
-                        <div>
-                            <h6 class="text-muted small fw-bold text-uppercase mb-1">Expiring (30 Days)</h6>
-                            <h2 class="text-warning mb-0" id="metricExpiringSoon">0</h2>
-                        </div>
-                        <div class="metric-icon-circle bg-warning-subtle text-warning"><i class="bi bi-hourglass-split"></i></div>
+            <div class="col-12 col-sm-6 col-md-3">
+                <div class="stat-card d-flex align-items-center justify-content-between">
+                    <div>
+                        <p class="text-muted small fw-bold mb-1">Expired LLRs</p>
+                        <h3 class="fw-bold mb-0 text-danger" id="statExpiredLlr">0</h3>
                     </div>
+                    <div class="icon-box bg-danger-subtle text-danger"><i class="bi bi-exclamation-octagon-fill"></i></div>
                 </div>
             </div>
-            <div class="col-6 col-md-3">
-                <div class="metric-card shadow-sm p-3 border-start border-success border-4">
-                    <div class="d-flex justify-content-between align-items-start">
-                        <div>
-                            <h6 class="text-muted small fw-bold text-uppercase mb-1">DL Converted</h6>
-                            <h2 class="text-success mb-0" id="metricDlIssued">0</h2>
-                        </div>
-                        <div class="metric-icon-circle bg-success-subtle text-success"><i class="bi bi-check-circle-fill"></i></div>
+            <div class="col-12 col-sm-6 col-md-3">
+                <div class="stat-card d-flex align-items-center justify-content-between">
+                    <div>
+                        <p class="text-muted small fw-bold mb-1">Expiring Soon</p>
+                        <h3 class="fw-bold mb-0 text-warning" id="statExpiringSoon">0</h3>
+                    </div>
+                    <div class="icon-box bg-warning-subtle text-warning"><i class="bi bi-hourglass-split"></i></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-3 mb-4">
+            <div class="col-12 col-sm-6 col-md-3">
+                <div class="stat-card d-flex align-items-center justify-content-between">
+                    <div>
+                        <p class="text-muted small fw-bold mb-1">DL Issued</p>
+                        <h4 class="fw-bold mb-0 text-primary" id="statDlIssued">0</h4>
+                    </div>
+                    <div class="icon-box bg-primary-subtle text-primary"><i class="bi bi-card-checklist"></i></div>
+                </div>
+            </div>
+            <div class="col-12 col-sm-6 col-md-3">
+                <div class="stat-card d-flex align-items-center justify-content-between">
+                    <div>
+                        <p class="text-muted small fw-bold mb-1">Pending DL</p>
+                        <h4 class="fw-bold mb-0 text-secondary" id="statDlPending">0</h4>
+                    </div>
+                    <div class="icon-box bg-light text-secondary"><i class="bi bi-clock-history"></i></div>
+                </div>
+            </div>
+            <div class="col-12 col-sm-6 col-md-3">
+                <div class="stat-card d-flex align-items-center justify-content-between">
+                    <div>
+                        <p class="text-muted small fw-bold mb-1">Today's LLR Issued</p>
+                        <h4 class="fw-bold mb-0 text-dark" id="statTodayLlr">0</h4>
+                    </div>
+                    <div class="icon-box bg-dark-subtle text-dark"><i class="bi bi-calendar-event"></i></div>
+                </div>
+            </div>
+            <div class="col-12 col-sm-6 col-md-3">
+                <div class="stat-card d-flex align-items-center justify-content-between">
+                    <div>
+                        <p class="text-muted small fw-bold mb-1">Today's DL Issued</p>
+                        <h4 class="fw-bold mb-0 text-dark" id="statTodayDl">0</h4>
+                    </div>
+                    <div class="icon-box bg-dark text-white"><i class="bi bi-calendar-check-fill"></i></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-3 mb-4">
+            <div class="col-12 col-sm-6 col-md-3">
+                <div class="stat-card d-flex align-items-center justify-content-between">
+                    <div>
+                        <p class="text-muted small fw-bold mb-1">Monthly LLR Issued</p>
+                        <h4 class="fw-bold mb-0 text-dark" id="statMonthLlr">0</h4>
+                    </div>
+                    <div class="icon-box bg-light text-dark"><i class="bi bi-calendar3"></i></div>
+                </div>
+            </div>
+            <div class="col-12 col-sm-6 col-md-3">
+                <div class="stat-card d-flex align-items-center justify-content-between">
+                    <div>
+                        <p class="text-muted small fw-bold mb-1">Monthly DL Issued</p>
+                        <h4 class="fw-bold mb-0 text-dark" id="statMonthDl">0</h4>
+                    </div>
+                    <div class="icon-box bg-light text-dark"><i class="bi bi-calendar3-range"></i></div>
+                </div>
+            </div>
+            <div class="col-12 col-md-6">
+                <div class="stat-card d-flex align-items-center justify-content-around">
+                    <div class="text-center">
+                        <p class="text-muted small fw-bold mb-1">Emergency Contacts Provided</p>
+                        <h4 class="fw-bold mb-0 text-success" id="statEmergencyWith">0</h4>
+                    </div>
+                    <div class="divider-line"></div>
+                    <div class="text-center">
+                        <p class="text-muted small fw-bold mb-1">Emergency Contacts Missing</p>
+                        <h4 class="fw-bold mb-0 text-danger" id="statEmergencyWithout">0</h4>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- WEEKLY WORKLOAD ALLOCATION ACTIVITY MATRIX CHART (Category 1 Upgrade) -->
-        <div class="card shadow-sm p-4 mb-4 chart-card-container">
-            <h6 class="fw-bold text-dark mb-1"><i class="bi bi-calendar3-range text-muted me-1"></i> Weekly Workload Allocation Matrix</h6>
-            <p class="text-muted small mb-4">Volume allocation of records generated across individual days of the operational week cycle.</p>
-            <div class="weekly-matrix-grid" id="weeklyWorkloadGrid">
-                <!-- Activity bar layers items dynamically bound by data compilation tracking managers -->
-                <div class="text-center text-muted py-4 small">Awaiting workload computation streams...</div>
-            </div>
-        </div>
-
-        <!-- VISUAL BREAKDOWNS SHARE GRIDS (Category 2 & Category 6 Distribution Maps) -->
-        <div class="row g-4 mb-4">
-            <div class="col-12 col-md-7">
-                <div class="card shadow-sm h-100 p-4 chart-card-container">
-                    <h6 class="fw-bold text-dark mb-1"><i class="bi bi-tags-fill text-muted me-1"></i> Vehicle Classes Distribution Share</h6>
-                    <p class="text-muted small mb-4">Unified volume breakdown across active driving authorization classification groups.</p>
-                    <div id="distributionContainer" class="d-flex flex-column gap-3">
-                        <div class="text-center text-muted py-5 small">Awaiting category mapping parameters...</div>
-                    </div>
+        <div class="row g-3 mb-4">
+            <div class="col-12 col-md-4">
+                <div class="chart-card">
+                    <h6 class="fw-bold text-dark mb-3">Vehicle Class Distribution</h6>
+                    <div class="canvas-container"><canvas id="chartVehicleClass"></canvas></div>
                 </div>
             </div>
-            <div class="col-12 col-md-5">
-                <div class="card shadow-sm h-100 p-4 chart-card-container">
-                    <h6 class="fw-bold text-dark mb-1"><i class="bi bi-shield-shaded text-muted me-1"></i> Validity Ratio Balance</h6>
-                    <p class="text-muted small mb-4">Proportionate chart breakdown of valid files vs overdue items.</p>
-                    <div id="validityBalanceContainer" class="d-flex flex-column gap-3 justify-content-center h-100 pb-3">
-                        <div class="text-center text-muted py-5 small">Awaiting ratio compilation mapping...</div>
-                    </div>
+            <div class="col-12 col-md-4">
+                <div class="chart-card">
+                    <h6 class="fw-bold text-dark mb-3">Blood Group Distribution</h6>
+                    <div class="canvas-container"><canvas id="chartBloodGroup"></canvas></div>
+                </div>
+            </div>
+            <div class="col-12 col-md-4">
+                <div class="chart-card">
+                    <h6 class="fw-bold text-dark mb-3">Age Group Distribution</h6>
+                    <div class="canvas-container"><canvas id="chartAgeGroup"></canvas></div>
                 </div>
             </div>
         </div>
 
-        <!-- HIGH PRIORITY CRITICAL ACTION BOARD DATA TABLE -->
-        <div class="card shadow-sm border-0 animated-pane table-card-container">
-            <div class="card-header bg-dark text-white py-3 px-4" style="border-radius: 24px 24px 0 0;">
-                <h6 class="mb-0 fw-bold text-light d-flex align-items-center gap-2">
-                    <i class="bi bi-exclamation-triangle-fill text-warning"></i> High Priority Expiry Action Board
-                </h6>
+        <div class="row g-3 mb-4">
+            <div class="col-12 col-md-4">
+                <div class="chart-card">
+                    <h6 class="fw-bold text-dark mb-3">Daily Issue Trend</h6>
+                    <div class="canvas-container"><canvas id="chartDailyTrend"></canvas></div>
+                </div>
             </div>
-            <div class="card-body p-0">
-                <div class="table-responsive">
-                    <table class="table table-hover table-striped align-middle mb-0">
-                        <thead class="sticky-thead">
-                            <tr>
-                                <th class="ps-4">LLR Number</th>
-                                <th>Applicant Name</th>
-                                <th>Mobile Number</th>
-                                <th>Expiry Date</th>
-                                <th class="pe-4 text-end">Timeline Status</th>
-                            </tr>
-                        </thead>
-                        <tbody id="criticalActionTableBody">
-                            <tr>
-                                <td colspan="5" class="text-center py-5 text-muted small">
-                                    <div class="spinner-border spinner-border-sm text-dark me-2"></div>
-                                    Syncing critical records layers fields arrays...
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
+            <div class="col-12 col-md-4">
+                <div class="chart-card">
+                    <h6 class="fw-bold text-dark mb-3">Monthly Issue Trend</h6>
+                    <div class="canvas-container"><canvas id="chartMonthlyTrend"></canvas></div>
+                </div>
+            </div>
+            <div class="col-12 col-md-4">
+                <div class="chart-card">
+                    <h6 class="fw-bold text-dark mb-3">Expiry Trend Mapping</h6>
+                    <div class="canvas-container"><canvas id="chartExpiryTrend"></canvas></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-3 mb-4">
+            <div class="col-12 col-md-4">
+                <div class="chart-card d-flex flex-column align-items-center justify-content-center text-center">
+                    <h6 class="fw-bold text-dark mb-3 align-self-start">DL Conversion Rate</h6>
+                    <div class="gauge-wrapper">
+                        <canvas id="chartDlConversion"></canvas>
+                        <div class="gauge-text-box">
+                            <h3 class="fw-bold mb-0" id="txtConversionPercent">0%</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-12 col-md-4">
+                <div class="chart-card">
+                    <h6 class="fw-bold text-dark mb-3">Relative Type Distribution</h6>
+                    <div class="canvas-container"><canvas id="chartRelativeType"></canvas></div>
+                </div>
+            </div>
+            <div class="col-12 col-md-4">
+                <div class="chart-card">
+                    <h6 class="fw-bold text-dark mb-3">Emergency Contact Availability</h6>
+                    <div class="canvas-container"><canvas id="chartEmergencyAvailability"></canvas></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-3 mb-4">
+            <div class="col-12 col-md-6">
+                <div class="chart-card">
+                    <h6 class="fw-bold text-dark mb-3">Address Distribution (City/District)</h6>
+                    <div class="canvas-container"><canvas id="chartAddressDistribution"></canvas></div>
+                </div>
+            </div>
+            <div class="col-12 col-md-6">
+                <div class="chart-card">
+                    <h6 class="fw-bold text-dark mb-3">Top Vehicle Classes</h6>
+                    <div class="canvas-container"><canvas id="chartTopVehicles"></canvas></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-3 mb-4">
+            <div class="col-12 col-md-6">
+                <div class="chart-card">
+                    <h6 class="fw-bold text-dark mb-2">Recent LLR Issued (Latest 15)</h6>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover align-middle small mb-0">
+                            <thead class="table-light sticky-top">
+                                <tr>
+                                    <th>LLR Number</th>
+                                    <th>Applicant Name</th>
+                                    <th>Issue Date</th>
+                                    <th>Class</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tableRecentLlr"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="col-12 col-md-6">
+                <div class="chart-card">
+                    <h6 class="fw-bold text-dark mb-2">Recent DL Issued (Latest 15)</h6>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover align-middle small mb-0">
+                            <thead class="table-light sticky-top">
+                                <tr>
+                                    <th>LLR Number</th>
+                                    <th>Applicant Name</th>
+                                    <th>Approved Date</th>
+                                    <th>DL Number</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tableRecentDl"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-3">
+            <div class="col-12 col-md-6">
+                <div class="chart-card">
+                    <h6 class="fw-bold text-danger mb-2">Recently Expired LLRs</h6>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover align-middle small mb-0">
+                            <thead class="table-danger sticky-top">
+                                <tr>
+                                    <th>LLR Number</th>
+                                    <th>Applicant Name</th>
+                                    <th>Expiry Date</th>
+                                    <th>Mobile</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tableRecentlyExpired"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="col-12 col-md-6">
+                <div class="chart-card">
+                    <h6 class="fw-bold text-warning mb-2">Upcoming Expiries (Next 30 Days)</h6>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover align-middle small mb-0">
+                            <thead class="table-warning sticky-top">
+                                <tr>
+                                    <th>LLR Number</th>
+                                    <th>Applicant Name</th>
+                                    <th>Expiry Date</th>
+                                    <th>Mobile</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tableUpcomingExpiries"></tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>
 
     </div>
 
-    <!-- Core Pipeline Script Infrastructure Components links mapping -->
     <script src="env.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="./js/dashboardManager.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="./js/dashboard.js"></script>
     <script src="js/navLoader.js"></script>
 </body>
 </html>

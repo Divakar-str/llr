@@ -1,188 +1,196 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LLR Portal - Advanced Reports Panel</title>
+    <title>LLR Portal - Reports Engine Console</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
     <link href="./css/reportStyle.css" rel="stylesheet">
 </head>
 <body>
 
-    <!-- Unified Centralized Navigation Container -->
-    <div id="global-nav-container"></div>
+       <div id="global-nav-container"></div>
 
-    <div class="container px-3 px-md-4 pb-5">
-        
-        <!-- Top Title Dashboard Ribbon -->
-        <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
-            <div class="d-flex align-items-center gap-3">
-                <div class="fs-3 text-dark d-none d-sm-block"><i class="bi bi-file-earmark-bar-graph-fill"></i></div>
-                <div>
-                    <h4 class="fw-bold text-dark mb-0">Management Reports Hub</h4>
-                    <p class="text-muted small mb-0">Track workspace efficiency metrics, category breakdowns, and validity timelines.</p>
-                </div>
-            </div>
-            
-            <div class="d-flex flex-column flex-sm-row align-items-stretch align-items-sm-center gap-2">
-                <div class="form-check form-switch bg-white px-4 py-2.5 rounded-3 border" id="exclusionToggleWrapper">
-                    <input class="form-check-input" type="checkbox" id="neglectDlIssuedCheckbox" checked style="cursor: pointer;">
-                    <label class="form-check-label small fw-bold text-secondary" for="neglectDlIssuedCheckbox" style="cursor: pointer; user-select: none;">
-                        Hide 'DL Issued' Records
-                    </label>
-                </div>
-                <button id="refreshReportBtn" class="btn btn-dark-custom shadow-sm fw-semibold">
-                    <i class="bi bi-arrow-clockwise"></i> Sync Sheet Rows
-                </button>
-            </div>
-        </div>
+    <div class="print-only-header text-center w-100 mb-4">
+       
+        <p class="print-subline" id="lblPrintTimestamp">Created On: --</p>
+        <div class="print-title-badge" id="lblPrintReportTitle">Active Database Registry Log</div>
+    </div>
 
-        <!-- PERFORMANCE CARDS AND BALANCE METRICS PANELS -->
-        <div class="row g-3 mb-4">
-            <div class="col-6 col-md-3">
-                <div class="metric-card shadow-sm border p-3 bg-white h-100">
-                    <div class="text-muted small fw-bold text-uppercase mb-1"><i class="bi bi-calendar3"></i> Processed Today</div>
-                    <h3 class="fw-black text-dark mb-0" id="metricProcessedToday">0</h3>
-                    <small class="text-success fw-semibold"><i class="bi bi-graph-up"></i> Live shift entries</small>
-                </div>
-            </div>
-            <div class="col-6 col-md-3">
-                <div class="metric-card shadow-sm border p-3 bg-white h-100">
-                    <div class="text-muted small fw-bold text-uppercase mb-1"><i class="bi bi-shield-check-fill text-success"></i> Active Safe</div>
-                    <h3 class="fw-black text-success mb-0" id="metricActiveTotal">0</h3>
-                    <small class="text-muted">Valid license records</small>
-                </div>
-            </div>
-            <div class="col-6 col-md-3">
-                <div class="metric-card shadow-sm border p-3 bg-white h-100">
-                    <div class="text-muted small fw-bold text-uppercase mb-1"><i class="bi bi-shield-x-fill text-danger"></i> Overdue Dead</div>
-                    <h3 class="fw-black text-danger mb-0" id="metricExpiredTotal">0</h3>
-                    <small class="text-muted">Expired license records</small>
-                </div>
-            </div>
-            <div class="col-6 col-md-3">
-                <div class="metric-card shadow-sm border p-3 bg-white h-100">
-                    <div class="text-muted small fw-bold text-uppercase mb-1"><i class="bi bi-activity text-primary"></i> Sync Accuracy</div>
-                    <h3 class="fw-black text-primary mb-0">100%</h3>
-                    <small class="text-muted">Cloud pipeline secure</small>
-                </div>
-            </div>
-        </div>
-
-        <!-- EXPIRY ALERTS AND PROACTIVE TIMELINE NAV FILTERS -->
-        <div class="row g-3 mb-4">
-            <div class="col-12 col-sm-6 col-md-3">
-                <button id="btnFilter31Days" class="report-selector-btn shadow-sm position-relative active">
-                    <span class="position-absolute top-0 end-0 translate-middle badge rounded-pill bg-danger d-none" id="badge31Days">0</span>
-                    <h6 class="text-muted small fw-bold text-uppercase mb-1"><i class="bi bi-calendar-check"></i> Milestone Met</h6>
-                    <span class="fw-bold text-dark d-block fs-5">Passed 31 Days</span>
-                    <small class="text-muted text-xs">Eligible for permanent driving tests</small>
-                </button>
-            </div>
-            <div class="col-12 col-sm-6 col-md-3">
-                <button id="btnFilter60Days" class="report-selector-btn shadow-sm position-relative">
-                    <span class="position-absolute top-0 end-0 translate-middle badge rounded-pill bg-warning text-dark d-none" id="badge60Days">0</span>
-                    <h6 class="text-muted small fw-bold text-uppercase mb-1"><i class="bi bi-hourglass-split"></i> Proactive Scope</h6>
-                    <span class="fw-bold text-dark d-block fs-5">Expiring In 60 Days</span>
-                    <small class="text-muted text-xs">Advance notification track matrix</small>
-                </button>
-            </div>
-            <div class="col-12 col-sm-6 col-md-3">
-                <button id="btnFilterOverdue" class="report-selector-btn shadow-sm position-relative">
-                    <span class="position-absolute top-0 end-0 translate-middle badge rounded-pill bg-dark d-none" id="badgeOverdue">0</span>
-                    <h6 class="text-muted small fw-bold text-uppercase mb-1"><i class="bi bi-slash-circle"></i> Breached Bounds</h6>
-                    <span class="fw-bold text-dark d-block fs-5">Completely Expired</span>
-                    <small class="text-muted text-xs">Out of 6-month validity window</small>
-                </button>
-            </div>
-            <div class="col-12 col-sm-6 col-md-3">
-                <button id="btnFilterCustomRange" class="report-selector-btn shadow-sm position-relative">
-                    <span class="position-absolute top-0 end-0 translate-middle badge rounded-pill bg-primary d-none" id="badgeCustomRange">0</span>
-                    <h6 class="text-muted small fw-bold text-uppercase mb-1"><i class="bi bi-calendar-date-fill"></i> Custom View</h6>
-                    <span class="fw-bold text-dark d-block fs-5">Date Range Report</span>
-                    <small class="text-muted text-xs">Uses side date picker inputs</small>
-                </button>
-            </div>
-        </div>
-
-        <!-- REFINED FILTER MATRIX PANEL -->
-        <div class="card shadow-sm border-0 bg-white p-4 mb-4">
-            <h6 class="fw-bold text-dark mb-3"><i class="bi bi-funnel-fill text-muted"></i> Report Filter Parameters</h6>
-            <div class="row g-3">
-                <div class="col-12 col-md-6">
-                    <label class="form-label"><i class="bi bi-car-front-fill"></i> Vehicle Classification</label>
-                    <select id="selectVehicleClassFilter" class="form-select">
-                        <option value="ALL">All Vehicle Classes</option>
-                        <option value="MCWOG">MCWOG Only</option>
-                        <option value="MCWG">MCWG Only</option>
-                        <option value="LMV">LMV Only</option>
-                        <option value="TRANS">TRANS Only</option>
-                        <option value="MCWOG_OR_MCWG_AND_LMV">MCWOG/MCWG with LMV</option>
-                    </select>
-                </div>
-                <div class="col-12 col-md-6">
-                    <label class="form-label"><i class="bi bi-calendar-range-fill"></i> Custom Issue Date Scope</label>
-                    <div class="d-flex gap-2 align-items-center">
-                        <input type="date" id="rangeStartDate" class="form-control">
-                        <span class="small text-muted">to</span>
-                        <input type="date" id="rangeEndDate" class="form-control">
+    <div class="container-fluid px-4 mt-4 no-print">
+        <div class="glass-panel-bar p-3 scale-in">
+            <div class="row g-3 align-items-end">
+                
+                <div class="col-12 col-md-5">
+                    <div class="panel-section-label">
+                        <span class="step-num-indicator">1</span>
+                        <span class="label-text-node">Search Parameters &amp; Dates</span>
+                    </div>
+                    <div class="row g-2">
+                        <div class="col-12">
+                            <div class="premium-search-input-group">
+                                <span class="input-icon-node"><i class="bi bi-search"></i></span>
+                                <input type="text" id="filterSearchQuery" class="form-control-premium" placeholder="Filter by Name, LLR Number, Phone...">
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="premium-date-input-group">
+                                <span class="input-icon-node"><i class="bi bi-calendar-event"></i></span>
+                                <input type="date" id="filterFromDate" class="form-control-premium" title="From Issue Date">
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="premium-date-input-group">
+                                <span class="input-icon-node"><i class="bi bi-calendar-check"></i></span>
+                                <input type="date" id="filterToDate" class="form-control-premium" title="To Issue Date">
+                            </div>
+                        </div>
                     </div>
                 </div>
-            </div>
-        </div>
 
-        <!-- MAIN TABLE LEDGER VIEW AND PRINT EXPORT CONTROLS -->
-        <div class="card shadow-sm border-0 animated-pane">
-            <div class="card-header bg-dark text-white d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-3 py-3 px-4" style="border-radius: 24px 24px 0 0;">
-                <h6 class="mb-0 fw-bold text-light d-flex align-items-center gap-2" id="reportTableTitle">
-                    <i class="bi bi-list-columns-reverse"></i> Compliance Records Reporting Ledger
-                </h6>
-                <div class="d-flex gap-2 w-100 w-sm-auto justify-content-end">
-                    <button id="exportCsvBtn" class="btn btn-sm btn-outline-light fw-bold px-3 rounded-3">
-                        <i class="bi bi-file-earmark-spreadsheet-fill"></i> Export CSV
-                    </button>
-                    <button id="printReportBtn" class="btn btn-sm btn-light fw-bold px-3 shadow-sm rounded-3">
-                        <i class="bi bi-printer-fill"></i> Batch Print Selected
-                    </button>
+                <div class="col-12 col-md-4">
+                    <div class="panel-section-label">
+                        <span class="step-num-indicator">2</span>
+                        <span class="label-text-node">Target Classification &amp; Lists</span>
+                    </div>
+                    <div class="row g-2">
+                        <div class="col-12 position-relative">
+                            <select id="filterVehicleClass" class="form-select-premium select-custom-engine">
+                                <option value="ALL">Show All Vehicle Classes</option>
+                                <option value="MCWG_ONLY">MCWG Only </option>
+                                <option value="MCWOG_ONLY">MCWOG Only </option>
+                                <option value="LMV_ONLY">LMV Only </option>
+                                <option value="TRANS_ONLY">TRANS Only </option>
+                                <option value="MCWG_LMV">MCWG &amp; LMV </option>
+                                <option value="MCWOG_LMV">MCWOG &amp; LMV </option>
+                            </select>
+                        </div>
+                        <div class="col-12 position-relative">
+                            <select id="reportTypeSelect" class="form-select-premium select-custom-engine template-trigger-highlight">
+                                <option value="" disabled selected>Choose a Report Template Target...</option>
+                                <option value="COMPLETE_REGISTER">Complete LLR List</option>
+                                <option value="ACTIVE_LLR">Active LLRs Only</option>
+                                <option value="EXPIRED_LLR">Expired LLRs Only</option>
+                                <option value="EXPIRY_REGISTER">LLR Expiry Timeline List</option>
+                                <option value="PASSED_30_DAYS">Passed 30 Days List</option>
+                                <option value="ELIGIBLE_FOR_DL">Eligible for DL Test</option>
+                                <option value="PENDING_DL">Pending DL List</option>
+                                <option value="DL_ISSUED">Permanent DL Issued List</option>
+                                <option value="LLR_TO_DL_CONVERSION">LLR to DL Conversion List</option>
+                                <option value="EXPIRING_7_DAYS">Expiring within 7 Days</option>
+                                <option value="EXPIRING_30_DAYS">Expiring within 30 Days</option>
+                                <option value="TODAYS_ISSUED">Today's LLR List</option>
+                                <option value="MONTHLY_ISSUED">This Month's LLR List</option>
+                                <option value="DUPLICATE_MOBILE">Double Mobile Number Check</option>
+                                <option value="MISSING_INFORMATION">Missing Profile Information Check</option>
+                            </select>
+                        </div>
+                    </div>
                 </div>
-            </div>
-            <div class="card-body p-0">
-                <div class="table-responsive">
-                    <table class="table table-hover table-striped align-middle mb-0">
-                        <thead class="sticky-thead">
-                            <tr>
-                                <th class="text-center ps-3" style="width: 50px;">
-                                    <input type="checkbox" id="selectAllRowsCheckbox" class="form-check-input" style="cursor: pointer;">
-                                </th>
-                                <th>LLR Number</th>
-                                <th>Applicant Name</th>
-                                <th>Vehicle Class</th>
-                                <th>Mobile Number</th>
-                                <th>Issue Date</th>
-                                <th>Expiry Date</th>
-                                <th>Lifespan Progress Timeline</th>
-                                <th class="pe-4 text-end">Action</th>
-                            </tr>
-                        </thead>
-                        <tbody id="reportTableBody">
-                            <tr>
-                                <td colspan="9" class="text-center py-5 text-muted small">
-                                    <div class="spinner-border spinner-border-sm text-dark me-2"></div>
-                                    Syncing data files registries layers arrays from remote repository grids...
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
+
+                <div class="col-12 col-md-3">
+                    <button id="generateReportBtn" class="premium-primary-action-btn w-100 mb-2">
+                        <i class="bi bi-arrow-clockwise spinner-icon d-none" id="btnSpinner"></i>
+                        <i class="bi bi-play-fill" id="btnIcon"></i>
+                        <span>Search Database</span>
+                    </button>
+                    <div class="row g-2">
+                        <div class="col-6">
+                            <button class="premium-secondary-action-btn excel-variant w-100" id="exportExcelBtn"><i class="bi bi-file-earmark-excel-fill"></i> Excel</button>
+                        </div>
+                        <div class="col-6">
+                            <button class="premium-secondary-action-btn csv-variant w-100" id="exportCsvBtn"><i class="bi bi-file-earmark-spreadsheet-fill"></i> CSV</button>
+                        </div>
+                    </div>
                 </div>
+
             </div>
         </div>
     </div>
 
-    <!-- Script Plugs Configurations Assemblies Links -->
+    <div class="container-fluid px-4 mt-2 no-print">
+        <div id="connectionStatusStatusTray" class="alert d-flex align-items-center gap-2 py-2 px-3 border-custom rounded-3 shadow-sm scale-in" style="font-size: 0.85rem; font-weight: 600; display: none !important;">
+            <span id="statusTraySpinner" class="spinner-border spinner-border-sm text-primary" role="status"></span>
+            <i id="statusTrayIcon" class="bi"></i>
+            <span id="statusTrayMessage">Connecting to Google Sheet backend registers...</span>
+        </div>
+    </div>
+
+    <div class="container-fluid px-4 py-3" id="wideReportWorkspace">
+        <div class="premium-main-workspace-card min-view-height d-flex flex-column justify-content-start position-relative overflow-hidden w-100">
+            
+            <div id="reportPlaceholderView" class="text-center my-auto py-5 fade-in no-print">
+                <div class="animated-empty-orb">
+                    <i class="bi bi-layers-half text-primary"></i>
+                </div>
+                <h4 class="fw-bold text-theme-dark tracking-tight mt-3">SELECT REPORT FORMAT</h4>
+                <p class="text-muted small max-width-p mx-auto">Choose a report format from the options below to generate your desired output.</p>
+            </div>
+
+            <div id="reportLoaderView" class="w-100 my-auto d-none no-print p-4">
+                <div class="skeleton-pill animate-pulse mb-3 w-25"></div>
+                <div class="skeleton-pill animate-pulse mb-2 w-100"></div>
+                <div class="skeleton-pill animate-pulse mb-2 w-100"></div>
+                <div class="skeleton-pill animate-pulse mb-2 w-100"></div>
+            </div>
+
+            <div id="reportDisplayView" class="d-none flex-grow-1 animated-fade-in w-100">
+                
+                <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center border-bottom pb-3 mb-3 gap-3 no-print">
+                    <div>
+                        <h4 class="fw-bold text-theme-dark m-0 tracking-tight" id="lblRenderedReportTitle">List Records Output</h4>
+                    </div>
+                    <div class="d-flex flex-wrap align-items-center gap-2">
+                        <button class="premium-print-btn px-4 py-2" id="printReportBtn">
+                            <i class="bi bi-printer-fill"></i> Print 
+                        </button>
+                        <div class="premium-counter-badge" id="lblRenderedReportCount">0 Records</div>
+                    </div>
+                </div>
+
+                <div class="row g-2 mb-4 no-print" id="reportSummaryRibbon">
+                    <div class="col-6 col-sm-3 col-md-3 col-lg-2">
+                        <div class="premium-ribbon-card border-left-success">
+                            <span class="ribbon-label">Active Records</span>
+                            <span class="ribbon-value text-success" id="ribbonActiveCount">0</span>
+                        </div>
+                    </div>
+                    <div class="col-6 col-sm-3 col-md-3 col-lg-2">
+                        <div class="premium-ribbon-card border-left-danger">
+                            <span class="ribbon-label">Expired Records</span>
+                            <span class="ribbon-value text-danger" id="ribbonExpiredCount">0</span>
+                        </div>
+                    </div>
+                    <div class="col-6 col-sm-3 col-md-3 col-lg-2">
+                        <div class="premium-ribbon-card border-left-primary">
+                            <span class="ribbon-label">Ready for DL Test</span>
+                            <span class="ribbon-value text-primary" id="ribbonDlReadyCount">0</span>
+                        </div>
+                    </div>
+                    <div class="col-6 col-sm-3 col-md-3 col-lg-2">
+                        <div class="premium-ribbon-card border-left-dark">
+                            <span class="ribbon-label">DL Conversions</span>
+                            <span class="ribbon-value text-dark-custom" id="ribbonDlIssuedCount">0</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="table-responsive border border-custom-grid rounded-4 custom-scrollbar max-height-viewport w-100 m-0" id="tableFrameViewport">
+                    <table class="table table-striped table-modern w-100 mb-0" id="reportDataTable">
+                        <thead id="reportDataTableHeader"></thead>
+                        <tbody id="reportDataTableBody"></tbody>
+                    </table>
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+
     <script src="env.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="./js/reportManager.js"></script>
-    <script src="js/navLoader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script src="./js/reports.js"></script>
+        <script src="js/navLoader.js"></script>
 </body>
 </html>
