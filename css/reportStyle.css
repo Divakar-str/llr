@@ -49,21 +49,6 @@ body {
     -webkit-font-smoothing: antialiased;
 }
 
-.main-navbar {
-    background: var(--card-bg);
-    box-shadow: var(--shadow-sm);
-    border-bottom: 1px solid var(--border-color) !important;
-}
-
-.navbar-brand-custom {
-    font-size: 1.15rem;
-    font-weight: 800;
-    letter-spacing: -0.02em;
-    color: var(--text-main);
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
 
 .terminal-icon-spin {
     color: var(--accent-blue);
@@ -82,25 +67,6 @@ body {
     }
 }
 
-.nav-action-btn {
-    text-decoration: none;
-    font-size: 0.88rem;
-    font-weight: 700;
-    color: var(--text-muted);
-    padding: 0.55rem 1rem;
-    border-radius: 10px;
-    transition: all 0.2s ease;
-}
-
-.nav-action-btn:hover {
-    color: var(--text-main);
-    background: var(--filter-pane);
-}
-
-.nav-action-btn.primary-btn {
-    background: var(--accent-blue);
-    color: #ffffff !important;
-}
 
 .theme-toggle-widget {
     background: var(--filter-pane);

@@ -117,14 +117,7 @@
                                      <label class="form-label"><i class="bi bi-vignette"></i> LLR Number <span class="text-danger">*</span></label>
                                      <input type="text" name="llr_number" id="addLlrNumber" class="form-control" placeholder="e.g. TN52/0004108/2026" required>
                                  </div>
-                                 <div class="col-12 col-md-6">
-                                     <label class="form-label"><i class="bi bi-receipt"></i> Fees Number</label>
-                                     <input type="text" name="fees_number" id="addFeesNumber" class="form-control" placeholder="e.g. U26...">
-                                 </div>
-                                 <div class="col-12 col-sm-4">
-                                     <label class="form-label"><i class="bi bi-currency-rupee"></i> Fee Amount</label>
-                                     <input type="text" name="fee" id="addFee" class="form-control" placeholder="e.g. 230">
-                                 </div>
+                                 
                                  <div class="col-12 col-sm-4">
                                      <label class="form-label text-dark fw-bold"><i class="bi bi-car-front-fill"></i> Vehicle Class <span class="text-danger">*</span></label>
                                      <select name="vehicle_class" id="addVehicleClass" class="form-select border-secondary" required>
@@ -132,15 +125,23 @@
                                          <option value="MCWG">MCWG</option>
                                          <option value="LMV" selected>LMV</option>
                                          <option value="TRANS">TRANS</option>
-                                         <option value="MCWG, LMV">MCWG, LMV</option>
-                                         <option value="MCWOG, LMV">MCWOG, LMV</option>
-                                         <option value="MCWG, LMV, TRANS">MCWG, LMV, TRANS</option>
+                                         <option value="MCWG,LMV">MCWG,LMV</option>
+                                         <option value="MCWOG,LMV">MCWOG,LMV</option>
                                      </select>
                                  </div>
-                                 <div class="col-12 col-sm-4">
-                                     <label class="form-label"><i class="bi bi-droplet-fill text-danger"></i> Blood Group</label>
-                                     <input type="text" name="blood_group" id="addBloodGroup" class="form-control" placeholder="e.g. O+ve">
+                                 <div class="col-12 col-sm-6 col-md-4">
+                                     <label class="form-label"><i class="bi bi-calendar-plus"></i> LLR Issue Date</label>
+                                     <input type="text" name="issue_date" id="addIssueDate" class="form-control" placeholder="DD-MM-YYYY">
                                  </div>
+                                 <div class="col-12 col-sm-6 col-md-4">
+                                     <label class="form-label"><i class="bi bi-calendar-minus"></i> LLR Expiry Date</label>
+                                     <input type="text" name="expiry_date" id="addExpiryDate" class="form-control" placeholder="DD-MM-YYYY">
+                                 </div>
+                                 <div class="col-12 col-sm-6 col-md-4">
+                                     <label class="form-label"><i class="bi bi-clock-history"></i> Approved Date</label>
+                                     <input type="text" name="approved_date" id="addApprovedDate" class="form-control" placeholder="DD-MM-YYYY">
+                                 </div>
+                               
                              </div>
                              
                              <div class="section-divider">
@@ -155,17 +156,24 @@
                                      <label class="form-label"><i class="bi bi-calendar-event"></i> Date of Birth <span class="text-danger">*</span></label>
                                      <input type="text" name="date_of_birth" id="addDob" class="form-control" placeholder="DD-MM-YYYY" required>
                                  </div>
-                                 <div class="col-12 col-sm-6 col-md-3">
+                                 <div class="col-12 col-sm-1">
+                                     <label class="form-label"><i class="bi bi-droplet-fill text-danger"></i> Blood Group</label>
+                                     <input type="text" name="blood_group" id="addBloodGroup" class="form-control" placeholder="e.g. O+ve">
+                                 </div>
+                                 <div class="col-12 col-sm-2 col-md-3">
                                      <label class="form-label"><i class="bi bi-people-fill"></i> Relative Type</label>
                                      <select name="relative_type" id="addRelativeType" class="form-select">
                                          <option value="Father">Father</option>
+                                         <option value="Daughter">Daughter</option>
+                                         <option value="Gaurdian">Gaurdian</option>
                                          <option value="Husband">Husband</option>
+
                                      </select>
                                  </div>
-                                 <div class="col-12 col-md-6">
+                                 <div class="col-12 col-md-3">
                                      <label class="form-label"><i class="bi bi-person-lines-fill"></i> Relative Name</label>
                                      <input type="text" name="relative_name" id="addRelativeName" class="form-control">
-                                 </div>
+                                 </div><br>
                                  <div class="col-12 col-sm-6 col-md-3">
                                      <label class="form-label text-dark fw-bold"><i class="bi bi-phone-fill"></i> Mobile Number <span class="text-danger">*</span></label>
                                      <input type="tel" name="mobile_number" id="addMobile" class="form-control border-secondary" maxlength="10" placeholder="10-digit number" required>
@@ -174,6 +182,7 @@
                                      <label class="form-label"><i class="bi bi-telephone-plus-fill"></i> Emergency Mobile</label>
                                      <input type="tel" name="emergency_mobile" id="addEmergencyMobile" class="form-control" placeholder="Backup tel" maxlength="10">
                                  </div>
+                                   
                              </div>
                              
                              <div class="section-divider">
@@ -203,18 +212,6 @@
                              </div>
                              <div class="row g-3">
                                  <div class="col-12 col-sm-6 col-md-4">
-                                     <label class="form-label"><i class="bi bi-calendar-plus"></i> LLR Issue Date</label>
-                                     <input type="text" name="issue_date" id="addIssueDate" class="form-control" placeholder="DD-MM-YYYY">
-                                 </div>
-                                 <div class="col-12 col-sm-6 col-md-4">
-                                     <label class="form-label"><i class="bi bi-calendar-minus"></i> LLR Expiry Date</label>
-                                     <input type="text" name="expiry_date" id="addExpiryDate" class="form-control" placeholder="DD-MM-YYYY">
-                                 </div>
-                                 <div class="col-12 col-sm-6 col-md-4">
-                                     <label class="form-label"><i class="bi bi-clock-history"></i> Approved Date</label>
-                                     <input type="text" name="approved_date" id="addApprovedDate" class="form-control" placeholder="DD-MM-YYYY">
-                                 </div>
-                                 <div class="col-12 col-sm-6 col-md-4">
                                      <label class="form-label text-dark fw-bold"><i class="bi bi-toggle-on"></i> DL Issued Status</label>
                                      <select name="dl_issued" id="addDlIssued" class="form-select border-secondary">
                                          <option value="No" selected>No</option>
@@ -224,6 +221,14 @@
                                  <div class="col-12 col-md-8">
                                      <label class="form-label"><i class="bi bi-card-heading"></i> Permanent DL Number</label>
                                      <input type="text" name="dl_number" id="addDlNumber" class="form-control" placeholder="e.g. TN5220260000000">
+                                 </div>
+                                 <div class="col-12 col-md-6">
+                                     <label class="form-label"><i class="bi bi-receipt"></i> Fees Number</label>
+                                     <input type="text" name="fees_number" id="addFeesNumber" class="form-control" placeholder="e.g. U26...">
+                                 </div>
+                                 <div class="col-12 col-sm-4">
+                                     <label class="form-label"><i class="bi bi-currency-rupee"></i> Fee Amount</label>
+                                     <input type="text" name="fee" id="addFee" class="form-control" placeholder="e.g. 230">
                                  </div>
                              </div>
                          </div>
@@ -260,30 +265,31 @@
                                  <label class="form-label"><i class="bi bi-vignette"></i> LLR Number</label>
                                  <input type="text" name="llr_number" id="editLlrNumber" class="form-control" required>
                              </div>
-                             <div class="col-12 col-md-6">
-                                 <label class="form-label"><i class="bi bi-receipt"></i> Fees Number</label>
-                                 <input type="text" name="fees_number" id="editFeesNumber" class="form-control">
-                             </div>
-                             <div class="col-12 col-sm-4">
-                                 <label class="form-label"><i class="bi bi-currency-rupee"></i> Fee Amount</label>
-                                 <input type="text" name="fee" id="editFee" class="form-control">
-                             </div>
-                             <div class="col-12 col-sm-4">
+                                                         <div class="col-12 col-sm-4">
                                  <label class="form-label text-dark fw-bold"><i class="bi bi-car-front-fill"></i> Vehicle Class</label>
                                  <select name="vehicle_class" id="editVehicleClass" class="form-select border-secondary" required>
                                      <option value="MCWOG">MCWOG</option>
                                      <option value="MCWG">MCWG</option>
                                      <option value="LMV">LMV</option>
                                      <option value="TRANS">TRANS</option>
-                                     <option value="MCWG, LMV">MCWG, LMV</option>
-                                     <option value="MCWOG, LMV">MCWOG, LMV</option>
-                                     <option value="MCWG, LMV, TRANS">MCWG, LMV, TRANS</option>
+                                     <option value="MCWG,LMV">MCWG,LMV</option>
+                                     <option value="MCWOG,LMV">MCWOG,LMV</option>
+                                  
                                  </select>
                              </div>
-                             <div class="col-12 col-sm-4">
-                                 <label class="form-label"><i class="bi bi-droplet-fill text-danger"></i> Blood Group</label>
-                                 <input type="text" name="blood_group" id="editBloodGroup" class="form-control">
+                             <div class="col-12 col-sm-6 col-md-4">
+                                 <label class="form-label"><i class="bi bi-calendar-plus"></i> LLR Issue Date</label>
+                                 <input type="text" name="issue_date" id="editIssueDate" class="form-control" placeholder="DD-MM-YYYY">
                              </div>
+                             <div class="col-12 col-sm-6 col-md-4">
+                                 <label class="form-label"><i class="bi bi-calendar-minus"></i> LLR Expiry Date</label>
+                                 <input type="text" name="expiry_date" id="editExpiryDate" class="form-control" placeholder="DD-MM-YYYY">
+                             </div>
+                             <div class="col-12 col-sm-6 col-md-4">
+                                 <label class="form-label"><i class="bi bi-clock-history"></i> Approved Date</label>
+                                 <input type="text" name="approved_date" id="editApprovedDate" class="form-control" placeholder="DD-MM-YYYY">
+                             </div>
+                          
                          </div>
                          
                          <div class="section-divider">
@@ -302,7 +308,9 @@
                                  <label class="form-label"><i class="bi bi-people-fill"></i> Relative Type</label>
                                  <select name="relative_type" id="editRelativeType" class="form-select">
                                      <option value="Father">Father</option>
-                                     <option value="Husband">Husband</option>
+                                     <option value="Daughter">Daughter</option>
+                                    <option value="Husband">Husband</option>
+                                        <option value="Gaurdian">Gaurdian</option>
                                  </select>
                              </div>
                              <div class="col-12 col-md-6">
@@ -316,6 +324,10 @@
                              <div class="col-12 col-sm-6 col-md-3">
                                  <label class="form-label"><i class="bi bi-telephone-plus-fill"></i> Emergency Mobile</label>
                                  <input type="tel" name="emergency_mobile" id="editEmergencyMobile" class="form-control" maxlength="10">
+                             </div>
+                                <div class="col-12 col-sm-4">
+                                 <label class="form-label"><i class="bi bi-droplet-fill text-danger"></i> Blood Group</label>
+                                 <input type="text" name="blood_group" id="editBloodGroup" class="form-control">
                              </div>
                          </div>
                          
@@ -345,18 +357,7 @@
                              <span class="section-title"><i class="bi bi-hourglass-split"></i> Status & Dates</span>
                          </div>
                          <div class="row g-3">
-                             <div class="col-12 col-sm-6 col-md-4">
-                                 <label class="form-label"><i class="bi bi-calendar-plus"></i> LLR Issue Date</label>
-                                 <input type="text" name="issue_date" id="editIssueDate" class="form-control" placeholder="DD-MM-YYYY">
-                             </div>
-                             <div class="col-12 col-sm-6 col-md-4">
-                                 <label class="form-label"><i class="bi bi-calendar-minus"></i> LLR Expiry Date</label>
-                                 <input type="text" name="expiry_date" id="editExpiryDate" class="form-control" placeholder="DD-MM-YYYY">
-                             </div>
-                             <div class="col-12 col-sm-6 col-md-4">
-                                 <label class="form-label"><i class="bi bi-clock-history"></i> Approved Date</label>
-                                 <input type="text" name="approved_date" id="editApprovedDate" class="form-control" placeholder="DD-MM-YYYY">
-                             </div>
+                             
                              <div class="col-12 col-sm-6 col-md-4">
                                  <label class="form-label text-dark fw-bold"><i class="bi bi-toggle-on"></i> DL Issued Status</label>
                                  <select name="dl_issued" id="editDlIssued" class="form-select border-secondary">
@@ -367,6 +368,14 @@
                              <div class="col-12 col-md-8">
                                  <label class="form-label"><i class="bi bi-card-heading"></i> Permanent DL Number</label>
                                  <input type="text" name="dl_number" id="editDlNumber" class="form-control" placeholder="e.g. TN5220260000000">
+                             </div>
+                              <div class="col-12 col-md-6">
+                                 <label class="form-label"><i class="bi bi-receipt"></i> Fees Number</label>
+                                 <input type="text" name="fees_number" id="editFeesNumber" class="form-control">
+                             </div>
+                             <div class="col-12 col-sm-4">
+                                 <label class="form-label"><i class="bi bi-currency-rupee"></i> Fee Amount</label>
+                                 <input type="text" name="fee" id="editFee" class="form-control">
                              </div>
                          </div>
                      </div>

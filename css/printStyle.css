@@ -1,174 +1,511 @@
-/* COMPLIANCE LAYOUT PRINT UTILITY STYLES */
-body { 
-    background: #f8fafc; 
-    font-family: system-ui, -apple-system, sans-serif;
-    overflow-x: hidden;
-} 
+/* ==========================================================================
+   LLR SYSTEM - TOTAL Saas DASHBOARD & INK-SAVER PRINT ENGINE STYLESHEET
+   Features: Color Clash Guard, Dropdown UI, Mobile Layouts, Print Media Engine
+   ========================================================================== */
 
-.card { 
-    border-radius: 24px; 
-    border: 1px solid #e2e8f0;
-    background: #ffffff;
-}
+/* --- 1. CORE DESIGN SYSTEM TOKENS --- */
+:root {
+    --llr-obsidian: #0f172a;
+    /* Premium Slate Dark */
+    --llr-charcoal: #334155;
+    /* Solid Text Gray */
+    --llr-text-main: #475569;
+    /* Professional Body Text */
+    --llr-text-muted: #64748b;
+    /* Clean Subtitle & Labels */
+    --llr-ivory: #f8fafc;
+    /* Soft Grid Grounding Surface */
+    --llr-pure-white: #ffffff;
+    --llr-border-delicate: #e2e8f0;
+    /* Ultra-Thin Dividers */
+    --llr-border-focus: #cbd5e1;
+    --llr-brand-blue: #2563eb;
+    /* Focused Interactive Accent */
 
-/* Custom Switch Row Styling alignment */
-.custom-toggle-row {
-    border-color: #cbd5e1 !important;
-    display: inline-flex;
-    align-items: center;
-}
-
-/* Custom Overlay Checklist Rows */
-.popup-checkbox-row {
-    display: flex;
-    align-items: center;
-    padding: 0.7rem 1rem;
-    background: #f8fafc;
-    border: 1px solid #e2e8f0;
-    border-radius: 12px;
-    transition: all 0.2s ease;
-    cursor: pointer;
-    margin-bottom: 2px;
-}
-.popup-checkbox-row:hover {
-    background: #f1f5f9;
-    border-color: #cbd5e1;
+    /* Shape Matrix & Shadow Metrics */
+    --llr-radius-classy: 14px;
+    --llr-radius-pill: 9999px;
+    --llr-radius-inner: 10px;
+    --llr-soft-shadow: 0 4px 20px -2px rgba(9, 13, 22, 0.03), 0 2px 6px -1px rgba(9, 13, 22, 0.02);
+    --llr-ease-smooth: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.form-select, .form-control {
-    border-radius: 12px !important;
-    font-size: 0.95rem;
-    padding: 0.65rem 0.85rem;
-    border: 1px solid #cbd5e1;
-    transition: all 0.2s ease;
-}
-.form-select:focus, .form-control:focus {
-    border-color: #0f172a;
-    box-shadow: 0 0 0 3px rgba(15, 23, 42, 0.08);
+/* Base Document Context */
+body {
+    background-color: var(--llr-ivory) !important;
+    color: var(--llr-obsidian) !important;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    letter-spacing: -0.01em;
+    -webkit-font-smoothing: antialiased;
 }
 
-.form-label {
-    color: #475569;
-    font-weight: 700;
-    font-size: 0.85rem;
-    margin-bottom: 0.4rem;
-    display: flex;
-    align-items: center;
-    gap: 0.4rem;
-}
-.form-label i {
-    color: #94a3b8;
+/* Layer Lock Layer for Collapsible Dynamic Mobile Menus */
+#global-nav-container {
+    position: relative;
+    z-index: 1060 !important;
 }
 
-/* Sticky Data Header Settings */
-.table-responsive { 
-    max-height: 520px; 
-    overflow-y: auto; 
-    border-radius: 16px;
-}
-.sticky-thead { 
-    position: sticky; 
-    top: 0; 
-    z-index: 1020; 
-}
-.sticky-thead th {
-    background-color: #f8fafc !important;
-    color: #334155 !important;
-    font-weight: 700;
-    font-size: 0.85rem;
-    text-transform: uppercase;
-    letter-spacing: 0.03em;
-    border-bottom: 2px solid #e2e8f0 !important;
-    padding: 1rem 0.75rem !important;
+/* --- 2. GLOBAL FLUID TRANSITION ENGINES --- */
+.card,
+.custom-toggle-row,
+#refreshBtn,
+.animated-pane {
+    animation: classyFadeIn 0.55s var(--llr-ease-smooth) both;
 }
 
-/* Custom Interactive Push Buttons Styles */
-.btn-dark-custom {
-    background: #0f172a;
-    color: #ffffff;
-    border: none;
-    border-radius: 12px;
-    font-weight: 600;
-    padding: 0.65rem 1.4rem;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    transition: all 0.25s ease;
-}
-.btn-dark-custom:hover {
-    background: #1e293b;
-    color: #ffffff;
-}
-
-.btn-outline-custom {
-    background: #ffffff;
-    color: #475569;
-    border: 1px solid #cbd5e1;
-    border-radius: 12px;
-    font-weight: 600;
-    padding: 0.65rem 1.25rem;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    transition: all 0.2s ease;
-}
-.btn-outline-custom:hover {
-    background: #f8fafc;
-    color: #0f172a;
+.card:nth-child(2) {
+    animation-delay: 0.05s;
 }
 
 .animated-pane {
-    animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-}
-@keyframes slideUp {
-    from { opacity: 0; transform: translateY(15px); }
-    to { opacity: 1; transform: translateY(0); }
+    animation-delay: 0.1s;
 }
 
-.col-hidden { 
-    display: none !important; 
+@keyframes classyFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(12px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
-/* =========================================================================
-   OFFICIAL PRINT BREAKPOINT RE-ALIGNMENTS
-   ========================================================================= */
+/* --- 3. HARD LAYER CONTRAST FIXES (SMASHES INVISIBLE WHITE TEXT GLITCHES) --- */
+h4.text-dark,
+h4.fw-bold,
+.text-dark,
+h4,
+h5,
+.fw-bold,
+h6:not(.text-light) {
+    color: var(--llr-obsidian) !important;
+}
+
+p.text-muted,
+.text-muted,
+.small.text-muted {
+    color: var(--llr-text-muted) !important;
+}
+
+label.text-secondary,
+.text-secondary {
+    color: var(--llr-charcoal) !important;
+}
+
+/* --- 4. TOP MANAGEMENT CONTROL BUTTONS & CONTROLS ALIGNMENT --- */
+.bi-printer-fill {
+    color: var(--llr-obsidian);
+    font-size: 1.25rem;
+    padding: 0.65rem;
+    background: var(--llr-pure-white);
+    border: 1px solid var(--llr-border-delicate);
+    border-radius: var(--llr-radius-inner);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Uniform Height Execution Controls System */
+.custom-toggle-row {
+    border: 1px solid var(--llr-border-delicate) !important;
+    background-color: var(--llr-pure-white) !important;
+    border-radius: var(--llr-radius-pill) !important;
+    padding: 0.55rem 1.25rem !important;
+    box-shadow: var(--llr-soft-shadow) !important;
+    display: inline-flex;
+    align-items: center;
+    height: 42px;
+    transition: border-color 0.2s ease;
+}
+
+.custom-toggle-row:hover {
+    border-color: var(--llr-border-focus) !important;
+}
+
+.custom-toggle-row .form-check-input {
+    width: 2.1em;
+    height: 1.1em;
+    cursor: pointer;
+    margin-top: 0;
+}
+
+.custom-toggle-row .form-check-input:checked {
+    background-color: var(--llr-obsidian) !important;
+    border-color: var(--llr-obsidian) !important;
+}
+
+#refreshBtn {
+    height: 42px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    background-color: var(--llr-obsidian) !important;
+    color: var(--llr-pure-white) !important;
+    border: 1px solid var(--llr-obsidian) !important;
+    border-radius: var(--llr-radius-pill) !important;
+    padding: 0 1.5rem !important;
+    font-size: 0.875rem !important;
+    font-weight: 500 !important;
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08) !important;
+    transition: all 0.2s var(--llr-ease-smooth);
+}
+
+#refreshBtn:hover {
+    background-color: #1e293b !important;
+    transform: translateY(-1px);
+}
+
+/* --- 5. SaaS DATA FILTER FORM ELEMENTS & CUSTOM OPTIONS LISTS --- */
+.form-label {
+    font-weight: 600;
+    font-size: 0.775rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--llr-text-muted) !important;
+    margin-bottom: 0.45rem;
+}
+
+.form-select,
+.form-control {
+    background-color: var(--llr-pure-white) !important;
+    color: var(--llr-obsidian) !important;
+    border: 1px solid var(--llr-border-delicate) !important;
+    border-radius: var(--llr-radius-inner) !important;
+    padding: 0.65rem 1rem !important;
+    font-size: 0.875rem;
+    transition: all 0.25s var(--llr-ease-smooth);
+}
+
+.form-select:focus,
+.form-control:focus {
+    border-color: var(--llr-brand-blue) !important;
+    box-shadow: 0 0 0 4px var(--llr-brand-glow) !important;
+    outline: 0;
+}
+
+/* Standardized Custom Option Down Arrow Overlay Styling */
+.form-select {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%2364748b' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e") !important;
+    background-position: right 1rem center !important;
+    background-size: 12px 12px !important;
+    padding-right: 2.5rem !important;
+    appearance: none !important;
+}
+
+.form-select option {
+    background-color: var(--llr-pure-white) !important;
+    color: var(--llr-obsidian) !important;
+}
+
+.input-group-text {
+    background-color: var(--llr-pure-white) !important;
+    border: 1px solid var(--llr-border-delicate) !important;
+    border-radius: var(--llr-radius-inner) 0 0 var(--llr-radius-inner) !important;
+    color: var(--llr-text-muted) !important;
+}
+
+.input-group>.form-control {
+    border-radius: 0 var(--llr-radius-inner) var(--llr-radius-inner) 0 !important;
+}
+
+/* --- 6. DATAGRID MATRIX FRAME (FIXES THE HIDDEN MANIFEST FRAME HEADER) --- */
+.animated-pane {
+    border-radius: var(--llr-radius-classy) !important;
+    overflow: hidden;
+    border: 1px solid var(--llr-border-delicate) !important;
+    background: var(--llr-pure-white) !important;
+    box-shadow: var(--llr-soft-shadow) !important;
+}
+
+/* Force dark gradient layout banner container layer */
+.card-header.bg-dark {
+   
+    padding: 1.25rem 1.75rem !important;
+    border-bottom: none !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+}
+
+.card-header.bg-dark h6,
+.card-header.bg-dark #previewTitle,
+.card-header.bg-dark .text-light,
+.card-header.bg-dark i {
+    color: var(--llr-pure-white) !important;
+    font-weight: 600 !important;
+}
+
+.card-header.bg-dark .btn-outline-light {
+    color: var(--llr-pure-white) !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    background-color: transparent !important;
+    border-radius: var(--llr-radius-pill) !important;
+    padding: 0.45rem 1.25rem !important;
+    font-size: 0.8rem !important;
+}
+
+/* Fixes Capsule Shape Layout and Bounding Mask Shifts */
+#triggerPrintBtn,
+.card-header.bg-dark .btn-light {
+    background-color: var(--llr-pure-white) !important;
+    color: var(--llr-obsidian) !important;
+    border: none !important;
+    border-radius: var(--llr-radius-pill) !important;
+    padding: 0.45rem 1.5rem !important;
+    font-size: 0.8rem !important;
+    font-weight: 600 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 0.5rem !important;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05) !important;
+}
+
+#triggerPrintBtn i,
+.card-header.bg-dark .btn-light i {
+    color: var(--llr-obsidian) !important;
+    font-size: 0.875rem !important;
+}
+
+/* Desktop Scrolling Parameters */
+@media screen {
+    .table-responsive {
+        max-height: 60vh;
+        overflow-y: auto;
+        position: relative;
+    }
+
+    .table-responsive::-webkit-scrollbar {
+        width: 5px;
+        height: 5px;
+    }
+
+    .table-responsive::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 99px;
+    }
+
+    .table thead th {
+        position: sticky;
+        top: 0;
+        z-index: 5;
+        background-color: #ffffff !important;
+        border-bottom: 2px solid var(--llr-border-delicate) !important;
+        box-shadow: inset 0 -1px 0 var(--llr-border-delicate);
+    }
+}
+
+/* Cell Matrix Typography Balancing Map */
+.table th {
+    font-weight: 600;
+    font-size: 0.775rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--llr-text-muted) !important;
+    background-color: var(--llr-ivory) !important;
+    padding: 1.1rem 1.5rem !important;
+}
+
+.table td {
+    padding: 1.1rem 1.5rem !important;
+    font-size: 0.875rem;
+    color: var(--llr-text-main) !important;
+    border-bottom: 1px solid var(--llr-ivory);
+}
+
+.table td.fw-bold {
+    color: var(--llr-obsidian) !important;
+    font-weight: 600 !important;
+}
+
+.table td.text-secondary {
+    color: var(--llr-charcoal) !important;
+}
+
+.table-hover tbody tr:hover {
+    background-color: #f8fafc !important;
+}
+
+.table-striped>tbody>tr:nth-of-type(odd)>* {
+    background-color: rgba(248, 250, 252, 0.45) !important;
+}
+
+.badge.bg-warning {
+    background-color: rgba(217, 119, 6, 0.08) !important;
+    color: #d97706 !important;
+    border: 1px solid rgba(217, 119, 6, 0.15) !important;
+    font-weight: 600;
+    padding: 0.35rem 0.75rem;
+    border-radius: var(--llr-radius-pill);
+    font-size: 0.725rem;
+}
+
+/* --- 7. ENTERPRISE MODEL SHELL OVERRIDES --- */
+.modal-content {
+    background-color: var(--llr-pure-white) !important;
+    border-radius: var(--llr-radius-classy) !important;
+    border: none !important;
+}
+
+.modal-body p {
+    color: var(--llr-text-muted) !important;
+}
+
+.modal-body label {
+    color: var(--llr-obsidian) !important;
+}
+
+.modal-footer {
+    background-color: var(--llr-ivory) !important;
+    border-top: 1px solid var(--llr-border-delicate) !important;
+}
+
+/* --- 8. MOBILE VIEWPORT VIEWING ANGLES OVERRIDES --- */
+@media (max-width: 991.98px) {
+    .container-fluid {
+        padding-left: 1rem !important;
+        padding-right: 1rem !important;
+    }
+
+    #refreshBtn,
+    .custom-toggle-row {
+        width: 100% !important;
+        justify-content: center;
+    }
+
+    .table th,
+    .table td {
+        padding: 0.95rem 1rem !important;
+        white-space: nowrap;
+    }
+}
+
+/* --- 9. PERFECT DEVICE INK-SAVER PRINT ENGINE --- */
 @media print {
-    body { background: #ffffff !important; color: #000000 !important; font-size: 11pt !important; padding: 0; margin: 0; }
-    
+    @page {
+        size: A4 landscape;
+        margin: 12mm 15mm;
+    }
+
+    html,
+    body {
+        background: #ffffff !important;
+        color: #000000 !important;
+        font-size: 10pt !important;
+        line-height: 1.4 !important;
+    }
+
     #global-nav-container,
-    .btn-dark-custom,
     .no-print-panel,
+    .card-header,
+    .btn,
+    .btn-dark-custom,
+    .btn-outline-light,
+    .btn-light,
+    #refreshBtn,
+    #triggerPrintBtn,
+    .form-check,
+    .form-switch,
     .custom-toggle-row,
-    .card-header .d-flex {
+    .bi-printer-fill,
+    .spinner-border,
+    .modal,
+    .modal-backdrop,
+    .input-group,
+    #liveSearchQuery {
         display: none !important;
+        opacity: 0 !important;
+        visibility: hidden !important;
+        height: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
     }
-    
-    .container, .card, .card-body { 
-        width: 100% !important; 
+
+    .container,
+    .container-fluid {
+        width: 100% !important;
         max-width: 100% !important;
-        padding: 0 !important; 
-        margin: 0 !important; 
-        box-shadow: none !important;
-        border: none !important;
+        padding: 0 !important;
+        margin: 0 !important;
     }
-    .table-responsive { max-height: none !important; overflow: visible !important; }
-    
-    table { width: 100% !important; border-collapse: collapse !important; }
-    tr { page-break-inside: avoid; }
-    thead { display: table-header-group !important; background-color: #f8f9fa !important; }
-    th, td { border: 1px solid #cbd5e1 !important; padding: 8px !important; font-size: 9.5pt !important; text-align: left !important; }
-    
-    .col-hidden { display: none !important; }
-    
-    body::before {
-        content: "Official LLR Portal Master Audit Record Ledger\nGenerated On: " attr(data-print-date) " | Scope Filter: " attr(data-print-scope);
-        display: block;
-        font-size: 10.5pt;
-        font-weight: bold;
-        white-space: pre-wrap;
-        text-align: left;
-        margin-bottom: 25px;
-        border-bottom: 2px solid #0f172a;
-        padding-bottom: 8px;
+
+    .card,
+    .animated-pane,
+    .table-responsive {
+        border: none !important;
+        box-shadow: none !important;
+        overflow: visible !important;
+        max-height: none !important;
+        width: 100% !important;
+        background: transparent !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
+    .table {
+        width: 100% !important;
+        border-collapse: collapse !important;
+        margin-top: 10px !important;
+    }
+
+    .table tr {
+        page-break-inside: avoid !important;
+        page-break-after: auto !important;
+    }
+
+    .table th {
+        background-color: #f1f5f9 !important;
+        color: #000000 !important;
+        border-bottom: 2px solid #000000 !important;
+        border-top: 1px solid #e2e8f0 !important;
+        padding: 8px 12px !important;
+        font-size: 9pt !important;
+        font-weight: 700 !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.05em !important;
+        text-align: left !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+
+    .table td {
+        border-bottom: 1px solid #cbd5e1 !important;
+        padding: 8px 12px !important;
+        font-size: 8.5pt !important;
+        background: transparent !important;
+        color: #000000 !important;
+        word-break: break-word !important;
+        white-space: normal !important;
+    }
+
+    .table td.fw-bold,
+    .table td.text-dark {
+        color: #000000 !important;
+        font-weight: 700 !important;
+    }
+
+    .table td.fw-semibold,
+    .table td.text-secondary {
+        color: #1e293b !important;
+        font-weight: 600 !important;
+    }
+
+    .table-striped>tbody>tr:nth-of-type(odd)>* {
+        background-color: #f8fafc !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+
+    .badge,
+    .badge.bg-warning {
+        border: none !important;
+        background: transparent !important;
+        color: #000000 !important;
+        padding: 0 !important;
+        font-weight: 700 !important;
+        font-size: 8.5pt !important;
     }
 }
