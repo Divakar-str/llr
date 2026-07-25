@@ -50,20 +50,51 @@ function calculateExactAge(dobStr) {
 /**
  * Parses address parameters to isolate the target operational district layer context.
  */
-function extractCityDistrict(addressStr) {
-    if (!addressStr || addressStr === "-") return "Unknown";
-    const upperAddr = addressStr.toUpperCase();
-    
-    if (upperAddr.includes("EDAPPADI") || upperAddr.includes("EDAPPADY")) return "Edappady";
-   if (upperAddr.includes("SANGAGIRI") || upperAddr.includes("SANKARI")) return "Sankagiri";
-    
-    if (upperAddr.includes("SALEM")) return "Salem";
-   
-    
-    const match = addressStr.match(/([A-Za-z\s]+?)\s*(?:DT|DISTRICT)/i);
-    return match ? match[1].trim() : "Other District";
-}
 
+function extractCityDistrict(addressStr) {
+    if (!addressStr || addressStr.trim() === "" || addressStr === "-") {
+        return "Unknown";
+    }
+
+    const upperAddr = addressStr.toUpperCase();
+    const matchesWord = (word) => new RegExp(`\\b${word}\\b`, "i").test(upperAddr);
+
+    // Tier 1: Driving School / Specific Anchors (MUST be checked FIRST)
+    const isThangamariammanAnchor = (
+        /THANGAMARI\s*AMMAN\b|THANGAMARIAMMAN\b|THANGAMARIAMMA\b|THANGAMARI\b/i.test(upperAddr) ||
+        /\b(?:HEAVY\s+DS|MOTOR\s+DS|DRIVING\s+SCHOOL|DRIVING\s+ACADEMY)\b/i.test(upperAddr) ||
+        /\b(?:THANGAMARIAMMAN\s+(?:DS|SCHOOL|HEAVY|MOTOR|ACADEMY))\b/i.test(upperAddr)
+    );
+
+    if (isThangamariammanAnchor) {
+        return "Thangamariamman";
+    }
+
+    // Tier 2: Specific Town / RTO Regions
+    if (matchesWord("EDAPPADI") || matchesWord("EDAPPADY")) {
+        return "Edappady";
+    }
+    
+    if (matchesWord("SANGAGIRI") || matchesWord("SANKARI") || matchesWord("SANAGIRI")) {
+        return "Sankagiri";
+    }
+
+    // Tier 3: District Headquarter Fallback
+    if (matchesWord("SALEM")) {
+        return "Salem";
+    }
+
+    // Tier 4: Dynamic Regex Extraction (e.g., "NAMAKKAL DT", "TIRUCHENGODE TK")
+    const dynamicMatch = upperAddr.match(/([A-Z\s]{2,20}?)\s*(?:TK|TALUK|DT|DISTRICT|DIST)\b/i);
+    if (dynamicMatch) {
+        const extracted = dynamicMatch[1].trim();
+        if (extracted.length > 2) {
+            return extracted.charAt(0).toUpperCase() + extracted.slice(1).toLowerCase();
+        }
+    }
+
+    return "Other District";
+}
 /**
  * Processes data metrics pipelines and renders visualization elements.
  */
@@ -86,8 +117,16 @@ function processDashboardMetricsEngine(rows) {
     let monthLlr = 0, monthDl = 0;
     let emergencyWith = 0, emergencyWithout = 0;
 
-    // Zero-baseline setup to handle single or combined inputs smoothly
-    const vehicleClassMap = { "MCWG": 0, "LMV": 0, "MCWOG": 0, "TRANS": 0 };
+    // Exact Map structure as requested
+    const vehicleClassMap = {
+        "MCWOG": 0, 
+        "MCWG": 0,
+        "LMV": 0,
+        "MCWOG,LMV": 0,  
+        "MCWG,LMV": 0,  
+        "TRANS": 0 
+    };
+    
     const bloodGroupMap = {};
     const relativeTypeMap = {};
     const addressSpreadMap = {};
@@ -130,21 +169,30 @@ function processDashboardMetricsEngine(rows) {
         if (row.issue_date && row.issue_date !== "-") {
             dailyIssueMap[row.issue_date] = (dailyIssueMap[row.issue_date] || 0) + 1;
             
-            const monthlyTokenKey = `${String(issueDateObj.getMonth() + 1).padStart(2, '0')}-${issueDateObj.getFullYear()}`;
-            monthlyIssueMap[monthlyTokenKey] = (monthlyIssueMap[monthlyTokenKey] || 0) + 1;
+            if (issueDateObj) {
+                const monthlyTokenKey = `${String(issueDateObj.getMonth() + 1).padStart(2, '0')}-${issueDateObj.getFullYear()}`;
+                monthlyIssueMap[monthlyTokenKey] = (monthlyIssueMap[monthlyTokenKey] || 0) + 1;
+            }
         }
 
-        // TWEAK: Tally individual classes correctly, even if they are combined in one string
+        // --- ENHANCED VEHICLE CLASS TALLYING ---
         if (row.vehicle_class && row.vehicle_class !== "-") {
-            row.vehicle_class.split(",").forEach(cls => {
-                const formattedClass = cls.trim().toUpperCase();
-                // Dynamically update existing categories or handle edge cases gracefully
-                if (vehicleClassMap[formattedClass] !== undefined) {
-                    vehicleClassMap[formattedClass]++;
-                } else if (formattedClass !== "") {
-                    vehicleClassMap[formattedClass] = (vehicleClassMap[formattedClass] || 0) + 1;
-                }
-            });
+            const rawClass = row.vehicle_class.trim().toUpperCase();
+
+            // 1. Direct match check (Catches exact combined strings like "MCWG,LMV" or "MCWOG,LMV")
+            if (vehicleClassMap[rawClass] !== undefined) {
+                vehicleClassMap[rawClass]++;
+            } else {
+                // 2. Token split fallback (In case tokens appear in different orders or unknown categories)
+                row.vehicle_class.split(",").forEach(cls => {
+                    const formattedClass = cls.trim().toUpperCase();
+                    if (vehicleClassMap[formattedClass] !== undefined) {
+                        vehicleClassMap[formattedClass]++;
+                    } else if (formattedClass !== "") {
+                        vehicleClassMap[formattedClass] = (vehicleClassMap[formattedClass] || 0) + 1;
+                    }
+                });
+            }
         }
 
         if (row.blood_group && row.blood_group !== "-") {
@@ -198,8 +246,10 @@ function processDashboardMetricsEngine(rows) {
     const sortedExpiryLabels = Object.keys(expiryTimelineMap).sort((a,b) => parseCustomDate(a) - parseCustomDate(b));
     const sortedExpiryData = sortedExpiryLabels.map(lbl => expiryTimelineMap[lbl]);
 
-    // Render with custom slate/blue/emerald theme colors including TRANS
-    renderPieChart("chartVehicleClass", Object.keys(vehicleClassMap), Object.values(vehicleClassMap), ['#0f172a','#3b82f6','#10b981','#f59e0b']);
+    // Color palette updated to comfortably fit 6+ categories
+    const chartColors = ['#0f172a', '#3b82f6', '#10b981', '#f59e0b', '#6366f1', '#ec4899', '#8b5cf6'];
+
+    renderPieChart("chartVehicleClass", Object.keys(vehicleClassMap), Object.values(vehicleClassMap), chartColors);
     renderBarChart("chartBloodGroup", Object.keys(bloodGroupMap), Object.values(bloodGroupMap), "#ef4444");
     renderBarChart("chartAgeGroup", Object.keys(ageGroupMap), Object.values(ageGroupMap), "#3b82f6");
     renderLineChart("chartDailyTrend", "Daily Issuance", sortedDailyLabels, sortedDailyData, "#0f172a");

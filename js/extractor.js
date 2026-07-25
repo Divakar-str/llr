@@ -132,9 +132,17 @@ function executeTextParsingEngine() {
     if (!coreBlockMatch) {
         const lines = rawText.split('\n').map(l => l.trim()).filter(l => l.length > 0);
         const dobIdx = lines.findIndex(l => l.match(/\d{2}-\d{2}-\d{4}/));
-        if (dobIdx >= 2) {
-            name = lines[dobIdx - 2];
-            relativeName = lines[dobIdx - 1];
+        
+        if (dobIdx !== -1) {
+            if (dobIdx > 0 && dobIdx + 1 < lines.length && !lines[dobIdx - 1].includes("Name")) {
+                // Handle multi-column dump format (Relative name above DOB, Applicant name below)
+                relativeName = lines[dobIdx - 1];
+                name = lines[dobIdx + 1];
+            } else if (dobIdx >= 2) {
+                // Standard stacked layout
+                name = lines[dobIdx - 2];
+                relativeName = lines[dobIdx - 1];
+            }
         }
     } else {
         let tokens = coreBlockMatch[1].trim().split(/\s+/);
@@ -161,15 +169,32 @@ function executeTextParsingEngine() {
 
     // 7 & 8. Address Structures & Biometric Scars Processing Space
     let addressText = "-", idMark1 = "-", idMark2 = "-";
-    
-    // Check if both index (1) and (2) exist to handle multi-mark extractions cleanly
-    const hasMark2 = flattenedText.includes("(2)");
-    
-    if (hasMark2) {
-        const id2Match = flattenedText.match(/\(2\)\s*(.*?)\s*(?:is licenced|is licensed|throughout)/i);
-        idMark2 = id2Match ? id2Match[1].trim() : "-";
+
+    // A. IDENTIFICATION MARKS EXTRACTION
+    const rawLines = rawText.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+    const markLines = rawLines.filter(l => /^(?:A\s+SCAR|A\s+MOLE|AMOLE)\b/i.test(l));
+
+    if (markLines.length > 0) {
+        idMark1 = markLines[0];
+        if (markLines.length > 1) {
+            idMark2 = markLines[1];
+        }
+    } else {
+        const markRegex = /(?:A\s+SCAR|A\s+MOLE|AMOLE)\b[^(\n\r]*/gi;
+        const extractedMarks = flattenedText.match(markRegex);
+
+        if (extractedMarks && extractedMarks.length > 0) {
+            idMark1 = extractedMarks[0].replace(/\s+(?:TN\d{2}|Husband|Father|is licenced|RTO|Fee Details).*/i, "").trim();
+            if (extractedMarks.length > 1) {
+                idMark2 = extractedMarks[1].replace(/\s+(?:TN\d{2}|Husband|Father|is licenced|RTO|Fee Details).*/i, "").trim();
+            }
+        }
     }
 
+    idMark1 = idMark1.replace(/^\(1\)\s*/i, "").replace(/\s*\(2\).*/i, "").trim();
+    idMark2 = idMark2.replace(/^\(2\)\s*/i, "").trim();
+
+    // B. ADDRESS EXTRACTION (With Primary Slicing + Clean Line Fallback)
     if (bloodGroup !== "-") {
         const bloodIndex = flattenedText.indexOf(bloodGroup) + bloodGroup.length;
         let absoluteAddressEndIdx = -1;
@@ -177,56 +202,53 @@ function executeTextParsingEngine() {
 
         if (markStartMatch) {
             absoluteAddressEndIdx = flattenedText.indexOf(markStartMatch[0], bloodIndex);
-            
-            if (hasMark2) {
-                const id2Index = flattenedText.indexOf("(2)");
-                idMark1 = flattenedText.slice(absoluteAddressEndIdx, id2Index).trim();
-            } else {
-                const licenceLicenseIdx = flattenedText.match(/is licenc[e|i]sd/i);
-                const endPos = licenceLicenseIdx ? licenceLicenseIdx.index : flattenedText.length;
-                idMark1 = flattenedText.slice(absoluteAddressEndIdx, endPos).trim();
-            }
         }
 
         if (absoluteAddressEndIdx > bloodIndex) {
             let block = flattenedText.slice(bloodIndex, absoluteAddressEndIdx).trim()
-                            .replace(/^\(1\)\s*/i)
-                            .replace(/Present Address|Permanent Address|Marks of Identification/gi, "")
-                            .trim();
+                                    .replace(/^\(1\)\s*/i, "")
+                                    .replace(/Present Address|Permanent Address|Marks of Identification/gi, "")
+                                    .trim();
             
             const mid = Math.floor(block.length / 2);
             let f = block.substring(0, mid).trim(), s = block.substring(mid).trim();
             addressText = (f === s || s.includes("TAMIL NADU") || s.includes("SALEM") || /\d{6}$/.test(s)) ? s : block;
         }
     }
-    
+
+    // Line-by-line address fallback if primary slice resulted in empty/invalid block
+    if (addressText === "-" || addressText === "") {
+        const cleanAddrLines = rawLines.filter(l => {
+            const isNoise = /^(Husband Name|Father Name|RTO|LLR|Fee|Warning|This Licence|is licenced|\d{2}\/\d{2}\/\d{4})/i.test(l) ||
+                            /^[A-Z]{2}\d{2}\s*\/[0-9\/]+/i.test(l);
+            if (isNoise) return false;
+
+            return /\d{1,4}\/\d{1,4}/.test(l) || 
+                   /\b(?:PO|TK|DT|DIST|STREET|ROAD|NAGAR|EARIKADU|KARUMAPURAM|TIRUCHENGODE|SANKARI|NAMAKKAL)\b/i.test(l) || 
+                   /\b\d{6}(?:,\d{6})?\b/.test(l);
+        });
+
+        if (cleanAddrLines.length > 0) {
+            let combined = cleanAddrLines.join(" ").replace(/\s+/g, " ").trim();
+            const mid = Math.floor(combined.length / 2);
+            let firstHalf = combined.substring(0, mid).trim();
+            let secondHalf = combined.substring(mid).trim();
+            addressText = (firstHalf === secondHalf) ? firstHalf : combined;
+        }
+    }
+
     data["present_address"] = addressText;
     data["permanent_address"] = addressText;
     data["identification_mark_1"] = idMark1.replace(/\s+/g, " ");
     data["identification_mark_2"] = idMark2.replace(/\s+/g, " ");
 
     // 9. Vehicle Designation Class with Space Strip Regular Expression
-    const vehicleMatch = flattenedText.match(/description\s+([A-Z0-9,\s\-+/]+?)(?:\s\.\.\.\.|\s\*|_)/i);
-    let extractedVehicle = vehicleMatch ? vehicleMatch[1] : "-";
-    data["vehicle_class"] = normalizeVehicleClass(extractedVehicle);
-
-    // 10. Validity Scale Ranges Tracking
-    let rawIssueDate = "-";
-    let rawExpiryDate = "-";
-    const validityMatch = flattenedText.match(/valid\s+from\s+date\s*(\d{2}[-\/]\d{2}[-\/]\d{4})\s*To\s*(\d{2}[-\/]\d{2}[-\/]\d{4})/i);
-
-    if (validityMatch) {
-        rawIssueDate = validityMatch[1];
-        rawExpiryDate = validityMatch[2];
-    } else {
-        const allDates = flattenedText.match(/(\d{2}[-\/]\d{2}[-\/]\d{4})/g);
-        if (allDates && allDates.length >= 2) {
-            rawIssueDate = allDates[allDates.length - 2];
-            rawExpiryDate = allDates[allDates.length - 1];
-        }
+    let vehicleMatch = flattenedText.match(/(?:description|following description)\s+([A-Z0-9,\s\-+/]+?)(?:\s\.\.\.\.|\s\*|_)/i);
+    if (!vehicleMatch) {
+        vehicleMatch = flattenedText.match(/\b(?:MCWOG|MCWG|LMV|TRANS)(?:\s*,\s*(?:MCWOG|MCWG|LMV|TRANS))*\b/i);
     }
-    data["issue_date"] = formatToStandardDate(rawIssueDate);
-    data["expiry_date"] = formatToStandardDate(rawExpiryDate);
+    let extractedVehicle = vehicleMatch ? (vehicleMatch[1] || vehicleMatch[0]) : "-";
+    data["vehicle_class"] = normalizeVehicleClass(extractedVehicle);
 
     // 11. Final Form Approved Datetime Target Mapping
     const approvedMatch = flattenedText.match(/Approved\s+Date:\s*([\d\s\-:\/A-Za-z]*)/i);
@@ -235,7 +257,39 @@ function executeTextParsingEngine() {
         let dateOnlyMatch = approvedMatch[1].match(/(\d{2,4}[-\/]\d{2}[-\/]\d{2,4})/);
         if (dateOnlyMatch) rawApprovedDate = dateOnlyMatch[1];
     }
-    // Fallback check if explicit Approved Date header token is completely absent
+
+    // 10. Validity Scale Ranges Tracking
+    let rawIssueDate = "-";
+    let rawExpiryDate = "-";
+
+    const validityMatch = flattenedText.match(/valid\s+from\s+.*?(\d{2}[-\/]\d{2}[-\/]\d{4})\s+(?:To\s+)?(\d{2}[-\/]\d{2}[-\/]\d{4})/i);
+
+    if (validityMatch) {
+        rawIssueDate = validityMatch[1];
+        rawExpiryDate = validityMatch[2];
+    } else {
+        const allDates = flattenedText.match(/(\d{2}[-\/]\d{2}[-\/]\d{4})/g);
+        if (allDates) {
+            const normDob = formatToStandardDate(data["date_of_birth"]);
+            const normApp = formatToStandardDate(rawApprovedDate);
+            
+            const validCandidates = allDates.filter(d => {
+                const std = formatToStandardDate(d);
+                return std !== normDob && std !== normApp;
+            });
+
+            if (validCandidates.length >= 2) {
+                rawIssueDate = validCandidates[0];
+                rawExpiryDate = validCandidates[1];
+            } else if (allDates.length >= 2) {
+                rawIssueDate = allDates[allDates.length - 2];
+                rawExpiryDate = allDates[allDates.length - 1];
+            }
+        }
+    }
+    data["issue_date"] = formatToStandardDate(rawIssueDate);
+    data["expiry_date"] = formatToStandardDate(rawExpiryDate);
+
     if (rawApprovedDate === "-" && data["issue_date"] !== "-") {
         rawApprovedDate = data["issue_date"];
     }
