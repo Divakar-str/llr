@@ -1,399 +1,430 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-     <meta charset="UTF-8">
-     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-     <title>LLR Portal - Records Management</title>
-     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
-     <!-- Linked to your external style sheet asset -->
-     <link href="./css/recordsStyle.css" rel="stylesheet"> 
-</head>
-<body>
-      <div id="global-nav-container"></div>
-      
-      <div class="container-fluid px-3 px-md-4 pb-5 pt-4">
-          <!-- Top Dashboard Header & Navigation Tabs Selection -->
-          <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
-             <div class="d-flex align-items-center gap-3">
-                 <div class="fs-3 text-dark d-none d-sm-block"><i class="bi bi-database-fill-gear"></i></div>
-                 <div>
-                     <h4 class="fw-bold text-dark mb-0">Records Hub</h4>
-                     <p class="text-muted small mb-0">View saved records, update existing information, or add new entries manually.</p>
-                 </div>
-             </div>
-             
-             <ul class="nav nav-pills shadow-sm p-1 bg-white rounded-3 border" id="crudTabPanel" role="tablist">
-                 <li class="nav-item" role="presentation">
-                     <button class="nav-link active" id="view-table-tab" data-bs-toggle="tab" data-bs-target="#viewTablePane" type="button" role="tab">
-                         <i class="bi bi-table"></i> View Registry
-                     </button>
-                 </li>
-                 <li class="nav-item" role="presentation">
-                     <button class="nav-link text-success" id="add-record-tab" data-bs-toggle="tab" data-bs-target="#addRecordPane" type="button" role="tab">
-                         <i class="bi bi-plus-circle-fill"></i> Add LLR
-                     </button>
-                 </li>
-             </ul>
-         </div>
-         
-         <!-- Tab Content Views Segment -->
-         <div class="tab-content" id="crudTabContent">
-             
-             <!-- TAB PANE 1: VIEW GRID DATA REGISTRY -->
-             <div class="tab-pane fade show active animated-pane" id="viewTablePane" role="tabpanel">
-                 <div class="card shadow-sm border-0 bg-white p-3 mb-3">
-                     <div class="row g-3 align-items-end">
-                         <div class="col-12 col-md-4">
-                             <label class="form-label"><i class="bi bi-search"></i> Search Records</label>
-                             <div class="input-group">
-                                 <span class="input-group-text bg-white border-end-0 text-muted"><i class="bi bi-search"></i></span>
-                                 <input type="text" id="tableSearchInput" class="form-control border-start-0 ps-1" placeholder="Search by name, LLR, phone...">
-                             </div>
-                         </div>
-                         <div class="col-12 col-sm-6 col-md-3 date-input-node">
-                             <label class="form-label"><i class="bi bi-calendar-plus"></i> Issue Date From</label>
-                             <input type="date" id="filterStartDate" class="form-control">
-                         </div>
-                         <div class="col-12 col-sm-6 col-md-3 date-input-node">
-                             <label class="form-label"><i class="bi bi-calendar-minus"></i> Issue Date To</label>
-                             <input type="date" id="filterEndDate" class="form-control">
-                         </div>
-                         <div class="col-12 col-md-2">
-                             <button id="refreshDataBtn" class="btn btn-dark-custom w-100 shadow-sm justify-content-center py-2.5">
-                                 <i class="bi bi-arrow-clockwise"></i> Refresh Data
-                             </button>
-                         </div>
-                     </div>
-                 </div>
-                 
-                 <div class="card shadow-sm border-0">
-                     <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center py-3 px-4" style="border-radius: 24px 24px 0 0;">
-                         <h6 class="mb-0 fw-bold text-light d-flex align-items-center gap-2">
-                             <i class="bi bi-cloud-check-fill"></i> Registry Database
-                         </h6>
-                         <span id="recordCountBadge" class="badge bg-secondary text-white fw-bold px-3 py-2 small">Loading...</span>
-                     </div>
-                     <div class="card-body p-0">
-                         <div class="table-responsive">
-                             <table class="table table-hover align-middle mb-0" id="dbMasterTable">
-                                 <thead class="sticky-thead">
-                                     <tr>
-                                         <th class="ps-4">LLR Number</th>
-                                         <th>Applicant Name</th>
-                                         <th>Date of Birth</th>
-                                         <th>Vehicle Class</th>
-                                         <th>Mobile Number</th>
-                                         <th>Issue Date</th>
-                                         <th>Expiry Date</th>
-                                         <th>DL Status</th>
-                                         <th class="text-center pe-4">Actions</th>
-                                     </tr>
-                                 </thead>
-                                 <tbody id="recordsTableBody"></tbody>
-                             </table>
-                         </div>
-                     </div>
-                 </div>
-             </div>
-             
-             <!-- TAB PANE 2: MANUAL ENTRY FORM -->
-             <div class="tab-pane fade animated-pane" id="addRecordPane" role="tabpanel">
-                 <div class="card shadow-sm border-0 bg-white">
-                     <div class="card-header bg-dark text-white py-3 px-4" style="border-radius: 24px 24px 0 0;">
-                         <h6 class="mb-0 fw-bold d-flex align-items-center gap-2">
-                             <i class="bi bi-file-earmark-plus"></i> New Record Form
-                         </h6>
-                     </div>
-                     <form id="manualInsertForm" novalidate class="needs-validation">
-                         <div class="card-body p-4">
-                             <input type="hidden" name="action" value="insert">
-                             
-                             <div class="section-divider mt-0">
-                                 <span class="section-title"><i class="bi bi-key-fill"></i> License Details</span>
-                             </div>
-                             <div class="row g-3">
-                                 <div class="col-12 col-md-6">
-                                     <label class="form-label"><i class="bi bi-vignette"></i> LLR Number <span class="text-danger">*</span></label>
-                                     <input type="text" name="llr_number" id="addLlrNumber" class="form-control" placeholder="e.g. TN52/0004108/2026" required>
-                                 </div>
-                                 
-                                 <div class="col-12 col-sm-4">
-                                     <label class="form-label text-dark fw-bold"><i class="bi bi-car-front-fill"></i> Vehicle Class <span class="text-danger">*</span></label>
-                                     <select name="vehicle_class" id="addVehicleClass" class="form-select border-secondary" required>
-                                         <option value="MCWOG">MCWOG</option>
-                                         <option value="MCWG">MCWG</option>
-                                         <option value="LMV" selected>LMV</option>
-                                         <option value="TRANS">TRANS</option>
-                                         <option value="MCWG,LMV">MCWG,LMV</option>
-                                         <option value="MCWOG,LMV">MCWOG,LMV</option>
-                                     </select>
-                                 </div>
-                                 <div class="col-12 col-sm-6 col-md-4">
-                                     <label class="form-label"><i class="bi bi-calendar-plus"></i> LLR Issue Date</label>
-                                     <input type="text" name="issue_date" id="addIssueDate" class="form-control" placeholder="DD-MM-YYYY">
-                                 </div>
-                                 <div class="col-12 col-sm-6 col-md-4">
-                                     <label class="form-label"><i class="bi bi-calendar-minus"></i> LLR Expiry Date</label>
-                                     <input type="text" name="expiry_date" id="addExpiryDate" class="form-control" placeholder="DD-MM-YYYY">
-                                 </div>
-                                 <div class="col-12 col-sm-6 col-md-4">
-                                     <label class="form-label"><i class="bi bi-clock-history"></i> Approved Date</label>
-                                     <input type="text" name="approved_date" id="addApprovedDate" class="form-control" placeholder="DD-MM-YYYY">
-                                 </div>
-                               
-                             </div>
-                             
-                             <div class="section-divider">
-                                 <span class="section-title"><i class="bi bi-person-bounding-box"></i> Personal Details</span>
-                             </div>
-                             <div class="row g-3">
-                                 <div class="col-12 col-md-6">
-                                     <label class="form-label"><i class="bi bi-person-fill"></i> Applicant Full Name <span class="text-danger">*</span></label>
-                                     <input type="text" name="name" id="addName" class="form-control" placeholder="FIRSTNAME LASTNAME" required>
-                                 </div>
-                                 <div class="col-12 col-sm-6 col-md-3">
-                                     <label class="form-label"><i class="bi bi-calendar-event"></i> Date of Birth <span class="text-danger">*</span></label>
-                                     <input type="text" name="date_of_birth" id="addDob" class="form-control" placeholder="DD-MM-YYYY" required>
-                                 </div>
-                                 <div class="col-12 col-sm-1">
-                                     <label class="form-label"><i class="bi bi-droplet-fill text-danger"></i> Blood Group</label>
-                                     <input type="text" name="blood_group" id="addBloodGroup" class="form-control" placeholder="e.g. O+ve">
-                                 </div>
-                                 <div class="col-12 col-sm-2 col-md-3">
-                                     <label class="form-label"><i class="bi bi-people-fill"></i> Relative Type</label>
-                                     <select name="relative_type" id="addRelativeType" class="form-select">
-                                         <option value="Father">Father</option>
-                                         <option value="Daughter">Daughter</option>
-                                         <option value="Gaurdian">Gaurdian</option>
-                                         <option value="Husband">Husband</option>
+<!DOCTYPE html> 
+<html lang="en"> 
+<head>  
+    <meta charset="UTF-8">  
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">  
+    <title>LLR Portal - Records Management</title>  
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">  
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">  
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Linked to your external style sheet asset -->  
+    <link href="./css/recordsStyle.css" rel="stylesheet">  
+</head> 
+<body>  
+    <div id="global-nav-container"></div>  
+        
+    <div class="container-fluid px-3 px-md-4 pb-5 pt-4">  
+        <!-- Top Dashboard Header & Navigation Tabs Selection -->  
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">  
+            <div class="d-flex align-items-center gap-3">  
+                <div class="fs-3 text-dark d-none d-sm-block"><i class="bi bi-database-fill-gear"></i></div>  
+                <div>  
+                    <h4 class="fw-bold text-dark mb-0">Records Hub</h4>  
+                    <p class="text-muted small mb-0">View saved records, update existing information, or add new entries manually.</p>  
+                </div>  
+            </div>  
+            
+            <ul class="nav nav-pills shadow-sm p-1 bg-white rounded-3 border" id="crudTabPanel" role="tablist">  
+                <li class="nav-item" role="presentation">  
+                    <button class="nav-link active" id="view-table-tab" data-bs-toggle="tab" data-bs-target="#viewTablePane" type="button" role="tab">  
+                        <i class="bi bi-table"></i> View Registry  
+                    </button>  
+                </li>  
+                <li class="nav-item" role="presentation">  
+                    <button class="nav-link text-success" id="add-record-tab" data-bs-toggle="tab" data-bs-target="#addRecordPane" type="button" role="tab">  
+                        <i class="bi bi-plus-circle-fill"></i> Add LLR  
+                    </button>  
+                </li>  
+            </ul>  
+        </div>  
+            
+        <!-- Tab Content Views Segment -->  
+        <div class="tab-content" id="crudTabContent">  
+            <!-- TAB PANE 1: VIEW GRID DATA REGISTRY -->  
+            <div class="tab-pane fade show active animated-pane" id="viewTablePane" role="tabpanel">  
+                <div class="card shadow-sm border-0 bg-white p-3 mb-3">  
+                    <div class="row g-3 align-items-end">  
+                        <div class="col-12 col-md-4">  
+                            <label class="form-label"><i class="bi bi-search"></i> Search Records</label>  
+                            <div class="input-group">  
+                                <span class="input-group-text bg-white border-end-0 text-muted"><i class="bi bi-search"></i></span>  
+                                <input type="text" id="tableSearchInput" class="form-control border-start-0 ps-1" placeholder="Search by name, LLR, phone...">  
+                            </div>  
+                        </div>  
+                        <div class="col-12 col-sm-6 col-md-3 date-input-node">  
+                            <label class="form-label"><i class="bi bi-calendar-plus"></i> Issue Date From</label>  
+                            <input type="date" id="filterStartDate" class="form-control">  
+                        </div>  
+                        <div class="col-12 col-sm-6 col-md-3 date-input-node">  
+                            <label class="form-label"><i class="bi bi-calendar-minus"></i> Issue Date To</label>  
+                            <input type="date" id="filterEndDate" class="form-control">  
+                        </div>  
+                        <div class="col-12 col-md-2">  
+                            <button id="refreshDataBtn" class="btn btn-dark-custom w-100 shadow-sm justify-content-center py-2.5">  
+                                <i class="bi bi-arrow-clockwise"></i> Sync Sheet Data  
+                            </button>  
+                        </div>  
+                    </div>  
+                </div>  
+                    
+                <div class="card shadow-sm border-0">  
+                    <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center py-3 px-4" style="border-radius: 24px 24px 0 0;">  
+                        <h6 class="mb-0 fw-bold text-light d-flex align-items-center gap-2">  
+                            <i class="bi bi-cloud-check-fill"></i> Registry Database  
+                        </h6>  
+                        <span id="recordCountBadge" class="badge bg-secondary text-white fw-bold px-3 py-2 small">Loading...</span>  
+                    </div>  
+                    <div class="card-body p-0">  
+                        <div class="table-responsive">  
+                            <table class="table table-hover align-middle mb-0" id="dbMasterTable">  
+                                <thead class="sticky-thead">  
+                                    <tr>  
+                                        <th class="ps-4">LLR Number</th>  
+                                        <th>Applicant Name</th>  
+                                        <th>Date of Birth</th>  
+                                        <th>Vehicle Class</th>  
+                                        <th>Mobile Number</th>  
+                                        <th>Issue Date</th>  
+                                        <th>Expiry Date</th>  
+                                        <th>DL Status</th>  
+                                        <th class="text-center pe-4">Actions</th>  
+                                    </tr>  
+                                </thead>  
+                                <tbody id="recordsTableBody"></tbody>  
+                            </table>  
+                        </div>  
+                    </div>  
+                    <!-- PAGINATION FOOTER CONTAINER -->
+                    <div id="tablePaginationNav" class="d-flex justify-content-between align-items-center px-4 py-3 bg-light border-top" style="border-radius: 0 0 24px 24px;">
+                        <span class="small text-muted">Showing <strong>0-0</strong> of <strong>0</strong> records</span>
+                        <div class="btn-group btn-group-sm">
+                            <button class="btn btn-outline-secondary" disabled><i class="bi bi-chevron-left"></i> Prev</button>
+                            <button class="btn btn-outline-secondary" disabled>Page 1 of 1</button>
+                            <button class="btn btn-outline-secondary" disabled>Next <i class="bi bi-chevron-right"></i></button>
+                        </div>
+                    </div>
+                </div>  
+            </div>  
+                
+            <!-- TAB PANE 2: MANUAL ENTRY FORM -->  
+            <div class="tab-pane fade animated-pane" id="addRecordPane" role="tabpanel">  
+                <div class="card shadow-sm border-0 bg-white">  
+                    <div class="card-header bg-dark text-white py-3 px-4" style="border-radius: 24px 24px 0 0;">  
+                        <h6 class="mb-0 fw-bold d-flex align-items-center gap-2">  
+                            <i class="bi bi-file-earmark-plus"></i> New Record Form  
+                        </h6>  
+                    </div>  
+                    <form id="manualInsertForm" novalidate class="needs-validation">  
+                        <div class="card-body p-4">  
+                            <input type="hidden" name="action" value="insert">  
+                            
+                            <!-- Duplicate Check Live Warning Alert Box -->
+                            <div id="insertDuplicateWarning" class="alert alert-warning d-none align-items-center gap-2 mb-3" role="alert">
+                                <i class="bi bi-exclamation-triangle-fill fs-5"></i>
+                                <span id="insertDuplicateWarningText">Duplicate entry detected!</span>
+                            </div>
 
-                                     </select>
-                                 </div>
-                                 <div class="col-12 col-md-3">
-                                     <label class="form-label"><i class="bi bi-person-lines-fill"></i> Relative Name</label>
-                                     <input type="text" name="relative_name" id="addRelativeName" class="form-control">
-                                 </div><br>
-                                 <div class="col-12 col-sm-6 col-md-3">
-                                     <label class="form-label text-dark fw-bold"><i class="bi bi-phone-fill"></i> Mobile Number <span class="text-danger">*</span></label>
-                                     <input type="tel" name="mobile_number" id="addMobile" class="form-control border-secondary" maxlength="10" placeholder="10-digit number" required>
-                                 </div>
-                                 <div class="col-12 col-sm-6 col-md-3">
-                                     <label class="form-label"><i class="bi bi-telephone-plus-fill"></i> Emergency Mobile</label>
-                                     <input type="tel" name="emergency_mobile" id="addEmergencyMobile" class="form-control" placeholder="Backup tel" maxlength="10">
-                                 </div>
-                                   
-                             </div>
-                             
-                             <div class="section-divider">
-                                 <span class="section-title"><i class="bi bi-geo-alt-fill"></i> Addresses & Identification Marks</span>
-                             </div>
-                             <div class="row g-3">
-                                 <div class="col-12 col-md-6">
-                                     <label class="form-label"><i class="bi bi-house-door-fill"></i> Present Address</label>
-                                     <textarea name="present_address" id="addPresentAddress" class="form-control" rows="2"></textarea>
-                                 </div>
-                                 <div class="col-12 col-md-6">
-                                     <label class="form-label"><i class="bi bi-building-fill"></i> Permanent Address</label>
-                                     <textarea name="permanent_address" id="addPermanentAddress" class="form-control" rows="2"></textarea>
-                                 </div>
-                                 <div class="col-12 col-md-6">
-                                     <label class="form-label"><i class="bi bi-patch-check-fill"></i> Identification Mark 1</label>
-                                     <input type="text" name="identification_mark_1" id="addIdMark1" class="form-control">
-                                 </div>
-                                 <div class="col-12 col-md-6">
-                                     <label class="form-label"><i class="bi bi-patch-check"></i> Identification Mark 2</label>
-                                     <input type="text" name="identification_mark_2" id="addIdMark2" class="form-control">
-                                 </div>
-                             </div>
-                             
-                             <div class="section-divider">
-                                 <span class="section-title"><i class="bi bi-hourglass-split"></i> Status & Dates</span>
-                             </div>
-                             <div class="row g-3">
-                                 <div class="col-12 col-sm-6 col-md-4">
-                                     <label class="form-label text-dark fw-bold"><i class="bi bi-toggle-on"></i> DL Issued Status</label>
-                                     <select name="dl_issued" id="addDlIssued" class="form-select border-secondary">
-                                         <option value="No" selected>No</option>
-                                         <option value="Yes">Yes</option>
-                                     </select>
-                                 </div>
-                                 <div class="col-12 col-md-8">
-                                     <label class="form-label"><i class="bi bi-card-heading"></i> Permanent DL Number</label>
-                                     <input type="text" name="dl_number" id="addDlNumber" class="form-control" placeholder="e.g. TN5220260000000">
-                                 </div>
-                                 <div class="col-12 col-md-6">
-                                     <label class="form-label"><i class="bi bi-receipt"></i> Fees Number</label>
-                                     <input type="text" name="fees_number" id="addFeesNumber" class="form-control" placeholder="e.g. U26...">
-                                 </div>
-                                 <div class="col-12 col-sm-4">
-                                     <label class="form-label"><i class="bi bi-currency-rupee"></i> Fee Amount</label>
-                                     <input type="text" name="fee" id="addFee" class="form-control" placeholder="e.g. 230">
-                                 </div>
-                             </div>
-                         </div>
-                         <div class="card-footer bg-light d-flex flex-column flex-sm-row justify-content-end gap-2 p-3" style="border-radius: 0 0 24px 24px;">
-                             <button type="reset" class="btn btn-outline-custom order-2 order-sm-1">Clear Fields</button>
-                             <button type="submit" id="saveInsertBtn" class="btn btn-dark-custom order-1 order-sm-2 px-4">
-                                 <span>Save New Record</span> <i class="bi bi-cloud-arrow-up-fill"></i>
-                             </button>
-                         </div>
-                     </form>
-                 </div>
-             </div>
-         </div>
-     </div>
-     
-     <!-- RECORD EDIT POPUP MODAL -->
-     <div class="modal fade" id="editRecordModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
-         <div class="modal-dialog modal-lg modal-dialog-centered">
-             <div class="modal-content shadow-lg" style="border-radius: 24px; border: none;">
-                 <div class="modal-header bg-dark text-white py-3 px-4" style="border-radius: 24px 24px 0 0;">
-                     <h5 class="modal-title fw-bold d-flex align-items-center gap-2"><i class="bi bi-pencil-square"></i> Edit Record Details</h5>
-                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                 </div>
-                 <form id="modalEditForm" novalidate class="needs-validation">
-                     <div class="modal-body p-4">
-                         <input type="hidden" name="action" value="update">
-                         <input type="hidden" id="editRowIndex" name="row_index">
-                         
-                         <div class="section-divider mt-0">
-                             <span class="section-title"><i class="bi bi-key-fill"></i> License Details</span>
-                         </div>
-                         <div class="row g-3">
-                             <div class="col-12 col-md-6">
-                                 <label class="form-label"><i class="bi bi-vignette"></i> LLR Number</label>
-                                 <input type="text" name="llr_number" id="editLlrNumber" class="form-control" required>
-                             </div>
-                                                         <div class="col-12 col-sm-4">
-                                 <label class="form-label text-dark fw-bold"><i class="bi bi-car-front-fill"></i> Vehicle Class</label>
-                                 <select name="vehicle_class" id="editVehicleClass" class="form-select border-secondary" required>
-                                     <option value="MCWOG">MCWOG</option>
-                                     <option value="MCWG">MCWG</option>
-                                     <option value="LMV">LMV</option>
-                                     <option value="TRANS">TRANS</option>
-                                     <option value="MCWG,LMV">MCWG,LMV</option>
-                                     <option value="MCWOG,LMV">MCWOG,LMV</option>
-                                  
-                                 </select>
-                             </div>
-                             <div class="col-12 col-sm-6 col-md-4">
-                                 <label class="form-label"><i class="bi bi-calendar-plus"></i> LLR Issue Date</label>
-                                 <input type="text" name="issue_date" id="editIssueDate" class="form-control" placeholder="DD-MM-YYYY">
-                             </div>
-                             <div class="col-12 col-sm-6 col-md-4">
-                                 <label class="form-label"><i class="bi bi-calendar-minus"></i> LLR Expiry Date</label>
-                                 <input type="text" name="expiry_date" id="editExpiryDate" class="form-control" placeholder="DD-MM-YYYY">
-                             </div>
-                             <div class="col-12 col-sm-6 col-md-4">
-                                 <label class="form-label"><i class="bi bi-clock-history"></i> Approved Date</label>
-                                 <input type="text" name="approved_date" id="editApprovedDate" class="form-control" placeholder="DD-MM-YYYY">
-                             </div>
-                          
-                         </div>
-                         
-                         <div class="section-divider">
-                             <span class="section-title"><i class="bi bi-person-bounding-box"></i> Personal Details</span>
-                         </div>
-                         <div class="row g-3">
-                             <div class="col-12 col-md-6">
-                                 <label class="form-label"><i class="bi bi-person-fill"></i> Applicant Name</label>
-                                 <input type="text" name="name" id="editName" class="form-control" required>
-                             </div>
-                             <div class="col-12 col-sm-6 col-md-3">
-                                 <label class="form-label"><i class="bi bi-calendar-event"></i> Date of Birth</label>
-                                 <input type="text" name="date_of_birth" id="editDob" class="form-control" placeholder="DD-MM-YYYY" required>
-                             </div>
-                             <div class="col-12 col-sm-6 col-md-3">
-                                 <label class="form-label"><i class="bi bi-people-fill"></i> Relative Type</label>
-                                 <select name="relative_type" id="editRelativeType" class="form-select">
-                                     <option value="Father">Father</option>
-                                     <option value="Daughter">Daughter</option>
-                                    <option value="Husband">Husband</option>
-                                        <option value="Gaurdian">Gaurdian</option>
-                                 </select>
-                             </div>
-                             <div class="col-12 col-md-6">
-                                 <label class="form-label"><i class="bi bi-person-lines-fill"></i> Relative Name</label>
-                                 <input type="text" name="relative_name" id="editRelativeName" class="form-control">
-                             </div>
-                             <div class="col-12 col-sm-6 col-md-3">
-                                 <label class="form-label text-dark fw-bold"><i class="bi bi-phone-fill"></i> Mobile Number</label>
-                                 <input type="tel" name="mobile_number" id="editMobile" class="form-control border-secondary" maxlength="10" required>
-                             </div>
-                             <div class="col-12 col-sm-6 col-md-3">
-                                 <label class="form-label"><i class="bi bi-telephone-plus-fill"></i> Emergency Mobile</label>
-                                 <input type="tel" name="emergency_mobile" id="editEmergencyMobile" class="form-control" maxlength="10">
-                             </div>
-                                <div class="col-12 col-sm-4">
-                                 <label class="form-label"><i class="bi bi-droplet-fill text-danger"></i> Blood Group</label>
-                                 <input type="text" name="blood_group" id="editBloodGroup" class="form-control">
-                             </div>
-                         </div>
-                         
-                         <div class="section-divider">
-                             <span class="section-title"><i class="bi bi-geo-alt-fill"></i> Addresses & Identification Marks</span>
-                         </div>
-                         <div class="row g-3">
-                             <div class="col-12 col-md-6">
-                                 <label class="form-label"><i class="bi bi-house-door-fill"></i> Present Address</label>
-                                 <textarea name="present_address" id="editPresentAddress" class="form-control" rows="2"></textarea>
-                             </div>
-                             <div class="col-12 col-md-6">
-                                 <label class="form-label"><i class="bi bi-building-fill"></i> Permanent Address</label>
-                                 <textarea name="permanent_address" id="editPermanentAddress" class="form-control" rows="2"></textarea>
-                             </div>
-                             <div class="col-12 col-md-6">
-                                 <label class="form-label"><i class="bi bi-patch-check-fill"></i> Identification Mark 1</label>
-                                 <input type="text" name="identification_mark_1" id="editIdMark1" class="form-control">
-                             </div>
-                             <div class="col-12 col-md-6">
-                                 <label class="form-label"><i class="bi bi-patch-check"></i> Identification Mark 2</label>
-                                 <input type="text" name="identification_mark_2" id="editIdMark2" class="form-control">
-                             </div>
-                         </div>
-                         
-                         <div class="section-divider">
-                             <span class="section-title"><i class="bi bi-hourglass-split"></i> Status & Dates</span>
-                         </div>
-                         <div class="row g-3">
-                             
-                             <div class="col-12 col-sm-6 col-md-4">
-                                 <label class="form-label text-dark fw-bold"><i class="bi bi-toggle-on"></i> DL Issued Status</label>
-                                 <select name="dl_issued" id="editDlIssued" class="form-select border-secondary">
-                                     <option value="No">No</option>
-                                     <option value="Yes">Yes</option>
-                                 </select>
-                             </div>
-                             <div class="col-12 col-md-8">
-                                 <label class="form-label"><i class="bi bi-card-heading"></i> Permanent DL Number</label>
-                                 <input type="text" name="dl_number" id="editDlNumber" class="form-control" placeholder="e.g. TN5220260000000">
-                             </div>
-                              <div class="col-12 col-md-6">
-                                 <label class="form-label"><i class="bi bi-receipt"></i> Fees Number</label>
-                                 <input type="text" name="fees_number" id="editFeesNumber" class="form-control">
-                             </div>
-                             <div class="col-12 col-sm-4">
-                                 <label class="form-label"><i class="bi bi-currency-rupee"></i> Fee Amount</label>
-                                 <input type="text" name="fee" id="editFee" class="form-control">
-                             </div>
-                         </div>
-                     </div>
-                     <div class="modal-footer bg-light d-flex flex-column flex-sm-row justify-content-between gap-2 p-3" style="border-radius: 0 0 24px 24px;">
-                         <button type="button" class="btn btn-outline-custom order-2 order-sm-1" data-bs-dismiss="modal">Cancel Changes</button>
-                         <button type="submit" id="saveEditBtn" class="btn btn-dark-custom order-1 order-sm-2">
-                             <span>Save Changes</span> <i class="bi bi-cloud-arrow-up-fill"></i>
-                         </button>
-                     </div>
-                 </form>
-             </div>
-         </div>
-     </div>
+                            <div class="section-divider mt-0">  
+                                <span class="section-title"><i class="bi bi-key-fill"></i> License Details</span>  
+                            </div>  
+                            <div class="row g-3">  
+                                <div class="col-12 col-md-6">  
+                                    <label class="form-label"><i class="bi bi-vignette"></i> LLR Number <span class="text-danger">*</span></label>  
+                                    <input type="text" name="llr_number" id="addLlrNumber" class="form-control" placeholder="e.g. TN52/0004108/2026" required>  
+                                </div>  
+                                <div class="col-12 col-sm-4">  
+                                    <label class="form-label text-dark fw-bold"><i class="bi bi-car-front-fill"></i> Vehicle Class <span class="text-danger">*</span></label>  
+                                    <select name="vehicle_class" id="addVehicleClass" class="form-select border-secondary" required>  
+                                        <option value="MCWOG">MCWOG</option>  
+                                        <option value="MCWG">MCWG</option>  
+                                        <option value="LMV" selected>LMV</option>  
+                                        <option value="TRANS">TRANS</option>  
+                                        <option value="MCWG,LMV">MCWG,LMV</option>  
+                                        <option value="MCWOG,LMV">MCWOG,LMV</option>  
+                                    </select>  
+                                </div>  
+                                <div class="col-12 col-sm-6 col-md-4">  
+                                    <label class="form-label"><i class="bi bi-calendar-plus"></i> LLR Issue Date</label>  
+                                    <input type="text" name="issue_date" id="addIssueDate" class="form-control" placeholder="DD-MM-YYYY">  
+                                </div>  
+                                <div class="col-12 col-sm-6 col-md-4">  
+                                    <label class="form-label"><i class="bi bi-calendar-minus"></i> LLR Expiry Date</label>  
+                                    <input type="text" name="expiry_date" id="addExpiryDate" class="form-control" placeholder="DD-MM-YYYY">  
+                                </div>  
+                                <div class="col-12 col-sm-6 col-md-4">  
+                                    <label class="form-label"><i class="bi bi-clock-history"></i> Approved Date</label>  
+                                    <input type="text" name="approved_date" id="addApprovedDate" class="form-control" placeholder="DD-MM-YYYY">  
+                                </div>  
+                            </div>  
+                                
+                            <div class="section-divider">  
+                                <span class="section-title"><i class="bi bi-person-bounding-box"></i> Personal Details</span>  
+                            </div>  
+                            <div class="row g-3">  
+                                <div class="col-12 col-md-6">  
+                                    <label class="form-label"><i class="bi bi-person-fill"></i> Applicant Full Name <span class="text-danger">*</span></label>  
+                                    <input type="text" name="name" id="addName" class="form-control" placeholder="FIRSTNAME LASTNAME" required>  
+                                </div>  
+                                <div class="col-12 col-sm-6 col-md-3">  
+                                    <label class="form-label"><i class="bi bi-calendar-event"></i> Date of Birth <span class="text-danger">*</span></label>  
+                                    <input type="text" name="date_of_birth" id="addDob" class="form-control" placeholder="DD-MM-YYYY" required>  
+                                </div>  
+                                <div class="col-12 col-sm-1">  
+                                    <label class="form-label"><i class="bi bi-droplet-fill text-danger"></i> Blood Group</label>  
+                                    <input type="text" name="blood_group" id="addBloodGroup" class="form-control" placeholder="e.g. O+ve">  
+                                </div>  
+                                <div class="col-12 col-sm-2 col-md-3">  
+                                    <label class="form-label"><i class="bi bi-people-fill"></i> Relative Type</label>  
+                                    <select name="relative_type" id="addRelativeType" class="form-select">  
+                                        <option value="Father">Father</option>  
+                                        <option value="Daughter">Daughter</option>  
+                                        <option value="Gaurdian">Gaurdian</option>  
+                                        <option value="Husband">Husband</option>  
+                                    </select>  
+                                </div>  
+                                <div class="col-12 col-md-3">  
+                                    <label class="form-label"><i class="bi bi-person-lines-fill"></i> Relative Name</label>  
+                                    <input type="text" name="relative_name" id="addRelativeName" class="form-control">  
+                                </div><br>  
+                                <div class="col-12 col-sm-6 col-md-3">  
+                                    <label class="form-label text-dark fw-bold"><i class="bi bi-phone-fill"></i> Mobile Number <span class="text-danger">*</span></label>  
+                                    <input type="tel" name="mobile_number" id="addMobile" class="form-control border-secondary" maxlength="10" pattern="[0-9]{10}" placeholder="10-digit number" required>  
+                                </div>  
+                                <div class="col-12 col-sm-6 col-md-3">  
+                                    <label class="form-label"><i class="bi bi-telephone-plus-fill"></i> Emergency Mobile</label>  
+                                    <input type="tel" name="emergency_mobile" id="addEmergencyMobile" class="form-control" placeholder="Backup tel" maxlength="10">  
+                                </div>  
+                            </div>  
+                                
+                            <div class="section-divider">  
+                                <span class="section-title"><i class="bi bi-geo-alt-fill"></i> Addresses & Identification Marks</span>  
+                            </div>  
+                            <div class="row g-3">  
+                                <div class="col-12 col-md-6">  
+                                    <label class="form-label"><i class="bi bi-house-door-fill"></i> Present Address</label>  
+                                    <textarea name="present_address" id="addPresentAddress" class="form-control" rows="2"></textarea>  
+                                </div>  
+                                <div class="col-12 col-md-6">  
+                                    <label class="form-label"><i class="bi bi-building-fill"></i> Permanent Address</label>  
+                                    <textarea name="permanent_address" id="addPermanentAddress" class="form-control" rows="2"></textarea>  
+                                </div>  
+                                <div class="col-12 col-md-6">  
+                                    <label class="form-label"><i class="bi bi-patch-check-fill"></i> Identification Mark 1</label>  
+                                    <input type="text" name="identification_mark_1" id="addIdMark1" class="form-control">  
+                                </div>  
+                                <div class="col-12 col-md-6">  
+                                    <label class="form-label"><i class="bi bi-patch-check"></i> Identification Mark 2</label>  
+                                    <input type="text" name="identification_mark_2" id="addIdMark2" class="form-control">  
+                                </div>  
+                            </div>  
+                                
+                            <div class="section-divider">  
+                                <span class="section-title"><i class="bi bi-hourglass-split"></i> Status & Dates</span>  
+                            </div>  
+                            <div class="row g-3">  
+                                <div class="col-12 col-sm-6 col-md-4">  
+                                    <label class="form-label text-dark fw-bold"><i class="bi bi-toggle-on"></i> DL Issued Status</label>  
+                                    <select name="dl_issued" id="addDlIssued" class="form-select border-secondary">  
+                                        <option value="No" selected>No</option>  
+                                        <option value="Yes">Yes</option>  
+                                    </select>  
+                                </div>  
+                                <div class="col-12 col-md-8">  
+                                    <label class="form-label"><i class="bi bi-card-heading"></i> Permanent DL Number</label>  
+                                    <input type="text" name="dl_number" id="addDlNumber" class="form-control" placeholder="e.g. TN5220260000000">  
+                                </div>  
+                                <div class="col-12 col-md-6">  
+                                    <label class="form-label"><i class="bi bi-receipt"></i> Fees Number</label>  
+                                    <input type="text" name="fees_number" id="addFeesNumber" class="form-control" placeholder="e.g. U26...">  
+                                </div>  
+                                <div class="col-12 col-sm-4">  
+                                    <label class="form-label"><i class="bi bi-currency-rupee"></i> Fee Amount</label>  
+                                    <input type="text" name="fee" id="addFee" class="form-control" placeholder="e.g. 230">  
+                                </div>  
+                            </div>  
+                        </div>  
+                        <div class="card-footer bg-light d-flex flex-column flex-sm-row justify-content-end gap-2 p-3" style="border-radius: 0 0 24px 24px;">  
+                            <button type="reset" class="btn btn-outline-custom order-2 order-sm-1">Clear Fields</button>  
+                            <button type="submit" id="saveInsertBtn" class="btn btn-dark-custom order-1 order-sm-2 px-4">  
+                                <span>Save New Record</span> <i class="bi bi-cloud-arrow-up-fill"></i>  
+                            </button>  
+                        </div>  
+                    </form>  
+                </div>  
+            </div>  
+        </div>  
+    </div>  
+        <!-- FULL DETAILS POPUP MODAL -->
+<div class="modal fade" id="viewRecordModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content shadow-lg border-0" style="border-radius: 24px;">
+            <div class="modal-header bg-dark text-white py-3 px-4" style="border-radius: 24px 24px 0 0;">
+                <h5 class="modal-title fw-bold d-flex align-items-center gap-2"><i class="bi bi-person-vcard-fill"></i> Applicant Record Profile</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4" id="viewRecordModalBody">
+                <!-- Dynamically populated by JS -->
+            </div>
+            <div class="modal-footer bg-light p-3" style="border-radius: 0 0 24px 24px;">
+                <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+    <!-- RECORD EDIT POPUP MODAL -->  
+    <div class="modal fade" id="editRecordModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">  
+        <div class="modal-dialog modal-lg modal-dialog-centered">  
+            <div class="modal-content shadow-lg" style="border-radius: 24px; border: none;">  
+                <div class="modal-header bg-dark text-white py-3 px-4" style="border-radius: 24px 24px 0 0;">  
+                    <h5 class="modal-title fw-bold d-flex align-items-center gap-2"><i class="bi bi-pencil-square"></i> Edit Record Details</h5>  
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>  
+                </div>  
+                <form id="modalEditForm" novalidate class="needs-validation">  
+                    <div class="modal-body p-4">  
+                        <input type="hidden" name="action" value="update">  
+                        <input type="hidden" id="editRowIndex" name="row_index">  
+                            
+                        <div class="section-divider mt-0">  
+                            <span class="section-title"><i class="bi bi-key-fill"></i> License Details</span>  
+                        </div>  
+                        <div class="row g-3">  
+                            <div class="col-12 col-md-6">  
+                                <label class="form-label"><i class="bi bi-vignette"></i> LLR Number</label>  
+                                <input type="text" name="llr_number" id="editLlrNumber" class="form-control" required>  
+                            </div>  
+                            <div class="col-12 col-sm-4">  
+                                <label class="form-label text-dark fw-bold"><i class="bi bi-car-front-fill"></i> Vehicle Class</label>  
+                                <select name="vehicle_class" id="editVehicleClass" class="form-select border-secondary" required>  
+                                    <option value="MCWOG">MCWOG</option>  
+                                    <option value="MCWG">MCWG</option>  
+                                    <option value="LMV">LMV</option>  
+                                    <option value="TRANS">TRANS</option>  
+                                    <option value="MCWG,LMV">MCWG,LMV</option>  
+                                    <option value="MCWOG,LMV">MCWOG,LMV</option>  
+                                </select>  
+                            </div>  
+                            <div class="col-12 col-sm-6 col-md-4">  
+                                <label class="form-label"><i class="bi bi-calendar-plus"></i> LLR Issue Date</label>  
+                                <input type="text" name="issue_date" id="editIssueDate" class="form-control" placeholder="DD-MM-YYYY">  
+                            </div>  
+                            <div class="col-12 col-sm-6 col-md-4">  
+                                <label class="form-label"><i class="bi bi-calendar-minus"></i> LLR Expiry Date</label>  
+                                <input type="text" name="expiry_date" id="editExpiryDate" class="form-control" placeholder="DD-MM-YYYY">  
+                            </div>  
+                            <div class="col-12 col-sm-6 col-md-4">  
+                                <label class="form-label"><i class="bi bi-clock-history"></i> Approved Date</label>  
+                                <input type="text" name="approved_date" id="editApprovedDate" class="form-control" placeholder="DD-MM-YYYY">  
+                            </div>  
+                        </div>  
+                            
+                        <div class="section-divider">  
+                            <span class="section-title"><i class="bi bi-person-bounding-box"></i> Personal Details</span>  
+                        </div>  
+                        <div class="row g-3">  
+                            <div class="col-12 col-md-6">  
+                                <label class="form-label"><i class="bi bi-person-fill"></i> Applicant Name</label>  
+                                <input type="text" name="name" id="editName" class="form-control" required>  
+                            </div>  
+                            <div class="col-12 col-sm-6 col-md-3">  
+                                <label class="form-label"><i class="bi bi-calendar-event"></i> Date of Birth</label>  
+                                <input type="text" name="date_of_birth" id="editDob" class="form-control" placeholder="DD-MM-YYYY" required>  
+                            </div>  
+                            <div class="col-12 col-sm-6 col-md-3">  
+                                <label class="form-label"><i class="bi bi-people-fill"></i> Relative Type</label>  
+                                <select name="relative_type" id="editRelativeType" class="form-select">  
+                                    <option value="Father">Father</option>  
+                                    <option value="Daughter">Daughter</option>  
+                                    <option value="Husband">Husband</option>  
+                                    <option value="Gaurdian">Gaurdian</option>  
+                                </select>  
+                            </div>  
+                            <div class="col-12 col-md-6">  
+                                <label class="form-label"><i class="bi bi-person-lines-fill"></i> Relative Name</label>  
+                                <input type="text" name="relative_name" id="editRelativeName" class="form-control">  
+                            </div>  
+                            <div class="col-12 col-sm-6 col-md-3">  
+                                <label class="form-label text-dark fw-bold"><i class="bi bi-phone-fill"></i> Mobile Number</label>  
+                                <input type="tel" name="mobile_number" id="editMobile" class="form-control border-secondary" maxlength="10" required>  
+                            </div>  
+                            <div class="col-12 col-sm-6 col-md-3">  
+                                <label class="form-label"><i class="bi bi-telephone-plus-fill"></i> Emergency Mobile</label>  
+                                <input type="tel" name="emergency_mobile" id="editEmergencyMobile" class="form-control" maxlength="10">  
+                            </div>  
+                            <div class="col-12 col-sm-4">  
+                                <label class="form-label"><i class="bi bi-droplet-fill text-danger"></i> Blood Group</label>  
+                                <input type="text" name="blood_group" id="editBloodGroup" class="form-control">  
+                            </div>  
+                        </div>  
+                            
+                        <div class="section-divider">  
+                            <span class="section-title"><i class="bi bi-geo-alt-fill"></i> Addresses & Identification Marks</span>  
+                        </div>  
+                        <div class="row g-3">  
+                            <div class="col-12 col-md-6">  
+                                <label class="form-label"><i class="bi bi-house-door-fill"></i> Present Address</label>  
+                                <textarea name="present_address" id="editPresentAddress" class="form-control" rows="2"></textarea>  
+                            </div>  
+                            <div class="col-12 col-md-6">  
+                                <label class="form-label"><i class="bi bi-building-fill"></i> Permanent Address</label>  
+                                <textarea name="permanent_address" id="editPermanentAddress" class="form-control" rows="2"></textarea>  
+                            </div>  
+                            <div class="col-12 col-md-6">  
+                                <label class="form-label"><i class="bi bi-patch-check-fill"></i> Identification Mark 1</label>  
+                                <input type="text" name="identification_mark_1" id="editIdMark1" class="form-control">  
+                            </div>  
+                            <div class="col-12 col-md-6">  
+                                <label class="form-label"><i class="bi bi-patch-check"></i> Identification Mark 2</label>  
+                                <input type="text" name="identification_mark_2" id="editIdMark2" class="form-control">  
+                            </div>  
+                        </div>  
+                            
+                        <div class="section-divider">  
+                            <span class="section-title"><i class="bi bi-hourglass-split"></i> Status & Dates</span>  
+                        </div>  
+                        <div class="row g-3">  
+                            <div class="col-12 col-sm-6 col-md-4">  
+                                <label class="form-label text-dark fw-bold"><i class="bi bi-toggle-on"></i> DL Issued Status</label>  
+                                <select name="dl_issued" id="editDlIssued" class="form-select border-secondary">  
+                                    <option value="No">No</option>  
+                                    <option value="Yes">Yes</option>  
+                                </select>  
+                            </div>  
+                            <div class="col-12 col-md-8">  
+                                <label class="form-label"><i class="bi bi-card-heading"></i> Permanent DL Number</label>  
+                                <input type="text" name="dl_number" id="editDlNumber" class="form-control" placeholder="e.g. TN5220260000000">  
+                            </div>  
+                            <div class="col-12 col-md-6">  
+                                <label class="form-label"><i class="bi bi-receipt"></i> Fees Number</label>  
+                                <input type="text" name="fees_number" id="editFeesNumber" class="form-control">  
+                            </div>  
+                            <div class="col-12 col-sm-4">  
+                                <label class="form-label"><i class="bi bi-currency-rupee"></i> Fee Amount</label>  
+                                <input type="text" name="fee" id="editFee" class="form-control">  
+                            </div>  
+                        </div>  
+                    </div>  
+                    <div class="modal-footer bg-light d-flex flex-column flex-sm-row justify-content-between gap-2 p-3" style="border-radius: 0 0 24px 24px;">  
+                        <button type="button" class="btn btn-outline-custom order-2 order-sm-1" data-bs-dismiss="modal">Cancel Changes</button>  
+                        <button type="submit" id="saveEditBtn" class="btn btn-dark-custom order-1 order-sm-2">  
+                            <span>Save Changes</span> <i class="bi bi-cloud-arrow-up-fill"></i>  
+                        </button>  
+                    </div>  
+                </form>  
+            </div>  
+        </div>  
+    </div>  
 
-     <!-- Native Script Pipeline Ingestion Links -->
-     <script src="env.js"></script>
-     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-     <script src="./js/recordsManager.js"></script>
-     <script src="js/navLoader.js"></script>
-</body>
+    <!-- Native Script Pipeline Ingestion Links -->  
+    <script src="env.js"></script>  
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>  
+    <script src="js/navLoader.js"></script>  
+        
+    <script src="js/records/records-state.js"></script> 
+    <script src="js/records/records-filters.js"></script> 
+    <script src="js/records/records-view.js"></script> 
+    <script src="js/records/records-engine.js"></script> 
+    <script src="js/records/records-app.js"></script> 
+</body> 
 </html>

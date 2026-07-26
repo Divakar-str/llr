@@ -130,7 +130,7 @@ function processDashboardMetricsEngine(rows) {
     const bloodGroupMap = {};
     const relativeTypeMap = {};
     const addressSpreadMap = {};
-    const ageGroupMap = { "18-25": 0, "26-35": 0, "36-50": 0, "Above 50": 0, "Under 18": 0 };
+    const ageGroupMap = { "18-20": 0,"20-25": 0,"26-35": 0, "36-50": 0, "Above 50": 0, "Under 18": 0 };
     
     const dailyIssueMap = {}, monthlyIssueMap = {}, expiryTimelineMap = {};
 
@@ -203,7 +203,8 @@ function processDashboardMetricsEngine(rows) {
         const calculatedAge = calculateExactAge(row.date_of_birth);
         if (calculatedAge > 0) {
             if (calculatedAge < 18) ageGroupMap["Under 18"]++;
-            else if (calculatedAge <= 25) ageGroupMap["18-25"]++;
+            else if (calculatedAge <= 20) ageGroupMap["18-20"]++;
+            else if (calculatedAge <= 25) ageGroupMap["20-25"]++;
             else if (calculatedAge <= 35) ageGroupMap["26-35"]++;
             else if (calculatedAge <= 50) ageGroupMap["36-50"]++;
             else ageGroupMap["Above 50"]++;
