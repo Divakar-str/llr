@@ -81,6 +81,7 @@ function renderGridTableRows(recordsArray) {
             <td class="small text-secondary">${cleanIncomingDate(item.issue_date)}</td>
             <td class="small text-secondary">${cleanIncomingDate(item.expiry_date)}</td>
             <td>${statusBadgeHTML}</td>
+            <td class="small text-secondary">${item.remarks || '-'}</td>
             <td class="text-center pe-4" onclick="event.stopPropagation()">
                 <button class="btn btn-sm btn-outline-info fw-semibold me-1" onclick="window.triggerViewFullDetailsModal(${item.row_index})" title="View Details"><i class="bi bi-eye-fill"></i></button>
                 <button class="btn btn-sm btn-outline-primary fw-semibold me-1" onclick="triggerInPlaceEditModal(${item.row_index})" title="Edit Record"><i class="bi bi-pencil-square"></i></button>
@@ -127,6 +128,7 @@ window.triggerViewFullDetailsModal = function(rowIndex) {
             <div class="col-6 col-md-4"><strong>Relative:</strong><br>${item.relative_type || 'Relative'}: ${item.relative_name || '-'}</div>
             <div class="col-6 col-md-4"><strong>Emergency Tel:</strong><br>${item.emergency_mobile || '-'}</div>
             <div class="col-6 col-md-4"><strong>DL Issued:</strong><br>${item.dl_issued || 'No'} (${item.dl_number || 'N/A'})</div>
+            <div class="col-6 col-md-4"><strong>Remarks:</strong><br>${item.remarks || '-'}</div>
 
             <div class="col-6 col-md-4"><strong>Issue Date:</strong><br>${cleanIncomingDate(item.issue_date)}</div>
             <div class="col-6 col-md-4"><strong>Expiry Date:</strong><br>${cleanIncomingDate(item.expiry_date)}</div>
@@ -256,6 +258,7 @@ window.triggerInPlaceEditModal = function(rowIndex) {
     document.getElementById("editEmergencyMobile").value = activeTargetRow.emergency_mobile || "";
     document.getElementById("editDlIssued").value = activeTargetRow.dl_issued === "Yes" ? "Yes" : "No";
     document.getElementById("editDlNumber").value = activeTargetRow.dl_number || "";
+    document.getElementById("editremarks").value = activeTargetRow.remarks || "";
 
     bootstrapModalInstance.show();
 };

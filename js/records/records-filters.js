@@ -143,8 +143,8 @@ function mirrorPresentAddressToPermanent(checkboxEl, presentId, permanentId) {
  */
 function attachAutoCapitalizationListeners() {
     const fieldsToCapitalize = [
-        "addLlrNumber", "addName", "addRelativeName", "addPresentAddress", "addPermanentAddress", "addIdMark1", "addIdMark2", "addDlNumber",
-        "editLlrNumber", "editName", "editRelativeName", "editPresentAddress", "editPermanentAddress", "editIdMark1", "editIdMark2", "editDlNumber"
+        "addLlrNumber", "addName", "addRelativeName", "addPresentAddress", "addPermanentAddress", "addIdMark1", "addIdMark2", "addDlNumber", "addremarks",
+        "editLlrNumber", "editName", "editRelativeName", "editPresentAddress", "editPermanentAddress", "editIdMark1", "editIdMark2", "editDlNumber","editremarks"
     ];
 
     fieldsToCapitalize.forEach(id => {
