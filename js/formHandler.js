@@ -30,6 +30,7 @@ window.bindFormFields = function(data) {
     document.getElementById("formEmergencyMobile").value = "";
     document.getElementById("formDlIssued").value = "No";
     document.getElementById("formDlNumber").value = "";
+    document.getElementById("formremarks").value = "";
 
     // Toggle viewport container display cards and navigation wizard progress pills
     document.getElementById("step1View").classList.add("d-none");
@@ -52,6 +53,7 @@ function revertWizardToStep1() {
     document.getElementById("formEmergencyMobile").value = "";
     document.getElementById("formDlIssued").value = "No";
     document.getElementById("formDlNumber").value = "";
+    document.getElementById("formremarks").value = "";
 }
 
 /**

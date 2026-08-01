@@ -10,10 +10,9 @@
 </head>
 <body>
 
-       <div id="global-nav-container"></div>
+    <div id="global-nav-container"></div>
 
     <div class="print-only-header text-center w-100 mb-4">
-       
         <p class="print-subline" id="lblPrintTimestamp">Created On: --</p>
         <div class="print-title-badge" id="lblPrintReportTitle">Active Database Registry Log</div>
     </div>
@@ -22,6 +21,7 @@
         <div class="glass-panel-bar p-3 scale-in">
             <div class="row g-3 align-items-end">
                 
+                <!-- Section 1: Filters & Search -->
                 <div class="col-12 col-md-5">
                     <div class="panel-section-label">
                         <span class="step-num-indicator">1</span>
@@ -31,64 +31,113 @@
                         <div class="col-12">
                             <div class="premium-search-input-group">
                                 <span class="input-icon-node"><i class="bi bi-search"></i></span>
-                                <input type="text" id="filterSearchQuery" class="form-control-premium" placeholder="Filter by Name, LLR Number, Phone...">
+                                <input type="text" id="filterSearchQuery" class="form-control-premium" placeholder="Filter by Name, LLR Number, Phone..." aria-label="Search Query">
                             </div>
                         </div>
                         <div class="col-6">
                             <div class="premium-date-input-group">
                                 <span class="input-icon-node"><i class="bi bi-calendar-event"></i></span>
-                                <input type="date" id="filterFromDate" class="form-control-premium" title="From Issue Date">
+                                <input type="date" id="filterFromDate" class="form-control-premium" title="From Issue Date" aria-label="From Issue Date">
                             </div>
                         </div>
                         <div class="col-6">
                             <div class="premium-date-input-group">
                                 <span class="input-icon-node"><i class="bi bi-calendar-check"></i></span>
-                                <input type="date" id="filterToDate" class="form-control-premium" title="To Issue Date">
+                                <input type="date" id="filterToDate" class="form-control-premium" title="To Issue Date" aria-label="To Issue Date">
                             </div>
                         </div>
                     </div>
                 </div>
 
+                <!-- Section 2: Target Classification & Lists -->
                 <div class="col-12 col-md-4">
-                    <div class="panel-section-label">
-                        <span class="step-num-indicator">2</span>
-                        <span class="label-text-node">Target Classification &amp; Lists</span>
-                    </div>
-                    <div class="row g-2">
-                        <div class="col-12 position-relative">
-                            <select id="filterVehicleClass" class="form-select-premium select-custom-engine">
-                                <option value="ALL">Show All Vehicle Classes</option>
-                                <option value="MCWG_ONLY">MCWG Only </option>
-                                <option value="MCWOG_ONLY">MCWOG Only </option>
-                                <option value="LMV_ONLY">LMV Only </option>
-                                <option value="TRANS_ONLY">TRANS Only </option>
-                                <option value="MCWG_LMV">MCWG &amp; LMV </option>
-                                <option value="MCWOG_LMV">MCWOG &amp; LMV </option>
-                            </select>
+                    <div class="target-classification-card p-2 rounded-3 border bg-light-subtle">
+                        <div class="panel-section-label mb-2">
+                            <span class="step-num-indicator">2</span>
+                            <span class="label-text-node">Target Classification &amp; Lists</span>
                         </div>
-                        <div class="col-12 position-relative">
-                            <select id="reportTypeSelect" class="form-select-premium select-custom-engine template-trigger-highlight">
-                                <option value="" disabled selected>Choose a Report Template Target...</option>
-                                <option value="COMPLETE_REGISTER">Complete LLR List</option>
-                                <option value="ACTIVE_LLR">Active LLRs Only</option>
-                                <option value="EXPIRED_LLR">Expired LLRs Only</option>
-                                <option value="EXPIRY_REGISTER">LLR Expiry Timeline List</option>
-                                <option value="PASSED_30_DAYS">Passed 30 Days List</option>
-                                <option value="ELIGIBLE_FOR_DL">Eligible for DL Test</option>
-                                <option value="PENDING_DL">Pending DL List</option>
-                                <option value="DL_ISSUED">Permanent DL Issued List</option>
-                                <option value="LLR_TO_DL_CONVERSION">LLR to DL Conversion List</option>
-                                <option value="EXPIRING_7_DAYS">Expiring within 7 Days</option>
-                                <option value="EXPIRING_30_DAYS">Expiring within 30 Days</option>
-                                <option value="TODAYS_ISSUED">Today's LLR List</option>
-                                <option value="MONTHLY_ISSUED">This Month's LLR List</option>
-                                <option value="DUPLICATE_MOBILE">Double Mobile Number Check</option>
-                                <option value="MISSING_INFORMATION">Missing Profile Information Check</option>
-                            </select>
+                        <div class="row g-2">
+                            
+                            <!-- Custom Multi-Select Dropdown -->
+                            <div class="col-12">
+                                <label class="form-label small fw-bold text-secondary mb-1">Vehicle Classification</label>
+                                
+                                <div class="custom-multiselect-container" id="vehicleClassMultiselect">
+                                    <div class="custom-multiselect-trigger" id="multiselectTrigger">
+                                        <div class="tags-holder" id="multiselectTagsHolder">
+                                            <span class="placeholder-text">Show All Vehicle Classes</span>
+                                        </div>
+                                        <i class="bi bi-chevron-down dropdown-arrow-icon"></i>
+                                    </div>
+                                    
+                                    <div class="custom-multiselect-menu d-none" id="multiselectMenu">
+                                        <div class="menu-item-option">
+                                            <input type="checkbox" class="form-check-input vehicle-checkbox" id="chk_ALL" value="ALL" checked>
+                                            <label for="chk_ALL">Show All Vehicle Classes</label>
+                                        </div>
+                                        <div class="dropdown-divider my-1"></div>
+                                        <div class="menu-item-option">
+                                            <input type="checkbox" class="form-check-input vehicle-checkbox" id="chk_MCWG_ONLY" value="MCWG_ONLY">
+                                            <label for="chk_MCWG_ONLY">MCWG Only</label>
+                                        </div>
+                                        <div class="menu-item-option">
+                                            <input type="checkbox" class="form-check-input vehicle-checkbox" id="chk_MCWOG_ONLY" value="MCWOG_ONLY">
+                                            <label for="chk_MCWOG_ONLY">MCWOG Only</label>
+                                        </div>
+                                        <div class="menu-item-option">
+                                            <input type="checkbox" class="form-check-input vehicle-checkbox" id="chk_LMV_ONLY" value="LMV_ONLY">
+                                            <label for="chk_LMV_ONLY">LMV Only</label>
+                                        </div>
+                                        <div class="menu-item-option">
+                                            <input type="checkbox" class="form-check-input vehicle-checkbox" id="chk_TRANS_ONLY" value="TRANS_ONLY">
+                                            <label for="chk_TRANS_ONLY">TRANS Only</label>
+                                        </div>
+                                        <div class="menu-item-option">
+                                            <input type="checkbox" class="form-check-input vehicle-checkbox" id="chk_MCWG_LMV" value="MCWG_LMV">
+                                            <label for="chk_MCWG_LMV">MCWG &amp; LMV</label>
+                                        </div>
+                                        <div class="menu-item-option">
+                                            <input type="checkbox" class="form-check-input vehicle-checkbox" id="chk_MCWOG_LMV" value="MCWOG_LMV">
+                                            <label for="chk_MCWOG_LMV">MCWOG &amp; LMV</label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Template Selector -->
+                            <div class="col-12 mt-2">
+                                <label for="reportTypeSelect" class="form-label small fw-bold text-secondary mb-1">Report Format Template</label>
+                                <select id="reportTypeSelect" class="form-select-premium template-select-highlight" aria-label="Select Report Template">
+                                    <option value="" disabled selected>Choose a Report Template Target...</option>
+                                    
+                                    <optgroup label="Standard Registers">
+                                        <option value="COMPLETE_REGISTER">Complete LLR List</option>
+                                        <option value="ACTIVE_LLR">Active LLRs Only</option>
+                                        <option value="EXPIRED_LLR">Expired LLRs Only</option>
+                                        <option value="EXPIRY_REGISTER">LLR Expiry Timeline List</option>
+                                        <option value="PASSED_30_DAYS">Passed 30 Days List</option>
+                                        <option value="ELIGIBLE_FOR_DL">Eligible for DL Test</option>
+                                        <option value="PENDING_DL">Pending DL List</option>
+                                        <option value="DL_ISSUED">Permanent DL Issued List</option>
+                                        <option value="LLR_TO_DL_CONVERSION">LLR to DL Conversion List</option>
+                                        <option value="EXPIRING_7_DAYS">Expiring within 7 Days</option>
+                                        <option value="EXPIRING_30_DAYS">Expiring within 30 Days</option>
+                                        <option value="TODAYS_ISSUED">Today's LLR List</option>
+                                        <option value="MONTHLY_ISSUED">This Month's LLR List</option>
+                                    </optgroup>
+
+                                    <optgroup label="Audit &amp; Verification Checks">
+                                        <option value="DUPLICATE_MOBILE">Double Mobile Number Check</option>
+                                        <option value="MISSING_INFORMATION">Missing Profile Information Check</option>
+                                    </optgroup>
+                                </select>
+                            </div>
+
                         </div>
                     </div>
                 </div>
 
+                <!-- Section 3: Action Buttons -->
                 <div class="col-12 col-md-3">
                     <button id="generateReportBtn" class="premium-primary-action-btn w-100 mb-2">
                         <i class="bi bi-arrow-clockwise spinner-icon d-none" id="btnSpinner"></i>
@@ -109,25 +158,29 @@
         </div>
     </div>
 
+    <!-- Connection Status Tray -->
     <div class="container-fluid px-4 mt-2 no-print">
         <div id="connectionStatusStatusTray" class="alert d-flex align-items-center gap-2 py-2 px-3 border-custom rounded-3 shadow-sm scale-in" style="font-size: 0.85rem; font-weight: 600; display: none !important;">
             <span id="statusTraySpinner" class="spinner-border spinner-border-sm text-primary" role="status"></span>
             <i id="statusTrayIcon" class="bi"></i>
-            <span id="statusTrayMessage">Connecting to Google Sheet backend registers...</span>
+            <span id="statusTrayMessage">Connecting to backend registers...</span>
         </div>
     </div>
 
+    <!-- Main Workspace -->
     <div class="container-fluid px-4 py-3" id="wideReportWorkspace">
         <div class="premium-main-workspace-card min-view-height d-flex flex-column justify-content-start position-relative overflow-hidden w-100">
             
+            <!-- Placeholder -->
             <div id="reportPlaceholderView" class="text-center my-auto py-5 fade-in no-print">
                 <div class="animated-empty-orb">
                     <i class="bi bi-layers-half text-primary"></i>
                 </div>
                 <h4 class="fw-bold text-theme-dark tracking-tight mt-3">SELECT REPORT FORMAT</h4>
-                <p class="text-muted small max-width-p mx-auto">Choose a report format from the options below to generate your desired output.</p>
+                <p class="text-muted small max-width-p mx-auto">Choose a report format from the options above to generate your desired output.</p>
             </div>
 
+            <!-- Loader -->
             <div id="reportLoaderView" class="w-100 my-auto d-none no-print p-4">
                 <div class="skeleton-pill animate-pulse mb-3 w-25"></div>
                 <div class="skeleton-pill animate-pulse mb-2 w-100"></div>
@@ -135,6 +188,7 @@
                 <div class="skeleton-pill animate-pulse mb-2 w-100"></div>
             </div>
 
+            <!-- Table View -->
             <div id="reportDisplayView" class="d-none flex-grow-1 animated-fade-in w-100">
                 
                 <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center border-bottom pb-3 mb-3 gap-3 no-print">
@@ -149,6 +203,7 @@
                     </div>
                 </div>
 
+                <!-- Metrics Ribbon -->
                 <div class="row g-2 mb-4 no-print" id="reportSummaryRibbon">
                     <div class="col-6 col-sm-3 col-md-3 col-lg-2">
                         <div class="premium-ribbon-card border-left-success">
@@ -176,6 +231,7 @@
                     </div>
                 </div>
 
+                <!-- Table Viewport -->
                 <div class="table-responsive border border-custom-grid rounded-4 custom-scrollbar max-height-viewport w-100 m-0" id="tableFrameViewport">
                     <table class="table table-striped table-modern w-100 mb-0" id="reportDataTable">
                         <thead id="reportDataTableHeader"></thead>
@@ -187,11 +243,72 @@
 
         </div>
     </div>
-     <script src="js/navLoader.js"></script>
+
+   <!-- Double Click Edit Modal -->
+<div class="modal fade no-print" id="editDlStatusModal" tabindex="-1" aria-labelledby="editDlStatusModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content shadow-lg border-0 rounded-4">
+            <div class="modal-header bg-primary text-white rounded-top-4">
+                <h5 class="modal-title fs-6 fw-bold" id="editDlStatusModalLabel"><i class="bi bi-pencil-square me-2"></i>Update Record &amp; Remarks</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <input type="hidden" id="editRowLlrNumber">
+                
+                <div class="mb-3">
+                    <label class="form-label small fw-bold text-muted">Applicant Name</label>
+                    <input type="text" id="editApplicantName" class="form-control form-control-sm bg-light" readonly>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label small fw-bold text-muted">Permanent DL Issued?</label>
+                    <select id="editDlIssuedSelect" class="form-select form-select-sm fw-semibold">
+                        <option value="NO">NO - Pending Learner Stage</option>
+                        <option value="YES">YES - Permanent DL Issued</option>
+                    </select>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label small fw-bold text-muted">Permanent DL Number (Optional)</label>
+                    <input type="text" id="editDlNumberInput" class="form-control form-control-sm" placeholder="e.g., TN5220260001234">
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label small fw-bold text-muted">Remarks</label>
+                    <textarea id="editRemarksInput" class="form-control form-control-sm" rows="2" placeholder="Add remarks or notes here..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer border-top-0 pt-0">
+                <button type="button" class="btn btn-sm btn-secondary px-3" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-sm btn-primary px-4 fw-bold" id="btnSaveDlModal">
+                    <span id="saveModalSpinner" class="spinner-border spinner-border-sm d-none me-1" role="status"></span>
+                    Save to Sheet
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+    <!-- Copy Notification Toast -->
+    <div class="toast-container position-fixed bottom-0 end-0 p-3 no-print" style="z-index: 1090;">
+        <div id="copyToast" class="toast align-items-center text-bg-dark border-0" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="d-flex">
+                <div class="toast-body small fw-semibold" id="copyToastMessage">
+                    Copied to clipboard!
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+        </div>
+    </div>
+
+    <!-- External Libs -->
+    <script src="js/navLoader.js"></script>
     <script src="env.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-      <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="./js/reports.js"></script>
-       
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- ES Module App Entry -->
+    <script type="module" src="./js/reports/report-app.js"></script>
+        
 </body>
 </html>
