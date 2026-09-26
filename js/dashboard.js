@@ -121,7 +121,7 @@ function processDashboardMetrics(records) {
         vehicleClassMap[vClass] = (vehicleClassMap[vClass] || 0) + 1;
 
         // Blood Group
-        const bGroup = (row.blood_group || "Not Specified").trim();
+        const bGroup = (row.blood_group || "Not Specified" || "-").trim();
         bloodGroupMap[bGroup] = (bloodGroupMap[bGroup] || 0) + 1;
 
         // Relative Type
@@ -142,9 +142,22 @@ function processDashboardMetrics(records) {
             }
         }
 
-        // Address mapping (Simple extraction of district/city token or default)
-        const addr = (row.present_address || row.permanent_address || "Other").trim();
+        // Address mapping
+        let addr = (row.present_address || row.permanent_address || "Other").trim();
+
+        if (/sankari|sankagiri/i.test(addr)) {
+            addr = "Sankagiri";
+        } 
+        else if (/pakkanadu/i.test(addr)) {
+            addr = "pakkanadu";
+        }else if (/edappadi|edappady|EDAPPAADI/i.test(addr)) {
+            addr = "Edappadi";
+        }
+        
+
+
         const shortAddr = addr.length > 15 ? addr.substring(0, 15) + "..." : addr;
+
         addressMap[shortAddr] = (addressMap[shortAddr] || 0) + 1;
     });
 
@@ -221,7 +234,7 @@ function populateTables(records) {
     });
 
     const today = new Date();
-    today.setHours(0,0,0,0);
+    today.setHours(0, 0, 0, 0);
 
     const expiredList = records.filter(r => {
         const parts = (r.expiry_date || "").split("-");
@@ -359,7 +372,7 @@ function renderCharts(data) {
     });
 
     // 10. Address Distribution Bar Chart
-    const topAddresses = Object.entries(data.addressMap).sort((a,b) => b[1] - a[1]).slice(0, 5);
+    const topAddresses = Object.entries(data.addressMap).sort((a, b) => b[1] - a[1]).slice(0, 7);
     new Chart(document.getElementById("chartAddressDistribution"), {
         type: 'bar',
         data: {
@@ -370,7 +383,7 @@ function renderCharts(data) {
     });
 
     // 11. Top Vehicle Classes Bar Chart
-    const topVehicles = Object.entries(data.vehicleClassMap).sort((a,b) => b[1] - a[1]).slice(0, 5);
+    const topVehicles = Object.entries(data.vehicleClassMap).sort((a, b) => b[1] - a[1]).slice(0, 5);
     new Chart(document.getElementById("chartTopVehicles"), {
         type: 'bar',
         data: {

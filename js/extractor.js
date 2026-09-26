@@ -1,310 +1,277 @@
 document.addEventListener("DOMContentLoaded", () => {
-     const extractBtn = document.getElementById("extractBtn");
-     const clearBtn = document.getElementById("clearBtn");
-     const mobileInput = document.getElementById("formMobile");
-     const emergencyMobileInput = document.getElementById("formEmergencyMobile");
+    const extractBtn = document.getElementById("extractBtn");
+    const clearBtn = document.getElementById("clearBtn");
+    const mobileInput = document.getElementById("formMobile");
+    const emergencyMobileInput = document.getElementById("formEmergencyMobile");
 
-     if (extractBtn) extractBtn.addEventListener("click", executeTextParsingEngine);
-     if (clearBtn) clearBtn.addEventListener("click", () => document.getElementById("pdfText").value = "");
+    if (extractBtn) extractBtn.addEventListener("click", executeTextParsingEngine);
+    if (clearBtn) clearBtn.addEventListener("click", () => {
+        const inputArea = document.getElementById("pdfText");
+        if (inputArea) inputArea.value = "";
+    });
 
-     // Restrict inputs to numeric digits only and cap at 10 characters
-     [mobileInput, emergencyMobileInput].forEach(input => {
-         if (input) {
-             input.addEventListener("input", (e) => {
-                 e.target.value = e.target.value.replace(/\D/g, "").slice(0, 10);
-             });
-         }
-     });
+    [mobileInput, emergencyMobileInput].forEach(inp => {
+        if (inp) {
+            inp.addEventListener("input", (e) => {
+                e.target.value = e.target.value.replace(/\D/g, "").slice(0, 10);
+            });
+        }
+    });
 });
 
 /**
- * Normalizes spacing inconsistencies without completely erasing structural line breaks.
+ * Normalizes spacing inconsistencies without erasing structural line breaks.
  */
 function cleanText(text) {
-     return text.replace(/["]/g, "").replace(/[ \t]+/g, " ").trim();
+    return text.replace(/["]/g, "").replace(/[ \t]+/g, " ").trim();
 }
 
 /**
  * Normalizes vehicle classifications into a standard sorted sequence.
- * Groups, sorts, and joins codes strictly using a comma with no surrounding spaces (e.g., "MCWG,LMV,TRANS").
  */
 function normalizeVehicleClass(vehicleStr) {
-     if (!vehicleStr || vehicleStr === "-") return "-";
+    if (!vehicleStr || vehicleStr === "-") return "-";
 
-     // Convert to uppercase and strip out punctuation artifacts, replacing them with standard spaces
-     let cleanStr = vehicleStr.toUpperCase().replace(/[\s\.,\-\+_\*]+/g, " ").trim();
-     let tokens = cleanStr.split(" ");
+    const weights = { "MCWOG": 1, "MCWG": 2, "LMV": 3, "LMV-NT": 4, "LMV-TR": 5, "TRANS": 6 };
+    let clean = vehicleStr.toUpperCase().replace(/[\s\.,\-\+_\*]+/g, " ").trim();
+    let detected = new Set();
 
-     let classes = [];
-     if (tokens.includes("MCWG")) classes.push("MCWG");
-     if (tokens.includes("LMV")) classes.push("LMV");
-     if (tokens.includes("MCWOG")) classes.push("MCWOG");
-     if (tokens.includes("TRANS")) classes.push("TRANS");
+    if (/\bMCWOG\b/.test(clean)) detected.add("MCWOG");
+    if (/\bMCWG\b/.test(clean)) detected.add("MCWG");
+    if (/\bLMV\b/.test(clean)) detected.add("LMV");
+    if (/\bTRANS\b/.test(clean)) detected.add("TRANS");
 
-     if (classes.length > 0) {
-         // Strict deterministic sorting rule: Motorcycle classes first, LMV second, TRANS last
-         classes.sort((a, b) => {
-             const weights = { "MCWG": 1, "MCWOG": 1, "LMV": 2, "TRANS": 3 };
-             const weightA = weights[a] || 9;
-             const weightB = weights[b] || 9;
+    let sorted = Array.from(detected).sort((a, b) => {
+        return (weights[a] || 9) - (weights[b] || 9);
+    });
 
-             if (weightA !== weightB) {
-                 return weightA - weightB;
-             }
-             return a.localeCompare(b);
-         });
-         return classes.join(",");
-     }
-
-     // Fallback cleanup if token matches are missing but commas exist
-     return cleanStr.replace(/\s*,\s*/g, ",");
+    return sorted.length > 0 ? sorted.join(",") : clean.replace(/\s*,\s*/g, ",");
 }
 
 /**
  * Normalizes date blocks into structured DD-MM-YYYY strings.
  */
 function formatToStandardDate(dateStr) {
-     if (!dateStr || dateStr === "-") return "-";
-
-     let normalized = dateStr.replace(/\s+/g, "").replace(/\//g, "-");
-     let match = normalized.match(/(\d{2,4})-(\d{2})-(\d{2,4})/);
-
-     if (match) {
-         let pieces = [match[1], match[2], match[3]];
-         if (pieces[0].length === 4) {
-             return `${pieces[2].padStart(2, '0')}-${pieces[1].padStart(2, '0')}-${pieces[0]}`;
-         }
-         return `${pieces[0].padStart(2, '0')}-${pieces[1].padStart(2, '0')}-${pieces[2]}`;
-     }
-     return normalized.trim();
+    if (!dateStr || dateStr === "-") return "-";
+    let normalized = dateStr.replace(/\s+/g, "").replace(/\//g, "-");
+    let match = normalized.match(/(\d{2,4})-(\d{2})-(\d{2,4})/);
+    if (match) {
+        if (match[1].length === 4) {
+            return `${match[3].padStart(2, "0")}-${match[2].padStart(2, "0")}-${match[1]}`;
+        }
+        return `${match[1].padStart(2, "0")}-${match[2].padStart(2, "0")}-${match[3]}`;
+    }
+    return normalized.trim();
 }
 
 /**
- * Processes text strings via dual extraction logic pathways.
+ * Specialized Tamil Nadu Form 3 LLR parsing engine.
  */
 function executeTextParsingEngine() {
-     const rawText = document.getElementById("pdfText").value;
-     if (!rawText.trim()) {
-         alert("Please paste the LLR text block first.");
-         return;
-     }
+    const rawEl = document.getElementById("pdfText");
+    if (!rawEl) return;
+    const rawText = rawEl.value;
+    if (!rawText.trim()) {
+        alert("Please paste the LLR text block first.");
+        return;
+    }
 
-     const structuralText = cleanText(rawText);
-     const flattenedText = rawText.replace(/\s+/g, " ").replace(/"/g, "").trim();
-     const data = {};
+    const flat = rawText.replace(/\s+/g, " ").replace(/"/g, "").trim();
+    const data = {};
 
-     // 1. LLR Number (Cascading match routine)
-     let llrMatch = structuralText.match(/([A-Z]{2}\d{2})\s*\/([0-9\/ ]+)/i);
-     if (!llrMatch) llrMatch = flattenedText.match(/([A-Z]{2}\d{2})\s*\/([0-9\/]+)/i);
-     data["llr_number"] = llrMatch ? `${llrMatch[1].toUpperCase()} /${llrMatch[2].replace(/\s+/g, "")}` : "-";
+    // 1. LLR Number (e.g., TN52 /0006383/2026 or TN52 /0006832/2026)
+    let llrMatch = flat.match(/\b(TN\s*\d{2})\s*\/([0-9\/]+)\b/i);
+    data["llr_number"] = llrMatch ? `${llrMatch[1].replace(/\s+/g, "").toUpperCase()} /${llrMatch[2].replace(/\s+/g, "")}` : "-";
 
-     // 2. Application/Fees Invoice Reference Identification
-     let appMatch = structuralText.match(/[A-Z]{2}\d{2}Z\s*\/[0-9]+/i);
-     if (!appMatch) appMatch = flattenedText.match(/[A-Z]{2}\d{2}Z\s*\/[0-9]+/i);
-     data["fees_number"] = appMatch ? appMatch[0].replace(/\s+/g, "") : "-";
+    // 2. Fees Invoice Number (e.g., TN26Z/2723255 or TN26Z/2912461)
+    let appMatch = flat.match(/\b(TN\d{2}[A-Z]\s*\/[0-9]+)\b/i);
+    if (!appMatch) appMatch = flat.match(/\/(TN\d{2}[A-Z]\/[0-9]+)/i);
+    data["fees_number"] = appMatch ? (appMatch[1] || appMatch[0]).replace(/[\/\s]/g, m => m === "/" ? "/" : "").toUpperCase() : "-";
 
-     // 3. Fee Amounts Capture (Updated to "fee_amount" to match database schema)
-     const feeMatch = flattenedText.match(/Rs\.?\s*([\d.]+)/i);
-     data["fee_amount"] = feeMatch ? feeMatch[1] : "-";
+    // 3. Fee Amount
+    let feeMatch = flat.match(/Rs\.?\s*([\d.]+)/i);
+    data["fee_amount"] = feeMatch ? feeMatch[1] : "-";
 
-     // 4. Date of Birth parsing loop block
-     let dobMatch = flattenedText.match(/(\d{2}\s*[-\/]\s*\d{2}\s*[-\/]\s*\d{4})/);
-     if (!dobMatch) {
-         let splitDateMatch = structuralText.replace(/\r?\n|\r/g, " ").match(/(\d{2})\s+(\d{2}-\d{4})/);
-         if (splitDateMatch) {
-             data["date_of_birth"] = formatToStandardDate(`${splitDateMatch[1]}-${splitDateMatch[2]}`);
-         } else {
-             data["date_of_birth"] = "-";
-         }
-     } else {
-         data["date_of_birth"] = formatToStandardDate(dobMatch[1]);
-     }
+    // 4. Date of Birth
+    let dobMatch = flat.match(/\b(\d{2}[-\/]\d{2}[-\/]\d{4})\b/);
+    data["date_of_birth"] = dobMatch ? formatToStandardDate(dobMatch[1]) : "-";
 
-     // 5. Blood Group Type Evaluation
-     const bloodMatch = flattenedText.match(/\b(A|B|AB|O|A1|A2|A1B|A2B)\s*([\+\-])/i);
-     const bloodGroup = bloodMatch ? `${bloodMatch[1].toUpperCase()}${bloodMatch[2]}` : "-";
-     data["blood_group"] = bloodGroup;
+    // 5. Blood Group Extraction & Fused Prefix Decoupler
+    let bloodGroupVal = "-";
+    let rawAddressStartOffset = 0;
 
-     // 6. Applicant Name & Kin Relations Extraction Matrix
-     let name = "-", relativeName = "-";
-     let coreBlockMatch = flattenedText.match(/\/\d{4}\s+([A-Z\s\.]+?)\s+\d{2}-\d{2}-\d{4}/i);
+    if (dobMatch) {
+        let dobPos = flat.indexOf(dobMatch[1]);
+        let postDobChunk = flat.substring(dobPos + dobMatch[1].length).trim();
 
-     if (!coreBlockMatch) {
-         const lines = rawText.split('\n').map(l => l.trim()).filter(l => l.length > 0);
-         const dobIdx = lines.findIndex(l => l.match(/\d{2}-\d{2}-\d{4}/));
+        // Check for character fusion: e.g. "ODNO", "O-DNO", "A-DNO", "B-DNO"
+        let fusedMatch = postDobChunk.match(/^([ABO]|A1|A2|A1B|A2B)\s*([+-])?\s*(?:-?\s*DNO|ODNO)\b/i);
 
-         if (dobIdx !== -1) {
-             if (dobIdx > 0 && dobIdx + 1 < lines.length && !lines[dobIdx - 1].includes("Name")) {
-                 // Handle multi-column dump format (Relative name above DOB, Applicant name below)
-                 relativeName = lines[dobIdx - 1];
-                 name = lines[dobIdx + 1];
-             } else if (dobIdx >= 2) {
-                 // Standard stacked layout
-                 name = lines[dobIdx - 2];
-                 relativeName = lines[dobIdx - 1];
-             }
-         }
-     } else {
-         let tokens = coreBlockMatch[1].trim().split(/\s+/);
-         if (tokens.length >= 2) {
-             if (tokens[tokens.length - 1] === tokens[tokens.length - 2]) {
-                 name = tokens.slice(0, tokens.length - 1).join(" ");
-                 relativeName = tokens[tokens.length - 1];
-             } else if (tokens.length === 4 && tokens[1].length === 1 && tokens[3].length === 1) {
-                 name = tokens.slice(0, 2).join(" ");
-                 relativeName = tokens.slice(2).join(" ");
-             } else {
-                 let half = Math.ceil(tokens.length / 2);
-                 if (tokens.length > 2 && tokens[1].length === 1 && tokens.length % 2 === 0) half = 2;
-                 name = tokens.slice(0, half).join(" ");
-                 relativeName = tokens.slice(half).join(" ");
-             }
-         } else {
-              name = tokens[0];
-         }
-     }
-     data["name"] = name;
-     data["relative_name"] = relativeName;
-     data["relative_type"] = flattenedText.toUpperCase().includes("HUSBAND") ? "Husband" : "Father";
+        if (fusedMatch) {
+            let group = fusedMatch[1].toUpperCase();
+            let sign = fusedMatch[2] || "-";
+            bloodGroupVal = `${group}${sign}`;
+            rawAddressStartOffset = postDobChunk.indexOf("DNO");
+        } else {
+            const bloodRegex = /(?:^|\s)(A1B|A2B|A1|A2|AB|A|B|O)\s*([+-])(?=\s|[0-9]|$)/i;
+            let match = postDobChunk.substring(0, 50).match(bloodRegex);
+            if (match) {
+                bloodGroupVal = `${match[1].toUpperCase()}${match[2]}`;
+            }
+        }
+    }
 
-     // 7 & 8. Address Structures & Biometric Scars Processing Space
-     let addressText = "-", idMark1 = "-", idMark2 = "-";
+    if (bloodGroupVal === "-") {
+        const globalBloodRegex = /(?:^|\s)(A1B|A2B|A1|A2|AB|A|B|O)\s*([+-])(?=\s|[0-9]|$)/i;
+        let globalMatch = flat.match(globalBloodRegex);
+        if (globalMatch) {
+            bloodGroupVal = `${globalMatch[1].toUpperCase()}${globalMatch[2]}`;
+        }
+    }
+    data["blood_group"] = bloodGroupVal;
 
-     // A. IDENTIFICATION MARKS EXTRACTION
-     const rawLines = rawText.split('\n').map(l => l.trim()).filter(l => l.length > 0);
-     const markLines = rawLines.filter(l => /^(?:A\s+SCAR|A\s+MOLE|AMOLE)\b/i.test(l));
+    // 6. Name and Kin Details
+    let name = "-", relativeName = "-";
+    if (llrMatch && dobMatch) {
+        let startPos = flat.indexOf(llrMatch[0]) + llrMatch[0].length;
+        let endPos = flat.indexOf(dobMatch[1], startPos);
 
-     if (markLines.length > 0) {
-         idMark1 = markLines[0];
-         if (markLines.length > 1) {
-             idMark2 = markLines[1];
-         }
-     } else {
-         const markRegex = /(?:A\s+SCAR|A\s+MOLE|AMOLE)\b[^(\n\r]*/gi;
-         const extractedMarks = flattenedText.match(markRegex);
+        if (endPos > startPos) {
+            let nameChunk = flat.substring(startPos, endPos)
+                .replace(/Fee Details.*?(?=[A-Z])/i, "")
+                .replace(/Licence No|Father'?s?\s*Name|Date of Birth|Name/gi, "")
+                .trim();
 
-         if (extractedMarks && extractedMarks.length > 0) {
-             idMark1 = extractedMarks[0].replace(/\s+(?:TN\d{2}|Husband|Father|is licenced|RTO|Fee Details).*/i, "").trim();
-             if (extractedMarks.length > 1) {
-                 idMark2 = extractedMarks[1].replace(/\s+(?:TN\d{2}|Husband|Father|is licenced|RTO|Fee Details).*/i, "").trim();
-             }
-         }
-     }
+            let tokens = nameChunk.split(/\s+/).filter(t => t.length > 0 && !/^\d+$/.test(t) && !/^[1-8]\.$/.test(t));
+            if (tokens.length >= 3) {
+                if (tokens[1].length === 1) {
+                    name = `${tokens[0]} ${tokens[1]}`;
+                    relativeName = tokens.slice(2).join(" ");
+                } else if (tokens[tokens.length - 1] === tokens[tokens.length - 2]) {
+                    relativeName = tokens[tokens.length - 1];
+                    name = tokens.slice(0, tokens.length - 2).join(" ");
+                } else {
+                    let half = Math.ceil(tokens.length / 2);
+                    name = tokens.slice(0, half).join(" ");
+                    relativeName = tokens.slice(half).join(" ");
+                }
+            } else if (tokens.length === 2) {
+                name = tokens[0];
+                relativeName = tokens[1];
+            } else if (tokens.length === 1) {
+                name = tokens[0];
+            }
+        }
+    }
+    data["name"] = name;
+    data["relative_name"] = relativeName;
+    data["relative_type"] = flat.toUpperCase().includes("HUSBAND") ? "Husband" : "Father";
 
-     idMark1 = idMark1.replace(/^\(1\)\s*/i, "").replace(/\s*\(2\).*/i, "").trim();
-     idMark2 = idMark2.replace(/^\(2\)\s*/i, "").trim();
+    // 7 & 8. Scoped Address & Precise Marks Splitting
+    let addressText = "-", idMark1 = "-", idMark2 = "-";
 
-     // B. ADDRESS EXTRACTION (With Primary Slicing + Clean Line Fallback)
-     if (bloodGroup !== "-") {
-         const bloodIndex = flattenedText.indexOf(bloodGroup) + bloodGroup.length;
-         let absoluteAddressEndIdx = -1;
-         const markStartMatch = flattenedText.slice(bloodIndex).match(/(A\s+SCAR|A\s+MOLE|AMOLE)/i);
+    if (dobMatch) {
+        let dobEnd = flat.indexOf(dobMatch[1]) + dobMatch[1].length;
 
-         if (markStartMatch) {
-             absoluteAddressEndIdx = flattenedText.indexOf(markStartMatch[0], bloodIndex);
-         }
+        // Hard stop before CMV Rule text begins
+        let footerLimitIdx = flat.search(/\bis licenced to drive\b/i);
+        if (footerLimitIdx === -1) footerLimitIdx = flat.indexOf("This Licence is valid");
+        if (footerLimitIdx === -1) footerLimitIdx = flat.length;
 
-         if (absoluteAddressEndIdx > bloodIndex) {
-             let block = flattenedText.slice(bloodIndex, absoluteAddressEndIdx).trim()
-                                    .replace(/^\(1\)\s*/i, "")
-                                    .replace(/Present Address|Permanent Address|Marks of Identification/gi, "")
-                                    .trim();
+        let middleSection = flat.substring(dobEnd, footerLimitIdx);
 
-             const mid = Math.floor(block.length / 2);
-             let f = block.substring(0, mid).trim(), s = block.substring(mid).trim();
-             addressText = (f === s || s.includes("TAMIL NADU") || s.includes("SALEM") || /\d{6}$/.test(s)) ? s : block;
-         }
-     }
+        // Find all 6-digit Tamil Nadu PIN codes (600xxx-643xxx)
+        let pinMatches = [...middleSection.matchAll(/\b(6\d{5})\b/g)];
+        let marksChunk = "";
 
-     // Line-by-line address fallback if primary slice resulted in empty/invalid block
-     if (addressText === "-" || addressText === "") {
-         const cleanAddrLines = rawLines.filter(l => {
-             const isNoise = /^(Husband Name|Father Name|RTO|LLR|Fee|Warning|This Licence|is licenced|\d{2}\/\d{2}\/\d{4})/i.test(l) ||
-                             /^[A-Z]{2}\d{2}\s*\/[0-9\/]+/i.test(l);
-             if (isNoise) return false;
-              return /\d{1,4}\/\d{1,4}/.test(l) ||
-                     /\b(?:PO|TK|DT|DIST|STREET|ROAD|NAGAR|EARIKADU|KARUMAPURAM|TIRUCHENGODE|SANKARI|NAMAKKAL)\b/i.test(l) ||
-                     /\b\d{6}(?:,\d{6})?\b/.test(l);
-         });
+        if (pinMatches.length > 0) {
+            let firstPinEnd = pinMatches[0].index + 6;
+            let lastPinEnd = pinMatches[pinMatches.length - 1].index + 6;
 
-         if (cleanAddrLines.length > 0) {
-             let combined = cleanAddrLines.join(" ").replace(/\s+/g, " ").trim();
-             const mid = Math.floor(combined.length / 2);
-             let firstHalf = combined.substring(0, mid).trim();
-             let secondHalf = combined.substring(mid).trim();
-             addressText = (firstHalf === secondHalf) ? firstHalf : combined;
-         }
-     }
+            // Address is from start of middleSection up to first PIN code
+            let addrChunk = middleSection.substring(0, firstPinEnd).trim();
 
-     data["present_address"] = addressText;
-     data["permanent_address"] = addressText;
-     data["identification_mark_1"] = idMark1.replace(/\s+/g, " ");
-     data["identification_mark_2"] = idMark2.replace(/\s+/g, " ");
+            if (rawAddressStartOffset > 0) {
+                addrChunk = addrChunk.substring(rawAddressStartOffset).trim();
+            } else if (bloodGroupVal !== "-") {
+                let bgEsc = bloodGroupVal.replace("+", "\\+").replace("-", "\\-");
+                addrChunk = addrChunk.replace(new RegExp(`^\\s*${bgEsc}\\s*`, "i"), "").trim();
+            }
+            addressText = addrChunk;
 
-     // 9. Vehicle Designation Class with Space Strip Regular Expression
-     let vehicleMatch = flattenedText.match(/(?:description|following description)\s+([A-Z0-9,\s\-+/]+?)(?:\s\.\.\.\.|\s\*|_)/i);
-     if (!vehicleMatch) {
-         vehicleMatch = flattenedText.match(/\b(?:MCWOG|MCWG|LMV|TRANS)(?:\s*,\s*(?:MCWOG|MCWG|LMV|TRANS))*\b/i);
-     }
-     let extractedVehicle = vehicleMatch ? (vehicleMatch[1] || vehicleMatch[0]) : "-";
-     data["vehicle_class"] = normalizeVehicleClass(extractedVehicle);
+            // Marks chunk starts strictly after the final PIN code occurrence
+            marksChunk = middleSection.substring(lastPinEnd).trim();
+        } else {
+            // Fallback delimiter splitting
+            let markHeaderMatch = middleSection.match(/(?:Marks\s*of\s*Identification|\b(?=A\s+(?:MOLE|SCAR|WOUND|STITCH|BURN|TATTOO|MARK|BLACK)))/i);
+            let addrBoundaryIdx = markHeaderMatch ? markHeaderMatch.index : -1;
+            addressText = addrBoundaryIdx !== -1 ? middleSection.substring(0, addrBoundaryIdx).trim() : middleSection.trim();
+            marksChunk = addrBoundaryIdx !== -1 ? middleSection.substring(addrBoundaryIdx).trim() : "";
+        }
 
-     // 11. Final Form Approved Datetime Target Mapping
-     const approvedMatch = flattenedText.match(/Approved\s+Date:\s*([\d\s\-:\/A-Za-z]*)/i);
-     let rawApprovedDate = "-";
-     if (approvedMatch && approvedMatch[1].trim().length > 0) {
-         let dateOnlyMatch = approvedMatch[1].match(/(\d{2,4}[-\/]\d{2}[-\/]\d{2,4})/);
-         if (dateOnlyMatch) rawApprovedDate = dateOnlyMatch[1];
-     }
+        // Clean label noise from marksChunk
+        marksChunk = marksChunk.replace(/^.*?Marks\s*of\s*Identification(?:\s*\(1\))?/i, "")
+                               .replace(/^\(1\)\s*/i, "")
+                               .trim();
 
-     // 10. Validity Scale Ranges Tracking
-     let rawIssueDate = "-";
-     let rawExpiryDate = "-";
+        // Split cleanly on "(2)"
+        let splitParts = marksChunk.split(/\s*\(2\)\s*/i);
 
-     const validityMatch = flattenedText.match(/valid\s+from\s+.*?(\d{2}[-\/]\d{2}[-\/]\d{4})\s+(?:To\s+)?(\d{2}[-\/]\d{2}[-\/]\d{4})/i);
+        if (splitParts.length >= 2) {
+            idMark1 = splitParts[0].trim();
+            idMark2 = splitParts[1].trim();
+        } else if (splitParts.length === 1 && splitParts[0].length > 0) {
+            // If "(2)" was absent, check for multiple physical markers like "A SCAR", "A MOLE"
+            let directMarks = [...splitParts[0].matchAll(/\b(A\s+(?:MOLE|SCAR|WOUND|STITCH|BURN|TATTOO|BLACK\s*MOLE)[^,\.\n]+)/gi)];
+            if (directMarks.length >= 2) {
+                idMark1 = directMarks[0][1].trim();
+                idMark2 = directMarks[1][1].trim();
+            } else if (directMarks.length === 1) {
+                idMark1 = directMarks[0][1].trim();
+            } else {
+                idMark1 = splitParts[0].trim();
+            }
+        }
+    }
 
-     if (validityMatch) {
-         rawIssueDate = validityMatch[1];
-         rawExpiryDate = validityMatch[2];
-     } else {
-         const allDates = flattenedText.match(/(\d{2}[-\/]\d{2}[-\/]\d{4})/g);
-         if (allDates) {
-             const normDob = formatToStandardDate(data["date_of_birth"]);
-             const normApp = formatToStandardDate(rawApprovedDate);
+    data["present_address"] = addressText;
+    data["permanent_address"] = addressText;
+    data["identification_mark_1"] = idMark1.replace(/\s+/g, " ");
+    data["identification_mark_2"] = idMark2.replace(/\s+/g, " ");
 
-             const validCandidates = allDates.filter(d => {
-                 const std = formatToStandardDate(d);
-                 return std !== normDob && std !== normApp;
-             });
+    // 9. Vehicle Class (e.g., LMV, MCWG)
+    let vehicleMatch = flat.match(/(?:description)\s+([A-Z0-9,\s\-+/]+?)(?=\s*\.|\s*The holder|\s*\*|$)/i);
+    data["vehicle_class"] = normalizeVehicleClass(vehicleMatch ? vehicleMatch[1] : flat);
 
-             if (validCandidates.length >= 2) {
-                 rawIssueDate = validCandidates[0];
-                 rawExpiryDate = validCandidates[1];
-             } else if (allDates.length >= 2) {
-                 rawIssueDate = allDates[allDates.length - 2];
-                 rawExpiryDate = allDates[allDates.length - 1];
-             }
-         }
-     }
-     data["issue_date"] = formatToStandardDate(rawIssueDate);
-     data["expiry_date"] = formatToStandardDate(rawExpiryDate);
+    // 10. Dates & Validity
+    let rawIssue = "-", rawExpiry = "-";
+    let validMatch = flat.match(/valid\s*from\s*(?:date\s*)?(\d{2}[\/\-]\d{2}[\/\-]\d{4})\s*(?:To|to)\s*(\d{2}[\/\-]\d{2}[\/\-]\d{4})/i);
+    if (validMatch) {
+        rawIssue = validMatch[1];
+        rawExpiry = validMatch[2];
+    }
+    data["issue_date"] = formatToStandardDate(rawIssue);
+    data["expiry_date"] = formatToStandardDate(rawExpiry);
 
-     if (rawApprovedDate === "-" && data["issue_date"] !== "-") {
-         rawApprovedDate = data["issue_date"];
-     }
-     data["approved_date"] = formatToStandardDate(rawApprovedDate);
+    // 11. Approval Datetime
+    let appDateMatch = flat.match(/Approved\s*Date:\s*([\d\s\-:\/A-Za-z]*)/i);
+    let rawApproved = "-";
+    if (appDateMatch) {
+        let dOnly = appDateMatch[1].match(/(\d{2,4}[-\/]\d{2}[-\/]\d{2,4})/);
+        if (dOnly) rawApproved = dOnly[1];
+    }
+    if (rawApproved === "-" && data["issue_date"] !== "-") rawApproved = data["issue_date"];
+    data["approved_date"] = formatToStandardDate(rawApproved);
 
-     // Dynamic external form interface UI synchronization callback
-     if (typeof window.bindFormFields === "function") {
-         window.bindFormFields(data);
-     }
+    // Bind values to UI Form
+    if (typeof window.bindFormFields === "function") {
+        window.bindFormFields(data);
+    }
 
-     // Auto-focus user cell phone element
-     setTimeout(() => {
-         const mobileField = document.getElementById("formMobile");
-         if (mobileField) {
-             mobileField.focus();
-             mobileField.select();
-         }
-     }, 100);
+    setTimeout(() => {
+        const m = document.getElementById("formMobile");
+        if (m) { m.focus(); m.select(); }
+    }, 100);
+
+    return data;
 }
