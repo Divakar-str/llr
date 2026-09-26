@@ -1,295 +1,308 @@
 /* ==========================================================================
-   LLR REGISTRY PORTAL - MOBILE-FIRST ULTRA ENTERPRISE DESIGN
+   LLR Portal - Comprehensive Records Management Design System
    ========================================================================== */
 
-/* --- DESIGN TOKENS & SYSTEM VARIABLES --- */
 :root {
-    --bg-main: #f8fafc;
-    --card-bg: #ffffff;
-    --text-primary: #0f172a;
-    --text-muted: #64748b;
-    --border-color: #e2e8f0;
-    --border-focus: #3b82f6;
-    
-    /* Brand Accents */
-    --accent-primary: #2563eb;
-    --accent-primary-hover: #1d4ed8;
-    --accent-primary-light: rgba(37, 99, 235, 0.08);
-    
-    /* Headers */
-    --header-bg: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-    --header-text: #ffffff;
-    
-    /* Status Badges */
-    --badge-active-bg: rgba(16, 185, 129, 0.12);
-    --badge-active-text: #059669;
-    --badge-warning-bg: rgba(245, 158, 11, 0.15);
-    --badge-warning-text: #d97706;
-    --badge-danger-bg: rgba(239, 68, 68, 0.12);
-    --badge-danger-text: #dc2626;
-    --badge-info-bg: rgba(37, 99, 235, 0.12);
-    --badge-info-text: #2563eb;
-    
-    /* Shadows & Radii */
-    --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.05);
-    --shadow-md: 0 4px 12px -2px rgba(15, 23, 42, 0.08);
-    --shadow-lg: 0 20px 25px -5px rgba(15, 23, 42, 0.12);
-    
-    --radius-sm: 10px;
-    --radius-md: 16px;
-    --radius-lg: 20px;
-    --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    --primary-color: #212529;
+    --primary-hover: #343a40;
+    --accent-color: #0d6efd;
+    --bg-body: #f8f9fa;
+    --card-radius: 24px;
+    --input-radius: 8px;
+    --transition-speed: 0.2s ease-in-out;
 }
 
-/* --- DARK MODE OVERRIDES --- */
-[data-theme="dark"] {
-    --bg-main: #090d16;
-    --card-bg: #111827;
-    --text-primary: #f3f4f6;
-    --text-muted: #9ca3af;
-    --border-color: #1f2937;
-    --border-focus: #60a5fa;
-    --header-bg: linear-gradient(135deg, #111827 0%, #1f2937 100%);
-    --header-text: #ffffff;
-    --shadow-md: 0 4px 14px rgba(0, 0, 0, 0.4);
-    --shadow-lg: 0 20px 25px rgba(0, 0, 0, 0.6);
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: var(--bg-body);
+    color: #333333;
+    -webkit-font-smoothing: antialiased;
 }
 
-/* --- GLOBAL LAYOUT FIXES FOR MOBILE --- */
-html, body {
-    width: 100%;
-    max-width: 100%;
-    overflow-x: hidden;
-    background-color: var(--bg-main);
-    color: var(--text-primary);
-    font-family: 'Inter', system-ui, -apple-system, sans-serif;
-    -webkit-tap-highlight-color: transparent;
-}
-
-/* --- CARDS & GLASSMORPHISM --- */
-.card {
-    background-color: var(--card-bg);
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-md);
-    box-shadow: var(--shadow-sm);
-    transition: var(--transition);
-    overflow: hidden;
-}
-
-.card-header {
-    background: var(--header-bg) !important;
-    color: var(--header-text) !important;
-    padding: 1rem 1.25rem;
-    border-bottom: 1px solid var(--border-color);
-}
-
-/* --- NAVIGATION PILLS (MOBILE TOUCH TARGETS) --- */
-.nav-pills {
-    background: var(--card-bg);
-    padding: 4px !important;
-    border-radius: var(--radius-md) !important;
-    border: 1px solid var(--border-color) !important;
-    display: flex;
-    width: 100%;
-}
-
-.nav-pills .nav-item {
-    flex: 1;
-}
-
+/* ==========================================================================
+   1. Dashboard Header & Navigation Tabs
+   ========================================================================== */
 .nav-pills .nav-link {
-    width: 100%;
-    text-align: center;
-    color: var(--text-muted);
-    font-weight: 600;
-    font-size: 0.875rem;
-    padding: 0.65rem 0.75rem;
-    border-radius: 12px;
-    min-height: 44px; /* Touch target sizing */
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.4rem;
+    color: #495057;
+    font-weight: 500;
+    border-radius: 6px;
+    padding: 8px 16px;
+    transition: all var(--transition-speed);
 }
 
 .nav-pills .nav-link.active {
-    background: var(--accent-primary) !important;
+    background-color: var(--primary-color) !important;
     color: #ffffff !important;
-    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-/* --- FORM LABELS & INPUTS (OPTIMIZED FOR TOUCH & KEYBOARDS) --- */
-.form-label {
-    font-size: 0.8rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-    color: var(--text-muted);
-    margin-bottom: 0.4rem;
-    display: flex;
-    align-items: center;
-    gap: 0.35rem;
+.nav-pills .nav-link:hover:not(.active) {
+    background-color: #e9ecef;
 }
 
-.form-control, .form-select {
-    background-color: var(--card-bg);
-    color: var(--text-primary);
-    border: 1.5px solid var(--border-color);
-    border-radius: var(--radius-sm);
-    padding: 0.75rem 0.9rem; /* Prevent auto-zoom in iOS Safari */
-    font-size: 0.95rem; 
+/* ==========================================================================
+   2. Buttons Hub
+   ========================================================================== */
+.btn-dark-custom {
+    background-color: var(--primary-color);
+    color: #ffffff;
+    border: none;
+    border-radius: var(--input-radius);
     font-weight: 500;
-    min-height: 48px; /* Touch Target */
-    transition: var(--transition);
+    transition: all var(--transition-speed);
 }
 
-.form-control:focus, .form-select:focus {
-    background-color: var(--card-bg);
-    color: var(--text-primary);
-    border-color: var(--border-focus);
-    box-shadow: 0 0 0 3px var(--accent-primary-light);
-    outline: none;
+.btn-dark-custom:hover {
+    background-color: var(--primary-hover);
+    color: #ffffff;
 }
 
-/* SECTION DIVIDERS IN FORMS --- */
+.btn-outline-custom {
+    color: var(--primary-color);
+    border: 1px solid #ced4da;
+    background-color: #ffffff;
+    border-radius: var(--input-radius);
+    font-weight: 500;
+    transition: all var(--transition-speed);
+}
+
+.btn-outline-custom:hover {
+    background-color: #f1f3f5;
+    border-color: var(--primary-color);
+}
+
+.btn-outline-success {
+    border-radius: var(--input-radius);
+    font-weight: 500;
+    transition: all var(--transition-speed);
+}
+
+.btn-outline-success:hover {
+    background-color: rgba(25, 135, 84, 0.1);
+    border-color: #198754;
+    color: #198754;
+}
+
+.btn-group .btn {
+    transition: all 0.15s ease-in-out;
+}
+
+.btn-group .btn:hover {
+    transform: translateY(-1px);
+    z-index: 2;
+}
+
+/* ==========================================================================
+   3. Cards, Containers & Dividers
+   ========================================================================== */
+.card {
+    border-radius: var(--card-radius) !important;
+    border: none;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card:hover {
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.05) !important;
+}
+
+.card-header {
+    border-top-left-radius: var(--card-radius) !important;
+    border-top-right-radius: var(--card-radius) !important;
+}
+
+/* Form Section Dividers */
 .section-divider {
     position: relative;
-    margin: 1.5rem 0 1rem 0;
-    border-bottom: 1.5px dashed var(--border-color);
+    border-top: 1px solid #dee2e6;
+    margin: 1.75rem 0 1.25rem 0;
 }
 
 .section-title {
-    position: relative;
-    top: 10px;
-    background: var(--card-bg);
-    padding-right: 10px;
-    font-size: 0.8rem;
-    font-weight: 800;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    color: var(--accent-primary);
+    position: absolute;
+    top: -12px;
+    left: 16px;
+    background-color: #ffffff;
+    padding: 0 10px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #495057;
+    display: flex;
+    align-items:center;
+    gap: 6px;
 }
 
-/* --- HORIZONTAL SCROLLABLE TABLE ON MOBILE --- */
+/* ==========================================================================
+   4. Form Elements, Inputs & Status Badges
+   ========================================================================== */
+.form-control, .form-select {
+    border-radius: var(--input-radius);
+    border-color: #ced4da;
+    padding: 0.55rem 0.75rem;
+    font-size: 0.95rem;
+    transition: border-color var(--transition-speed), box-shadow var(--transition-speed);
+}
+
+.form-control:focus, .form-select:focus {
+    background-color: #ffffff;
+    border-color: var(--accent-color);
+    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.12);
+}
+
+.input-group .form-control:focus {
+    z-index: 3;
+}
+
+/* Active Search Highlight Animation */
+#tableSearchInput.border-primary {
+    transition: all 0.25s ease-in-out;
+}
+
+/* Professional Soft Badges */
+.badge.bg-success {
+    background-color: rgba(25, 135, 84, 0.1) !important;
+    color: #198754 !important;
+    border: 1px solid rgba(25, 135, 84, 0.2);
+    font-weight: 600;
+}
+
+.badge.bg-warning {
+    background-color: rgba(255, 193, 7, 0.1) !important;
+    color: #ffc107 !important;
+    border: 1px solid rgba(255, 193, 7, 0.2);
+    font-weight: 600;
+}
+
+/* ==========================================================================
+   5. Data Registry Table & Rows
+   ========================================================================== */
 .table-responsive {
-    width: 100%;
-    margin-bottom: 0;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    border-radius: 0 0 var(--radius-md) var(--radius-md);
-}
-
-.table {
-    width: 100%;
-    min-width: 850px; /* Forces full width layout on desktop, enables scroll on mobile */
-    margin-bottom: 0;
-    --bs-table-bg: transparent;
-    --bs-table-color: var(--text-primary);
+    border-bottom-left-radius: var(--card-radius);
+    border-bottom-right-radius: var(--card-radius);
 }
 
 .sticky-thead th {
     position: sticky;
     top: 0;
-    background: var(--card-bg) !important;
-    color: var(--text-muted);
-    font-size: 0.75rem;
-    font-weight: 800;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    padding: 0.85rem 0.75rem;
-    border-bottom: 2px solid var(--border-color);
-    z-index: 5;
-    white-space: nowrap;
-}
-
-.table td {
-    padding: 0.85rem 0.75rem;
-    vertical-align: middle;
-    font-size: 0.875rem;
-    white-space: nowrap;
-}
-
-.table tbody tr {
-    border-bottom: 1px solid var(--border-color);
-}
-
-/* --- ACTION BUTTONS (MOBILE OPTIMIZED) --- */
-.btn {
-    border-radius: var(--radius-sm);
+    background-color: var(--primary-color) !important;
+    color: #ffffff;
+    z-index: 10;
     font-weight: 600;
-    font-size: 0.875rem;
-    min-height: 44px;
-    padding: 0.6rem 1.1rem;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.4rem;
-    transition: var(--transition);
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding-top: 14px;
+    padding-bottom: 14px;
+    border: none !important;
 }
 
-.btn-sm {
-    min-height: 36px;
-    padding: 0.35rem 0.65rem;
-    font-size: 0.8rem;
+#dbMasterTable tbody tr {
+    transition: background-color 0.15s ease-in-out;
 }
 
-.btn-dark-custom {
-    background: var(--header-bg);
-    color: #ffffff;
-    border: none;
+#dbMasterTable tbody tr:hover {
+    background-color: rgba(13, 110, 253, 0.04) !important;
 }
 
-.btn-dark-custom:hover, .btn-dark-custom:active {
-    background: var(--accent-primary);
-    color: #ffffff;
+#dbMasterTable td {
+    padding-top: 12px;
+    padding-bottom: 12px;
+    vertical-align: middle;
 }
 
-/* --- MOBILE POPUP MODALS --- */
-.modal-dialog {
-    margin: 0.5rem;
+/* Interactive Copiable Elements */
+td span[onclick], th span[onclick] {
+    transition: color 0.15s ease-in-out;
 }
 
-@media (min-width: 576px) {
-    .modal-dialog {
-        margin: 1.75rem auto;
-    }
+td span[onclick]:hover {
+    color: var(--accent-color) !important;
 }
 
+/* ==========================================================================
+   6. Modals Styling
+   ========================================================================== */
 .modal-content {
-    background-color: var(--card-bg);
-    color: var(--text-primary);
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-md) !important;
-    box-shadow: var(--shadow-lg);
+    border-radius: var(--card-radius) !important;
+    border: none;
+    box-shadow: 0 1rem 3rem rgba(0, 0, 0, 0.175);
 }
 
 .modal-header {
-    background: var(--header-bg);
-    color: #ffffff;
-    padding: 1rem 1.25rem;
-    border-radius: var(--radius-md) var(--radius-md) 0 0 !important;
+    border-top-left-radius: var(--card-radius) !important;
+    border-top-right-radius: var(--card-radius) !important;
 }
 
-/* --- PAGINATION & FOOTER ON MOBILE --- */
-#tablePaginationNav {
-    background-color: var(--card-bg) !important;
-    border-top: 1px solid var(--border-color) !important;
-    padding: 0.85rem 1rem !important;
-    flex-wrap: wrap;
-    gap: 0.75rem;
+.modal-footer {
+    border-bottom-left-radius: var(--card-radius) !important;
+    border-bottom-right-radius: var(--card-radius) !important;
 }
 
-@media (max-width: 576px) {
-    #tablePaginationNav {
-        justify-content: center !important;
-        text-align: center;
-    }
-    
-    #tablePaginationNav .btn-group {
-        width: 100%;
-    }
+/* ==========================================================================
+   7. Custom Sleek Scrollbars & Animations
+   ========================================================================== */
+.table-responsive::-webkit-scrollbar,
+.modal-body::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
 
-    #tablePaginationNav .btn-group .btn {
-        flex: 1;
+.table-responsive::-webkit-scrollbar-track,
+.modal-body::-webkit-scrollbar-track {
+    background: #f1f3f5;
+    border-radius: 4px;
+}
+
+.table-responsive::-webkit-scrollbar-thumb,
+.modal-body::-webkit-scrollbar-thumb {
+    background: #ced4da;
+    border-radius: 4px;
+}
+
+.table-responsive::-webkit-scrollbar-thumb:hover,
+.modal-body::-webkit-scrollbar-thumb:hover {
+    background: #adb5bd;
+}
+
+.animated-pane {
+    animation: fadeInPane 0.25s ease-in-out forwards;
+}
+
+@keyframes fadeInPane {
+    from {
+        opacity: 0;
+        transform: translateY(6px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Toast Container Polish */
+#customAlertContainer .alert {
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    animation: slideInRight 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes slideInRight {
+    from {
+        opacity: 0;
+        transform: translateX(40px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+/* ==========================================================================
+   8. Responsive Design Tweaks
+   ========================================================================== */
+@media (max-width: 768px) {
+    .container-fluid {
+        padding-left: 1rem !important;
+        padding-right: 1rem !important;
     }
 }

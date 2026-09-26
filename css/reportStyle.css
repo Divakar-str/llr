@@ -1,153 +1,131 @@
 /* ==========================================================================
-   LLR PORTAL - REPORTS ENGINE CONSOLE STYLESHEET
+   LLR Portal - Ultra-Modern Reports Console Stylesheet
    ========================================================================== */
 
-/* --------------------------------------------------------------------------
-   1. CSS Custom Properties & Variables
-   -------------------------------------------------------------------------- */
 :root {
-    --primary-color: #0d6efd;
-    --primary-hover: #0b5ed7;
-    --primary-soft: rgba(13, 110, 253, 0.08);
-    --success-color: #198754;
-    --success-soft: rgba(25, 135, 84, 0.1);
-    --danger-color: #dc3545;
-    --danger-soft: rgba(220, 53, 69, 0.1);
-    --warning-color: #ffc107;
-    --warning-soft: rgba(255, 193, 7, 0.15);
-
-    --bg-glass: rgba(255, 255, 255, 0.85);
-    --border-color: rgba(0, 0, 0, 0.08);
-    --card-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
-    --transition-smooth: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    --bg-main: #f8fafc;
+    --surface-card: #ffffff;
+    --border-subtle: #f1f5f9;
+    --border-default: #e2e8f0;
+    --text-primary: #0f172a;
+    --text-secondary: #64748b;
+    --accent-dark: #0f172a;
+    --accent-hover: #1e293b;
+    --radius-card: 20px;
+    --radius-element: 12px;
+    --shadow-soft: 0 10px 30px -5px rgba(0, 0, 0, 0.04);
 }
 
-/* --------------------------------------------------------------------------
-   2. Glassmorphism Panels & Header Controls
-   -------------------------------------------------------------------------- */
+body {
+    background-color: var(--bg-main);
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    color: var(--text-primary);
+    overflow-x: hidden;
+    letter-spacing: -0.01em;
+}
+
+/* Glassmorphism Control Panel Bar */
 .glass-panel-bar {
-    background: var(--bg-glass);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border: 1px solid var(--border-color);
-    border-radius: 16px;
-    box-shadow: var(--card-shadow);
-    position: relative;
-    z-index: 100;
-    overflow: visible !important;
+    background: var(--surface-card);
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-card);
+    box-shadow: var(--shadow-soft);
+    backdrop-filter: blur(10px);
 }
 
+/* Section Indicators and Labels */
 .panel-section-label {
     display: flex;
     align-items: center;
     gap: 8px;
     margin-bottom: 8px;
-    font-size: 0.8rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    color: #6c757d;
 }
 
 .step-num-indicator {
+    background: var(--accent-dark);
+    color: #ffffff;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 20px;
-    height: 20px;
-    background: var(--primary-color);
-    color: #fff;
-    border-radius: 50%;
-    font-size: 0.75rem;
+    font-size: 0.7rem;
     font-weight: 700;
 }
 
-/* Premium Form Controls */
-.form-control-premium,
-.form-select-premium {
-    width: 100%;
-    padding: 0.55rem 0.85rem;
-    font-size: 0.875rem;
-    font-weight: 500;
-    border: 1px solid rgba(0, 0, 0, 0.12);
-    border-radius: 10px;
-    background-color: #fff;
-    transition: var(--transition-smooth);
+.label-text-node {
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-secondary);
 }
 
-.form-control-premium:focus,
-.form-select-premium:focus {
-    border-color: var(--primary-color);
-    box-shadow: 0 0 0 4px var(--primary-soft);
+/* Premium Inputs */
+.form-control-premium, .form-select-premium {
+    width: 100%;
+    border-radius: var(--radius-element);
+    border: 1px solid var(--border-default);
+    background-color: #fcfcfd;
+    padding: 0.65rem 0.9rem;
+    font-size: 0.875rem;
+    transition: all 0.2s ease;
+    color: var(--text-primary);
+}
+
+.form-control-premium:focus, .form-select-premium:focus {
+    border-color: var(--accent-dark);
+    background-color: #ffffff;
+    box-shadow: 0 0 0 4px rgba(15, 23, 42, 0.06);
     outline: none;
 }
 
-.premium-search-input-group,
-.premium-date-input-group {
+.premium-search-input-group, .premium-date-input-group {
     position: relative;
     display: flex;
     align-items: center;
 }
 
-.input-icon-node {
-    position: absolute;
-    left: 12px;
-    color: #8a92a6;
-    pointer-events: none;
-    font-size: 0.9rem;
-}
-
-.premium-search-input-group .form-control-premium,
-.premium-date-input-group .form-control-premium {
+.premium-search-input-group input, .premium-date-input-group input {
     padding-left: 36px;
 }
 
-/* --------------------------------------------------------------------------
-   3. Target Classification & Multi-Select Dropdown Widget
-   -------------------------------------------------------------------------- */
-.target-classification-card {
-    background-color: rgba(248, 249, 250, 0.9);
-    border: 1px solid rgba(13, 110, 253, 0.12) !important;
-    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.02);
-    position: relative;
-    z-index: 105;
-    overflow: visible !important;
+.premium-search-input-group .input-icon-node, .premium-date-input-group .input-icon-node {
+    position: absolute;
+    left: 12px;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    pointer-events: none;
 }
 
+/* Template Highlight Dropdown */
+.template-select-highlight {
+    border: 1.5px solid #0f172a !important;
+    font-weight: 600;
+    color: var(--accent-dark);
+}
+
+/* Custom Multi-Select Dropdown Container */
 .custom-multiselect-container {
     position: relative;
-    width: 100%;
-    z-index: 110;
+    cursor: pointer;
 }
 
 .custom-multiselect-trigger {
-    min-height: 38px;
-    padding: 4px 30px 4px 10px;
-    background-color: #ffffff;
-    border: 1px solid rgba(0, 0, 0, 0.15);
-    border-radius: 10px;
-    cursor: pointer;
+    background: #fcfcfd;
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-element);
+    padding: 0.5rem 0.9rem;
+    min-height: 42px;
     display: flex;
     align-items: center;
-    position: relative;
-    transition: var(--transition-smooth);
+    justify-content: space-between;
+    font-size: 0.875rem;
 }
 
 .custom-multiselect-trigger:hover {
-    border-color: var(--primary-color);
-}
-
-.custom-multiselect-trigger.active-ring {
-    border-color: var(--primary-color);
-    box-shadow: 0 0 0 4px var(--primary-soft);
-}
-
-.dropdown-arrow-icon {
-    position: absolute;
-    right: 12px;
-    color: #6c757d;
-    font-size: 0.8rem;
-    pointer-events: none;
+    border-color: #cbd5e1;
 }
 
 .tags-holder {
@@ -157,47 +135,24 @@
     align-items: center;
 }
 
-.placeholder-text {
+.tags-holder .placeholder-text {
+    color: var(--text-secondary);
     font-size: 0.85rem;
-    color: #6c757d;
-}
-
-.multiselect-tag-badge {
-    background-color: var(--primary-soft);
-    color: var(--primary-color);
-    border: 1px solid rgba(13, 110, 253, 0.2);
-    border-radius: 6px;
-    padding: 1px 6px;
-    font-size: 0.75rem;
-    font-weight: 600;
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-}
-
-.tag-remove-btn {
-    cursor: pointer;
-    font-size: 0.9rem;
-    line-height: 1;
-    color: var(--primary-color);
-}
-
-.tag-remove-btn:hover {
-    color: var(--danger-color);
 }
 
 .custom-multiselect-menu {
     position: absolute;
-    top: calc(100% + 4px);
+    top: 100%;
     left: 0;
-    right: 0;
+    width: 100%;
     background: #ffffff;
-    border: 1px solid rgba(0, 0, 0, 0.15);
-    border-radius: 10px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
-    z-index: 9999 !important;
-    padding: 6px;
-    max-height: 220px;
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-element);
+    box-shadow: 0 15px 30px -5px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+    margin-top: 4px;
+    padding: 8px;
+    max-height: 240px;
     overflow-y: auto;
 }
 
@@ -205,498 +160,304 @@
     display: flex;
     align-items: center;
     gap: 8px;
-    padding: 6px 10px;
+    padding: 6px 8px;
     border-radius: 6px;
+    font-size: 0.85rem;
     cursor: pointer;
-    transition: var(--transition-smooth);
+    transition: background 0.15s ease;
 }
 
 .menu-item-option:hover {
-    background-color: #f8f9fa;
+    background: #f8fafc;
 }
 
-.menu-item-option label {
-    font-size: 0.825rem;
-    font-weight: 500;
-    cursor: pointer;
-    margin: 0;
-    flex-grow: 1;
-}
-
-.template-select-highlight {
-    border-left: 3px solid var(--primary-color) !important;
-    font-weight: 600;
-}
-
-/* --------------------------------------------------------------------------
-   4. Action Buttons & Summary Metric Ribbons
-   -------------------------------------------------------------------------- */
-.premium-primary-action-btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    padding: 0.65rem 1.25rem;
-    font-weight: 600;
-    font-size: 0.9rem;
-    color: #fff;
-    background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%);
-    border: none;
-    border-radius: 10px;
-    box-shadow: 0 4px 12px rgba(13, 110, 253, 0.25);
-    cursor: pointer;
-    transition: var(--transition-smooth);
-}
-
-.premium-primary-action-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 16px rgba(13, 110, 253, 0.35);
-}
-
+/* Secondary Action Buttons (Excel & CSV) */
 .premium-secondary-action-btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-    padding: 0.5rem 0.85rem;
-    font-size: 0.825rem;
+    border-radius: var(--radius-element);
     font-weight: 600;
-    border-radius: 8px;
-    border: 1px solid var(--border-color);
-    background: #fff;
-    transition: var(--transition-smooth);
-    cursor: pointer;
+    font-size: 0.85rem;
+    padding: 0.65rem 1rem;
+    border: 1px solid var(--border-default);
+    transition: all 0.2s ease;
 }
 
-.premium-secondary-action-btn.excel-variant {
-    color: #198754;
-    border-color: rgba(25, 135, 84, 0.2);
+.excel-variant {
+    background: #f0fdf4;
+    color: #166534;
+    border-color: #bbf7d0;
 }
 
-.premium-secondary-action-btn.csv-variant {
-    color: #0d6efd;
-    border-color: rgba(13, 110, 253, 0.2);
+.excel-variant:hover {
+    background: #dcfce7;
 }
 
-.premium-print-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    font-weight: 600;
-    font-size: 0.875rem;
-    color: #fff;
-    background: #212529;
-    border: none;
-    border-radius: 8px;
-    transition: var(--transition-smooth);
+.csv-variant {
+    background: #eff6ff;
+    color: #1e40af;
+    border-color: #bfdbfe;
 }
 
+.csv-variant:hover {
+    background: #dbeafe;
+}
+
+/* Main Workspace Card */
+.premium-main-workspace-card {
+    background: var(--surface-card);
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-card);
+    box-shadow: var(--shadow-soft);
+    padding: 1.5rem;
+    min-height: 500px;
+}
+
+/* Metrics Ribbon Cards */
 .premium-ribbon-card {
+    background: #ffffff;
+    border: 1px solid var(--border-default);
+    border-radius: 14px;
+    padding: 0.85rem 1rem;
     display: flex;
     flex-direction: column;
-    padding: 0.75rem 1rem;
-    background: #fff;
-    border-radius: 12px;
-    border: 1px solid var(--border-color);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
-    transition: var(--transition-smooth);
+    gap: 2px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.02);
 }
 
-.premium-ribbon-card.border-left-success {
-    border-left: 4px solid var(--success-color);
-}
-
-.premium-ribbon-card.border-left-danger {
-    border-left: 4px solid var(--danger-color);
-}
-
-.premium-ribbon-card.border-left-primary {
-    border-left: 4px solid var(--primary-color);
-}
-
-.premium-ribbon-card.border-left-dark {
-    border-left: 4px solid #212529;
-}
+.border-left-success { border-left: 4px solid #10b981 !important; }
+.border-left-danger { border-left: 4px solid #ef4444 !important; }
+.border-left-primary { border-left: 4px solid #3b82f6 !important; }
+.border-left-dark { border-left: 4px solid #0f172a !important; }
 
 .ribbon-label {
-    font-size: 0.725rem;
+    font-size: 0.7rem;
     font-weight: 700;
     text-transform: uppercase;
-    color: #6c757d;
-    letter-spacing: 0.5px;
+    color: var(--text-secondary);
+    letter-spacing: 0.05em;
 }
 
 .ribbon-value {
-    font-size: 1.35rem;
+    font-size: 1.25rem;
     font-weight: 800;
-    line-height: 1.2;
-    margin-top: 2px;
 }
 
-.premium-counter-badge {
-    background: var(--primary-soft);
-    color: var(--primary-color);
-    font-weight: 700;
-    font-size: 0.85rem;
-    padding: 0.4rem 0.85rem;
-    border-radius: 30px;
-    border: 1px solid rgba(13, 110, 253, 0.15);
-}
-
-/* --------------------------------------------------------------------------
-   5. Interactive Data Table, Copyable Cells & Double-Click Modal Styles
-   -------------------------------------------------------------------------- */
-.premium-main-workspace-card {
-    background: #fff;
-    border-radius: 16px;
-    border: 1px solid var(--border-color);
-    box-shadow: var(--card-shadow);
-    padding: 1.5rem;
-}
-
-.min-view-height {
-    min-height: 480px;
-}
-
+/* Modern Report Data Table */
 .table-modern {
-    vertical-align: middle;
-    font-size: 0.875rem;
+    margin-bottom: 0;
 }
 
 .table-modern thead th {
-    background-color: #f8f9fa;
-    color: #495057;
+    background-color: #f8fafc;
+    color: var(--text-secondary);
     font-weight: 700;
-    font-size: 0.775rem;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
-    border-bottom: 2px solid #dee2e6;
-    padding: 0.85rem 0.75rem;
+    font-size: 0.7rem;
+    letter-spacing: 0.08em;
+    padding: 1rem 0.85rem;
+    border-bottom: 2px solid var(--border-default);
 }
 
-.sortable-header:hover {
-    background-color: #e9ecef !important;
+.table-modern tbody tr {
+    transition: background 0.15s ease;
 }
 
-.table-modern tbody td {
-    padding: 0.85rem 0.75rem;
-    border-bottom: 1px solid #f1f3f5;
-    color: #212529;
+.table-modern tbody tr:hover {
+    background-color: #f8fafc !important;
 }
 
-/* Double-Click Editable Row Styling */
-.editable-table-row {
-    cursor: pointer;
-    transition: var(--transition-smooth);
+.table-modern td {
+    padding: 0.9rem 0.85rem;
+    font-size: 0.875rem;
+    vertical-align: middle;
+    border-color: var(--border-subtle);
+    color: #334155;
 }
 
-.editable-table-row:hover {
-    background-color: rgba(13, 110, 253, 0.03) !important;
+.premium-print-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background-color: #2563eb;
+  color: #ffffff;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  box-shadow: 0 2px 4px rgba(0, 0, 0,  0.1);
+  transition: background-color 0.2s ease, transform 0.1s ease;
 }
 
-/* One-Click Copy Cell Styling */
-.copyable-cell {
-    cursor: copy !important;
-    position: relative;
-    transition: var(--transition-smooth);
+.premium-print-btn:hover {
+  background-color: #1d4ed8;
 }
 
-.copyable-cell:hover {
-    background-color: var(--primary-soft) !important;
-    border-radius: 4px;
+.premium-print-btn:active {
+  transform: scale(0.98);
 }
 
-.copyable-cell:active {
-    transform: scale(0.96);
+@media print {
+  .premium-print-btn {
+    display: none;
+  }
 }
 
-/* Custom Scrollbar for Workspace Table */
-.custom-scrollbar::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
+/* ==========================================================================
+   Ultra-Modern SaaS Toast Alert Styles
+   ========================================================================== */
+#customAlertContainer {
+    position: fixed;
+    top: 24px;
+    right: 24px;
+    z-index: 1080;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    pointer-events: none;
 }
 
-.custom-scrollbar::-webkit-scrollbar-track {
-    background: #f1f1f1;
-    border-radius: 10px;
+#customAlertContainer .alert {
+    pointer-events: auto;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-radius: 16px !important;
+    padding: 1rem 1.25rem;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+    animation: alertSlideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    font-size: 0.9rem;
 }
 
-.custom-scrollbar::-webkit-scrollbar-thumb {
-    background: #ccc;
-    border-radius: 10px;
+@keyframes alertSlideIn {
+    from { opacity: 0; transform: translateX(30px) scale(0.95); }
+    to { opacity: 1; transform: translateX(0) scale(1); }
 }
 
-.custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: #aaa;
+/* ==========================================================================
+   Strict A4 Landscape Toner-Saving Print & PDF Export Stylesheet
+   ========================================================================== */
+@page {
+    size: A4 landscape;
+    margin: 10mm 10mm 10mm 10mm;
 }
 
-/* --------------------------------------------------------------------------
-   6. Keyframe Animations & Micro-Interactions
-   -------------------------------------------------------------------------- */
-@keyframes scaleIn {
-    0% {
-        opacity: 0;
-        transform: scale(0.97);
+@media print {
+    /* Hide all web app navigation, filters, ribbons, and modals */
+    .no-print, 
+    nav, 
+    #global-nav-container, 
+    .glass-panel-bar, 
+    #reportSummaryRibbon,
+    .modal,
+    .toast-container,
+    #customAlertContainer {
+        display: none !important;
     }
 
-    100% {
-        opacity: 1;
-        transform: scale(1);
-    }
-}
-
-.scale-in {
-    animation: scaleIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-}
-
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(6px);
+    /* Force pure white background and economical print typography */
+    body {
+        background: #ffffff !important;
+        color: #000000 !important;
+        font-size: 9pt;
+        font-family: Arial, Helvetica, sans-serif;
+        margin: 0 !important;
+        padding: 0 !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
     }
 
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-.animated-fade-in {
-    animation: fadeIn 0.3s ease-out forwards;
-}
-
-.spinner-icon {
-    animation: spinRotate 1s linear infinite;
-}
-
-@keyframes spinRotate {
-    0% {
-        transform: rotate(0deg);
+    /* Clean A4 Landscape Print Header */
+    .print-only-header {
+        display: block !important;
+        text-align: center;
+        margin-bottom: 12px;
+        border-bottom: 1.5px solid #000000;
+        padding-bottom: 6px;
     }
 
-    100% {
-        transform: rotate(360deg);
-    }
-}
-
-.animated-empty-orb {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 80px;
-    height: 80px;
-    border-radius: 50%;
-    background: var(--primary-soft);
-    font-size: 2.2rem;
-    animation: floatOrb 3s ease-in-out infinite;
-}
-
-@keyframes floatOrb {
-
-    0%,
-    100% {
-        transform: translateY(0);
+    .print-title-badge {
+        font-size: 13pt;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: #000000;
+        margin-bottom: 2px;
     }
 
-    50% {
-        transform: translateY(-8px);
-    }
-}
-
-.skeleton-pill {
-    height: 20px;
-    background: #e9ecef;
-    border-radius: 6px;
-}
-
-.animate-pulse {
-    animation: pulseGlow 1.5s ease-in-out infinite;
-}
-
-@keyframes pulseGlow {
-
-    0%,
-    100% {
-        opacity: 0.5;
+    .print-subline {
+        font-size: 8pt;
+        color: #333333;
+        margin: 0;
     }
 
-    50% {
-        opacity: 1;
+    /* Full width viewport container for A4 Landscape */
+    .container-fluid {
+        width: 100% !important;
+        max-width: 100% !important;
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+
+    .premium-main-workspace-card {
+        border: none !important;
+        box-shadow: none !important;
+        padding: 0 !important;
+        background: transparent !important;
+        min-height: auto !important;
+    }
+
+    /* Table layout optimization for toner conservation */
+    .table-responsive {
+        overflow: visible !important;
+        border: none !important;
+        background: transparent !important;
+    }
+
+    .table-modern {
+        width: 100% !important;
+        border-collapse: collapse !important;
+        page-break-inside: auto;
+    }
+
+    .table-modern tr {
+        page-break-inside: avoid;
+        page-break-after: auto;
+    }
+
+    .table-modern thead th {
+        background-color: #f3f4f6 !important; /* Extremely light grey saves dark ink toner */
+        color: #000000 !important;
+        font-size: 7.5pt;
+        font-weight: 700;
+        padding: 5px 4px;
+        border: 1px solid #000000 !important;
+        text-align: left;
+    }
+
+    .table-modern tbody td {
+        font-size: 7.5pt;
+        padding: 4px;
+        border: 1px solid #9ca3af !important;
+        color: #111111 !important;
+        background: transparent !important;
+    }
+
+    .table-modern tbody tr:nth-child(even) {
+        background-color: #fafafa !important;
+    }
+
+    .badge {
+        border: 1px solid #4b5563 !important;
+        background: transparent !important;
+        color: #000000 !important;
+        padding: 1px 3px;
+        font-size: 7pt;
+        font-weight: 600;
     }
 }
 
 .print-only-header {
     display: none;
-}
-
-/* --------------------------------------------------------------------------
-   7. Complete Print Media Overrides (@media print)
-   -------------------------------------------------------------------------- */
-/* --------------------------------------------------------------------------
-   7. Complete Print Media Overrides (@media print)
-   -------------------------------------------------------------------------- */
-@media print {
-    @page {
-        size: A4 landscape;
-        margin: 8mm 8mm 8mm 8mm;
-    }
-
-    /* Force browser print engine to render background colors and borders */
-    *,
-    *::before,
-    *::after {
-        -webkit-print-color-adjust: exact !important;
-        print-color-adjust: exact !important;
-    }
-
-    /* Hide Controls, Navigation, and Modals */
-    .no-print,
-    #reportPaginationFooter,
-    .glass-panel-bar,
-    #global-nav-container,
-    #reportSummaryRibbon,
-    #connectionStatusStatusTray,
-    .btn,
-    .form-select,
-    .form-control,
-    .premium-counter-badge,
-    .custom-multiselect-menu,
-    .modal,
-    .modal-backdrop,
-    .toast-container {
-        display: none !important;
-    }
-
-    .hide-row-on-print {
-        display: none !important;
-    }
-
-    /* Print Header Display */
-    .print-only-header {
-        display: block !important;
-        margin-bottom: 12px !important;
-        text-align: center !important;
-    }
-
-    .print-title-badge {
-        font-size: 1.2rem !important;
-        font-weight: 800 !important;
-        text-transform: uppercase !important;
-        color: #000 !important;
-        border-bottom: 2px solid #000 !important;
-        padding-bottom: 2px !important;
-        display: inline-block !important;
-    }
-
-    .print-subline {
-        font-size: 0.75rem !important;
-        color: #333 !important;
-        margin: 0 !important;
-    }
-
-    /* Reset Body & Workspace Canvas */
-    html,
-    body {
-        background: #fff !important;
-        color: #000 !important;
-        width: 100% !important;
-        height: auto !important;
-        padding: 0 !important;
-        margin: 0 !important;
-        overflow: visible !important;
-    }
-
-    #wideReportWorkspace,
-    .container-fluid,
-    .premium-main-workspace-card {
-        padding: 0 !important;
-        margin: 0 !important;
-        border: none !important;
-        box-shadow: none !important;
-        width: 100% !important;
-        max-width: 100% !important;
-    }
-
-    .table-responsive {
-        overflow: visible !important;
-        max-height: none !important;
-        width: 100% !important;
-        display: block !important;
-    }
-
-    /* Table Architecture & Border Enforcement */
-    table,
-    #reportDataTable {
-        width: 100% !important;
-        max-width: 100% !important;
-        table-layout: fixed !important;
-        border-collapse: collapse !important;
-        border-spacing: 0 !important;
-        word-wrap: break-word !important;
-        border: 1px solid #000000 !important;
-    }
-
-    /* Force Borders on Every Header, Cell, and Row */
-    tr {
-        border-bottom: 1px solid #000000 !important;
-        page-break-inside: avoid !important;
-    }
-
-    th,
-    td {
-        border: 1px solid #000000 !important;
-        padding: 4px 6px !important;
-        font-size: 9px !important;
-        color: #000000 !important;
-        word-break: break-word !important;
-        vertical-align: middle !important;
-    }
-
-    /* Full-Cell Backgrounds for Alternating Zebra Rows */
-    tbody tr:nth-child(odd) {
-        background-color: #f2f2f2 !important;
-    }
-
-    tbody tr:nth-child(odd) td {
-        background-color: #f2f2f2 !important;
-    }
-
-    tbody tr:nth-child(even) {
-        background-color: #ffffff !important;
-    }
-
-    tbody tr:nth-child(even) td {
-        background-color: #ffffff !important;
-    }
-
-    thead th {
-        background-color: #e0e0e0 !important;
-        font-weight: bold !important;
-        border-bottom: 2px solid #000000 !important;
-        
-    }
-
-    /* Transparent Wrappers inside Cells so Whole Cell shows Background */
-    .copyable-cell,
-    .copyable-cell span,
-    .copy-text,
-    td span,
-    .badge {
-        color: #000000 !important;
-        background-color: transparent !important;
-        background: transparent !important;
-        font-weight: normal !important;
-        text-decoration: none !important;
-        box-shadow: none !important;
-        border: none !important;
-        padding: 0 !important;
-        margin: 0 !important;
-        display: inline !important;
-        text-align:justify !important;
-    }
-
-    .editable-table-row:hover,
-    .copyable-cell:hover {
-        background-color: transparent !important;
-    }
 }

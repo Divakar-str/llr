@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LLR Portal - All-in-One Operations & Data Copier Hub</title>
+    <!-- Framework & Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    
+    <!-- Unified SaaS Styling -->
+    <style>
+        :root {
+            --bg-main: #f8fafc;
+            --surface-card: #ffffff;
+            --border-default: #e2e8f0;
+            --text-primary: #0f172a;
+            --text-secondary: #64748b;
+            --accent-dark: #0f172a;
+            --radius-card: 20px;
+            --radius-element: 12px;
+            --shadow-soft: 0 10px 30px -5px rgba(0, 0, 0, 0.04);
+        }
+
+        body {
+            background-color: var(--bg-main);
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            color: var(--text-primary);
+            overflow-x: hidden;
+        }
+
+        .glass-panel {
+            background: var(--surface-card);
+            border: 1px solid var(--border-default);
+            border-radius: var(--radius-card);
+            box-shadow: var(--shadow-soft);
+            padding: 2rem;
+        }
+
+        .btn-dark-custom {
+            background-color: var(--accent-dark);
+            color: #ffffff;
+            border-radius: var(--radius-element);
+            font-weight: 600;
+            padding: 0.7rem 1.4rem;
+            border: none;
+            transition: all 0.2s ease;
+        }
+
+        .btn-dark-custom:hover {
+            background-color: #1e293b;
+            color: #ffffff;
+            transform: translateY(-1px);
+        }
+
+        #customAlertContainer {
+            position: fixed;
+            top: 24px;
+            right: 24px;
+            z-index: 1080;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+    <!-- Global Navigation Hub Loader -->
+    <div id="global-nav-container"></div>
+
+    <!-- Main Workspace Container -->
+    <div class="container py-5">
+        <div class="row justify-content-center">
+            <div class="col-12 col-lg-10">
+                
+                <!-- Page Header Title -->
+                <div class="d-flex align-items-center justify-content-between mb-4">
+                    <div>
+                        <h2 class="fw-bold tracking-tight mb-1">Operations & Data Hub</h2>
+                        <p class="text-muted small mb-0">Manage bulk record migrations, schema mappings, and database backups.</p>
+                    </div>
+                    <div class="fs-1 text-dark"><i class="bi bi-cpu-fill"></i></div>
+                </div>
+
+                <!-- Bulk CSV Uploader Card -->
+                <div class="glass-panel mb-4">
+                    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+                        <div>
+                            <h5 class="fw-bold mb-1"><i class="bi bi-file-earmark-arrow-up-fill text-primary me-2"></i> Bulk CSV Ingestion Engine</h5>
+                            <p class="text-muted small mb-0">Upload `data.csv` to securely sync entries directly to your Cloudflare D1 backend in batches.</p>
+                        </div>
+                        <button type="button" class="btn btn-dark-custom px-4" data-bs-toggle="modal" data-bs-target="#csvUploadModal">
+                            <i class="bi bi-upload me-1"></i> Launch Uploader
+                        </button>
+                    </div>
+                </div>
+
+                <!-- System Diagnostic Status Tray -->
+                <div class="glass-panel p-4">
+                    <h6 class="fw-bold text-dark mb-3"><i class="bi bi-shield-check text-success me-2"></i> System Diagnostics & Connectivity</h6>
+                    <div class="d-flex align-items-center justify-content-between p-3 rounded-3 bg-light border">
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="spinner-border spinner-border-sm text-primary" role="status" id="diagSpinner"></span>
+                            <span class="small fw-semibold text-secondary" id="diagStatusText">Checking Cloudflare D1 connection status...</span>
+                        </div>
+                        <button class="btn btn-sm btn-outline-secondary fw-bold" onclick="runDiagnostics()">Re-check</button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- Animated Progress Modal for CSV Upload -->
+    <div class="modal fade" id="csvUploadModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content shadow-lg border-0 rounded-4 p-2">
+                <div class="modal-header border-bottom-0">
+                    <h5 class="modal-title fw-bold"><i class="bi bi-cloud-arrow-up-fill text-primary me-2"></i> Bulk CSV Ingestion Console</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" id="closeCsvModalBtn"></button>
+                </div>
+                <div class="modal-body">
+                    <!-- Step 1: File Picker -->
+                    <div id="csvUploadStep1">
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold text-secondary">Select `data.csv` File</label>
+                            <input type="file" id="csvFileInput" class="form-control" accept=".csv">
+                        </div>
+                        <div class="alert alert-info py-2 small rounded-3">
+                            <i class="bi bi-info-circle-fill me-1"></i> Headers match your exact CSV schema and date serial numbers normalize automatically.
+                        </div>
+                        <button type="button" id="startUploadBtn" class="btn btn-dark-custom w-100 py-2.5 fw-semibold mt-2">
+                            Start Secure Transfer 🚀
+                        </button>
+                    </div>
+
+                    <!-- Step 2: Animated Progress View -->
+                    <div id="csvUploadStep2" class="d-none text-center py-4">
+                        <div class="spinner-border text-primary mb-3" style="width: 3rem; height: 3.5rem;" role="status"></div>
+                        <h5 class="fw-bold text-dark" id="uploadStatusTitle">Parsing CSV file...</h5>
+                        <p class="text-muted small mb-3" id="uploadStatusSub">Please keep this window open while records sync.</p>
+                        
+                        <div class="progress rounded-pill mb-3" style="height: 12px; background-color: #f1f5f9;">
+                            <div id="uploadProgressBar" class="progress-bar bg-primary progress-bar-striped progress-bar-animated rounded-pill" role="progressbar" style="width: 0%"></div>
+                        </div>
+                        <div class="d-flex justify-content-between text-muted small fw-semibold px-1">
+                            <span id="uploadProgressCount">0 / 0 rows</span>
+                            <span id="uploadProgressPercent">0%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Global Toast Alert Container -->
+    <div id="customAlertContainer"></div>
+
+    <!-- Scripts Hub -->
+    <script src="env.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/navLoader.js"></script>
+
+    <!-- Embedded Copier & Uploader Script Logic -->
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            runDiagnostics();
+            const startBtn = document.getElementById("startUploadBtn");
+            if (startBtn) {
+                startBtn.addEventListener("click", handleCsvUploadProcess);
+            }
+        });
+
+        async function runDiagnostics() {
+            const txt = document.getElementById("diagStatusText");
+            const spinner = document.getElementById("diagSpinner");
+            try {
+                const res = await fetch(`${ENV.SHEET_API_URL}?action=readAll`, { headers: getAuthHeaders() });
+                if (res.ok) {
+                    const json = await res.json();
+                    const count = Array.isArray(json) ? json.length : (json.data ? json.data.length : 0);
+                    txt.textContent = `Connected successfully! ${count} records active in Cloudflare D1.`;
+                    txt.className = "small fw-semibold text-success";
+                    if (spinner) spinner.remove();
+                } else {
+                    throw new Error("Server responded with code " + res.status);
+                }
+            } catch (err) {
+                txt.textContent = "Connection warning: " + err.message;
+                txt.className = "small fw-semibold text-danger";
+                if (spinner) spinner.remove();
+            }
+        }
+
+        // Robust Date Normalizer (Fixes Excel Serial numbers like 30442.0001 -> DD-MM-YYYY)
+        function normalizeDate(val) {
+            if (!val) return "";
+            let strVal = String(val).trim();
+
+            if (!isNaN(strVal) && strVal !== "") {
+                const num = Number(strVal);
+                if (num > 10000 && num < 60000) {
+                    const utc_days = Math.floor(num - 25569);
+                    const dateInfo = new Date(utc_days * 86400 * 1000);
+                    if (!isNaN(dateInfo.getTime())) {
+                        const day = String(dateInfo.getDate()).padStart(2, '0');
+                        const month = String(dateInfo.getMonth() + 1).padStart(2, '0');
+                        const year = dateInfo.getFullYear();
+                        return `${day}-${month}-${year}`;
+                    }
+                }
+            }
+
+            if (/^\d{4}-\d{2}-\d{2}$/.test(strVal)) {
+                const parts = strVal.split("-");
+                return `${parts[2]}-${parts[1]}-${parts[0]}`;
+            }
+
+            return strVal;
+        }
+
+        async function handleCsvUploadProcess() {
+            const fileInput = document.getElementById("csvFileInput");
+            if (!fileInput || fileInput.files.length === 0) {
+                alert("Please select a valid .csv file first.");
+                return;
+            }
+
+            const file = fileInput.files[0];
+            document.getElementById("csvUploadStep1").classList.add("d-none");
+            document.getElementById("csvUploadStep2").classList.remove("d-none");
+            document.getElementById("closeCsvModalBtn").classList.add("d-none");
+
+            updateProgressUI(5, "Reading CSV file stream...", "0 / 0 rows");
+
+            try {
+                const dataBuffer = await file.arrayBuffer();
+                const workbook = XLSX.read(dataBuffer, { type: "array" });
+                const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+                const rawJsonRows = XLSX.utils.sheet_to_json(worksheet, { defval: "" });
+
+                if (!rawJsonRows || rawJsonRows.length === 0) {
+                    throw new Error("The uploaded CSV file is empty or formatted incorrectly.");
+                }
+
+                updateProgressUI(15, `Parsed ${rawJsonRows.length} rows. Normalizing dates & schema...`, `0 / ${rawJsonRows.length} rows`);
+
+                // Exact mapping based on your custom header attributes
+                const sanitizedRows = rawJsonRows.map(row => ({
+                    llr_number: String(row.llr_number || "").trim(),
+                    name: String(row.name || "").trim(),
+                    date_of_birth: normalizeDate(row.date_of_birth),
+                    vehicle_class: String(row.vehicle_class || "").trim(),
+                    mobile_number: String(row.mobile_number || "").trim(),
+                    issue_date: normalizeDate(row.issue_date),
+                    expiry_date: normalizeDate(row.expiry_date),
+                    approved_date: normalizeDate(row.approved_date),
+                    relative_type: String(row.relative_type || "").trim(),
+                    relative_name: String(row.relative_name || "").trim(),
+                    emergency_mobile: String(row.emergency_mobile || "").trim(),
+                    present_address: String(row.present_address || "").trim(),
+                    permanent_address: String(row.permanent_address || "").trim(),
+                    identification_mark_1: String(row.identification_mark_1 || "").trim(),
+                    identification_mark_2: String(row.identification_mark_2 || "").trim(),
+                    blood_group: String(row.blood_group || "").trim(),
+                    fees_number: String(row.fees_number || "").trim(),
+                    fee_amount: String(row.fee_amount || "").trim(),
+                    dl_issued: String(row.dl_issued || "No").trim(),
+                    dl_number: String(row.dl_number || "").trim(),
+                    remarks: String(row.remarks || "-").trim(),
+                    action: "insert"
+                })).filter(r => r.llr_number !== "");
+
+                updateProgressUI(30, `Starting batch transfer to Cloudflare D1...`, `0 / ${sanitizedRows.length} rows`);
+
+                const batchSize = 25;
+                let successCount = 0;
+                let duplicateCount = 0;
+
+                for (let i = 0; i < sanitizedRows.length; i += batchSize) {
+                    const chunk = sanitizedRows.slice(i, i + batchSize);
+                    for (const payload of chunk) {
+                        try {
+                            const response = await fetch(ENV.SHEET_API_URL, {
+                                method: "POST",
+                                headers: getAuthHeaders(),
+                                body: JSON.stringify(payload)
+                            });
+                            const resJson = await response.json();
+                            if (resJson.status === "success") successCount++;
+                            else if (resJson.status === "duplicate") duplicateCount++;
+                        } catch (err) {
+                            console.warn(`Failed row ${payload.llr_number}:`, err.message);
+                        }
+                    }
+
+                    const progressPct = Math.round(((i + chunk.length) / sanitizedRows.length) * 70) + 30;
+                    const currentProcessed = Math.min(i + batchSize, sanitizedRows.length);
+                    updateProgressUI(progressPct, `Transferring batch data (${currentProcessed}/${sanitizedRows.length})...`, `${currentProcessed} / ${sanitizedRows.length} rows`);
+                }
+
+                updateProgressUI(100, `Upload Complete! Added ${successCount} entries (${duplicateCount} duplicates skipped).`, `${sanitizedRows.length} / ${sanitizedRows.length} rows`);
+                document.getElementById("uploadStatusTitle").textContent = "✓ Ingestion Successful!";
+                document.getElementById("closeCsvModalBtn").classList.remove("d-none");
+
+            } catch (error) {
+                console.error("CSV Upload Error:", error);
+                document.getElementById("uploadStatusTitle").textContent = "❌ Transfer Failed";
+                document.getElementById("uploadStatusSub").textContent = error.message;
+                document.getElementById("closeCsvModalBtn").classList.remove("d-none");
+            }
+        }
+
+        function updateProgressUI(percent, titleText, countText) {
+            const bar = document.getElementById("uploadProgressBar");
+            const title = document.getElementById("uploadStatusTitle");
+            const count = document.getElementById("uploadProgressCount");
+            const percentLbl = document.getElementById("uploadProgressPercent");
+
+            if (bar) bar.style.width = `${percent}%`;
+            if (title && titleText) title.textContent = titleText;
+            if (count && countText) count.textContent = countText;
+            if (percentLbl) percentLbl.textContent = `${percent}%`;
+        }
+    </script>
+</body>
+</html>

@@ -1,336 +1,290 @@
-// CONTROLLER FOR ADVANCED COLUMN SELECTIONS AND AUTOMATED OVERLAY PRINT ENGINE
-const SHEET_API_URL = ENV.SHEET_API_URL;
-
-let localCacheRecordsCollection = [];
-
-// Default active starting columns list structure maps
-let MASTER_TABLE_COLUMNS_SCHEMA = [
-    { key: "llr_number", label: "LLR Number", isDynamicAdded: false },
-    { key: "name", label: "Applicant Name", isDynamicAdded: false },
-    { key: "date_of_birth", label: "Date of Birth", isDynamicAdded: false },
-    { key: "vehicle_class", label: "Vehicle Class", isDynamicAdded: false },
-    { key: "mobile_number", label: "Mobile Number", isDynamicAdded: false },
-    { key: "issue_date", label: "Issue Date", isDynamicAdded: false },
-    { key: "expiry_date", label: "Expiry Date", isDynamicAdded: false },
-    { key: "dl_issued", label: "DL Issued", isDynamicAdded: true }
-];
-
-let localColumnsVisibilityState = {};
-
+// js/printEngine.js - Advanced Print & Manifest Console Engine for Cloudflare D1
 document.addEventListener("DOMContentLoaded", () => {
-    const rawToday = new Date();
-    const formattedToday = `${String(rawToday.getDate()).padStart(2, '0')}-${String(rawToday.getMonth() + 1).padStart(2, '0')}-${rawToday.getFullYear()}`;
-    document.body.setAttribute("data-print-date", formattedToday);
-
-    syncSchemaVisibilityTrackingLookup();
-    renderOverlayModalColumnChecklist();
-    fetchActiveRegistryPrintCollectionData();
-
-    // Wire up runtime event triggers handles hooks
-    document.getElementById("refreshBtn").addEventListener("click", fetchActiveRegistryPrintCollectionData);
-    document.getElementById("triggerPrintBtn").addEventListener("click", executeBrowserPrintSystemCall);
-    document.getElementById("addCustomColumnBtn").addEventListener("click", executeAddOptionalLlrColumnField);
-    document.getElementById("toggleDlIssuedVisibility").addEventListener("change", runLiveClientFiltersPipeline);
-    
-    // CONTROLLING INPUT DOM ELEMENT VISIBILITY VIA FILTER MODES
-    document.getElementById("filterTypeDropdown").addEventListener("change", (e) => {
-        const outerDateBox = document.getElementById("conditionalDateContainer");
-        const singleDateWrapper = document.getElementById("wrapperSingleDate");
-        const rangeDateWrapper = document.getElementById("wrapperDateRange");
-        const vehicleColumn = document.getElementById("vehicleFilterColumn");
-
-        // First step: clear values and reset visibility settings layout classes completely
-        outerDateBox.classList.add("d-none");
-        singleDateWrapper.classList.add("d-none");
-        rangeDateWrapper.classList.add("d-none");
-        
-        // Re-adjust column grid balance for crisp layout spacing
-        vehicleColumn.className = "col-12 col-md-3";
-
-        if (e.target.value === "SINGLE_DATE") {
-            vehicleColumn.className = "col-12 col-md-3";
-            outerDateBox.className = "col-12 col-md-5";
-            outerDateBox.classList.remove("d-none");
-            singleDateWrapper.classList.remove("d-none");
-        } else if (e.target.value === "CUSTOM_RANGE") {
-            vehicleColumn.className = "col-12 col-md-3";
-            outerDateBox.className = "col-12 col-md-5";
-            outerDateBox.classList.remove("d-none");
-            rangeDateWrapper.classList.remove("d-none");
-        }
-
-        runLiveClientFiltersPipeline();
-    });
-
-    document.getElementById("filterTargetDate").addEventListener("change", runLiveClientFiltersPipeline);
-    document.getElementById("filterStartDate").addEventListener("change", runLiveClientFiltersPipeline);
-    document.getElementById("filterEndDate").addEventListener("change", runLiveClientFiltersPipeline);
-    document.getElementById("filterVehicleClass").addEventListener("change", runLiveClientFiltersPipeline);
-    document.getElementById("liveSearchQuery").addEventListener("input", runLiveClientFiltersPipeline);
+    initPrintConsole();
 });
 
-function syncSchemaVisibilityTrackingLookup() {
-    MASTER_TABLE_COLUMNS_SCHEMA.forEach(col => {
-        if (localColumnsVisibilityState[col.key] === undefined) {
-            localColumnsVisibilityState[col.key] = true;
-        }
-    });
+let masterPrintCache = [];
+
+// Default printable columns configuration
+let activeColumns = [
+    { id: "llr_number", label: "LLR Number", visible: true },
+    { id: "name", label: "Applicant Name", visible: true },
+    { id: "date_of_birth", label: "DOB", visible: true },
+    { id: "vehicle_class", label: "Vehicle Class", visible: true },
+    { id: "mobile_number", label: "Mobile Number", visible: true },
+    { id: "issue_date", label: "Issue Date", visible: true },
+    { id: "expiry_date", label: "Expiry Date", visible: true },
+    { id: "dl_issued", label: "DL Status", visible: true }
+];
+
+async function initPrintConsole() {
+    setupPrintEventListeners();
+    buildColumnConfigModalUI();
+    await fetchPrintDataRegistry();
 }
 
-function renderOverlayModalColumnChecklist() {
-    const modalContainer = document.getElementById("modalColumnContainer");
-    modalContainer.innerHTML = "";
-
-    MASTER_TABLE_COLUMNS_SCHEMA.forEach(col => {
-        const labelRow = document.createElement("label");
-        labelRow.className = "popup-checkbox-row";
-        labelRow.setAttribute("for", `pop-chk-${col.key}`);
-
-        const trashBtnHtml = col.isDynamicAdded ? 
-            `<button class="btn btn-sm btn-link text-danger p-0 ms-auto border-0" onclick="event.preventDefault(); dropDynamicColumnByKey('${col.key}')"><i class="bi bi-trash3-fill"></i></button>` : '';
-
-        labelRow.innerHTML = `
-            <div class="form-check m-0">
-                <input class="form-check-input modal-col-checkbox" type="checkbox" id="pop-chk-${col.key}" data-col-key="${col.key}" ${localColumnsVisibilityState[col.key] ? 'checked' : ''} style="cursor: pointer;">
-                <span class="small fw-bold text-dark ms-1">${col.label}</span>
-            </div>
-            ${trashBtnHtml}
+// 1. Fetch Master Registry Data
+async function fetchPrintDataRegistry() {
+    const tbody = document.getElementById("printTableBody");
+    if (tbody) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="100" class="text-center py-5 text-muted small">
+                    <div class="spinner-border spinner-border-sm text-dark me-2" role="status"></div>
+                    Syncing database entries parameters fields...
+                </td>
+            </tr>
         `;
-
-        labelRow.querySelector("input").addEventListener("change", (e) => {
-            const key = e.target.getAttribute("data-col-key");
-            localColumnsVisibilityState[key] = e.target.checked;
-            applyRuntimeTableColumnVisibilityToggles();
-        });
-
-        modalContainer.appendChild(labelRow);
-    });
-}
-
-function executeAddOptionalLlrColumnField() {
-    const selector = document.getElementById("customColumnSelect");
-    const chosenFieldKey = selector.value;
-
-    if (!chosenFieldKey) {
-        alert("Selection Required: Please pick an unlisted LLR data field from the dropdown selection box list.");
-        return;
     }
-
-    const chosenFieldLabel = selector.options[selector.selectedIndex].text;
-    const isAlreadyPresent = MASTER_TABLE_COLUMNS_SCHEMA.some(col => col.key === chosenFieldKey);
-    if (isAlreadyPresent) {
-        alert(`Attention: The "${chosenFieldLabel}" data column field is already active.`);
-        return;
-    }
-
-    MASTER_TABLE_COLUMNS_SCHEMA.push({ key: chosenFieldKey, label: chosenFieldLabel, isDynamicAdded: true });
-    localColumnsVisibilityState[chosenFieldKey] = true;
-    selector.value = "";
-
-    renderOverlayModalColumnChecklist();
-    runLiveClientFiltersPipeline();
-}
-
-window.dropDynamicColumnByKey = function(targetKey) {
-    MASTER_TABLE_COLUMNS_SCHEMA = MASTER_TABLE_COLUMNS_SCHEMA.filter(col => col.key !== targetKey);
-    delete localColumnsVisibilityState[targetKey];
-    
-    renderOverlayModalColumnChecklist();
-    runLiveClientFiltersPipeline();
-};
-
-async function fetchActiveRegistryPrintCollectionData() {
-    const tableBody = document.getElementById("printTableBody");
-    tableBody.innerHTML = `<tr><td colspan="100" class="text-center py-5 text-muted small"><div class="spinner-border spinner-border-sm text-dark me-2"></div>Syncing master database entries from cloud channels...</td></tr>`;
 
     try {
-        const response = await fetch(SHEET_API_URL);
-        if (!response.ok) throw new Error(`HTTP data connection pipeline down: ${response.status}`);
-        
-        const parseResult = await response.json();
-        if (parseResult.status === "success") {
-            localCacheRecordsCollection = parseResult.data || [];
-            runLiveClientFiltersPipeline();
-        } else {
-            throw new Error(parseResult.message || "Remote sheet script engine denied entry arrays request.");
+        const response = await fetch(`${ENV.SHEET_API_URL}?action=readAll`, {
+            headers: getAuthHeaders()
+        });
+
+        if (response.status === 401) {
+            alert("Session expired or unauthorized. Redirecting to login...");
+            window.location.href = "login.html";
+            return;
         }
-    } catch (fault) {
-        tableBody.innerHTML = `<tr><td colspan="100" class="text-center text-danger py-4 fw-bold">❌ Connection Interrupted<br><span class="small fw-normal text-muted">${fault.message}</span></td></tr>`;
+
+        if (!response.ok) throw new Error(`Server returned status: ${response.status}`);
+
+        const data = await response.json();
+        masterPrintCache = Array.isArray(data) ? data : (data.data || []);
+
+        applyFiltersAndRender();
+    } catch (error) {
+        console.error("Print Console Fetch Error:", error);
+        if (tbody) {
+            tbody.innerHTML = `<tr><td colspan="100" class="text-center py-4 text-danger small">Failed to load registry data from server.</td></tr>`;
+        }
     }
 }
 
-function runLiveClientFiltersPipeline() {
-    const rightNow = new Date();
-    
-    const filterType = document.getElementById("filterTypeDropdown").value;
-    const classFilter = document.getElementById("filterVehicleClass").value;
-    const hideDlIssued = document.getElementById("toggleDlIssuedVisibility").checked;
-    const targetSingleDateStr = document.getElementById("filterTargetDate").value;
-    const startRangeStr = document.getElementById("filterStartDate").value;
-    const endRangeStr = document.getElementById("filterEndDate").value;
-    const query = document.getElementById("liveSearchQuery").value.toLowerCase().trim();
+// 2. Setup Event Listeners
+function setupPrintEventListeners() {
+    const refreshBtn = document.getElementById("refreshBtn");
+    if (refreshBtn) refreshBtn.addEventListener("click", fetchPrintDataRegistry);
 
-    let dataset = localCacheRecordsCollection;
-
-    // 1. FILTER STAGE A: Toggle Row Switch Constraints
-    if (hideDlIssued) {
-        dataset = dataset.filter(row => row.dl_issued !== "Yes");
-    }
-
-    // 2. FILTER STAGE B: Core 4-Tier Filter Logic Pipeline
-    if (filterType === "SINGLE_DATE" && targetSingleDateStr) {
-        const thresholdTargetTimestamp = new Date(targetSingleDateStr).setHours(0,0,0,0);
-        dataset = dataset.filter(row => {
-            const currentIssueJsDate = parseStringToJsDate(row.issue_date);
-            return currentIssueJsDate && currentIssueJsDate.setHours(0,0,0,0) === thresholdTargetTimestamp;
-        });
-    } else if (filterType === "CUSTOM_RANGE" && startRangeStr && endRangeStr) {
-        const tsStart = new Date(startRangeStr).setHours(0,0,0,0);
-        const tsEnd = new Date(endRangeStr).setHours(23,59,59,999);
-        dataset = dataset.filter(row => {
-            const issue = parseStringToJsDate(row.issue_date);
-            return issue && issue.getTime() >= tsStart && issue.getTime() <= tsEnd;
-        });
-    } else if (filterType === "ELIMINATED_31DAYS") {
-        dataset = dataset.filter(row => {
-            const issue = parseStringToJsDate(row.issue_date);
-            if (!issue) return false;
-            return Math.floor((rightNow.getTime() - issue.getTime()) / (1000 * 60 * 60 * 24)) >= 31;
+    const filterTypeDropdown = document.getElementById("filterTypeDropdown");
+    if (filterTypeDropdown) {
+        filterTypeDropdown.addEventListener("change", (e) => {
+            toggleConditionalDateInputs(e.target.value);
+            applyFiltersAndRender();
         });
     }
 
-    // 3. FILTER STAGE C: Class Filters
-    if (classFilter !== "ALL") {
-        if (classFilter === "COMBINED") {
-            dataset = dataset.filter(row => {
-                const val = String(row.vehicle_class).toUpperCase();
-                return (val.includes("MCWOG") || val.includes("MCWG")) && val.includes("LMV");
-            });
-        } else {
-            dataset = dataset.filter(row => String(row.vehicle_class).toUpperCase() === classFilter);
+    const triggerPrintBtn = document.getElementById("triggerPrintBtn");
+    if (triggerPrintBtn) {
+        triggerPrintBtn.addEventListener("click", () => window.print());
+    }
+
+    // Input listeners for dynamic re-rendering
+    const liveSearch = document.getElementById("liveSearchQuery");
+    const vehicleClassSelect = document.getElementById("filterVehicleClass");
+    const toggleDl = document.getElementById("toggleDlIssuedVisibility");
+    const targetDate = document.getElementById("filterTargetDate");
+    const startDate = document.getElementById("filterStartDate");
+    const endDate = document.getElementById("filterEndDate");
+
+    [liveSearch, vehicleClassSelect, toggleDl, targetDate, startDate, endDate].forEach(el => {
+        if (el) {
+            el.addEventListener("input", applyFiltersAndRender);
+            el.addEventListener("change", applyFiltersAndRender);
         }
-    }
-
-    // 4. FILTER STAGE D: Live Global Queries
-    if (query) {
-        dataset = dataset.filter(row => {
-            return (row.llr_number && row.llr_number.toLowerCase().includes(query)) ||
-                   (row.name && row.name.toLowerCase().includes(query)) ||
-                   (row.vehicle_class && row.vehicle_class.toLowerCase().includes(query)) ||
-                   (row.mobile_number && row.mobile_number.toString().includes(query));
-        });
-    }
-
-    let scopeLabelDescription = `Filter Rule Mode Selection [${filterType}]`;
-    if (filterType === "SINGLE_DATE" && targetSingleDateStr) scopeLabelDescription += ` | Date Point: ${targetSingleDateStr}`;
-    if (classFilter !== "ALL") scopeLabelDescription += ` | Transit Class: ${classFilter}`;
-    document.body.setAttribute("data-print-scope", scopeLabelDescription);
-
-    renderPrintTargetMasterGridRows(dataset);
-}
-
-function renderPrintTargetMasterGridRows(compiledDatasetArray) {
-    const headContainer = document.getElementById("tableHeaderSelectors");
-    const bodyContainer = document.getElementById("printTableBody");
-
-    let headerHtmlRow = "<tr>";
-    MASTER_TABLE_COLUMNS_SCHEMA.forEach(col => {
-        headerHtmlRow += `<th data-header-key="${col.key}">${col.label}</th>`;
     });
-    headerHtmlRow += "</tr>";
-    headContainer.innerHTML = headerHtmlRow;
 
-    if (compiledDatasetArray.length === 0) {
-        bodyContainer.innerHTML = `<tr><td colspan="100" class="text-center text-muted py-5 small fw-medium">No active record rows matches discovered matching current conditions.</td></tr>`;
+    // Custom column addition button
+    const addCustomColBtn = document.getElementById("addCustomColumnBtn");
+    if (addCustomColBtn) {
+        addCustomColBtn.addEventListener("click", handleAddCustomColumn);
+    }
+}
+
+// 3. Conditional Date View Handlers
+function toggleConditionalDateInputs(mode) {
+    const container = document.getElementById("conditionalDateContainer");
+    const singleWrapper = document.getElementById("wrapperSingleDate");
+    const rangeWrapper = document.getElementById("wrapperDateRange");
+
+    if (mode === "ALL" || mode === "ELIMINATED_31DAYS") {
+        container.classList.add("d-none");
+        singleWrapper.classList.add("d-none");
+        rangeWrapper.classList.add("d-none");
+    } else if (mode === "SINGLE_DATE") {
+        container.classList.remove("d-none");
+        singleWrapper.classList.remove("d-none");
+        rangeWrapper.classList.add("d-none");
+    } else if (mode === "CUSTOM_RANGE") {
+        container.classList.remove("d-none");
+        singleWrapper.classList.add("d-none");
+        rangeWrapper.classList.remove("d-none");
+    }
+}
+
+// 4. Column Configuration Modal Builder
+function buildColumnConfigModalUI() {
+    const container = document.getElementById("modalColumnContainer");
+    if (!container) return;
+
+    container.innerHTML = "";
+    activeColumns.forEach((col, index) => {
+        const div = document.createElement("div");
+        div.className = "form-check form-switch bg-light p-2.5 rounded-3 border";
+        div.innerHTML = `
+            <input class="form-check-input column-toggle-chk" type="checkbox" id="colChk_${col.id}" data-col-id="${col.id}" ${col.visible ? 'checked' : ''} style="cursor: pointer;">
+            <label class="form-check-label small fw-bold text-dark ms-2" for="colChk_${col.id}" style="cursor: pointer;">
+                ${col.label}
+            </label>
+        `;
+        container.appendChild(div);
+    });
+
+    // Bind checkbox toggles
+    document.querySelectorAll(".column-toggle-chk").forEach(chk => {
+        chk.addEventListener("change", (e) => {
+            const colId = e.target.getAttribute("data-col-id");
+            const targetCol = activeColumns.find(c => c.id === colId);
+            if (targetCol) {
+                targetCol.visible = e.target.checked;
+                applyFiltersAndRender();
+            }
+        });
+    });
+}
+
+function handleAddCustomColumn() {
+    const select = document.getElementById("customColumnSelect");
+    const val = select.value;
+    if (!val) {
+        alert("Please select an available LLR data field from the dropdown first.");
         return;
     }
 
-    let bodyHtmlRows = "";
-    compiledDatasetArray.forEach(row => {
-        bodyHtmlRows += `<tr data-row-index-id="${row.row_index}">`;
-        
-        MASTER_TABLE_COLUMNS_SCHEMA.forEach(col => {
-            let valueFieldData = row[col.key] !== undefined ? row[col.key] : "-";
-            
-            if (col.key.includes("date") || col.key === "date_of_birth") {
-                valueFieldData = cleanIncomingDate(valueFieldData);
-            }
+    if (activeColumns.some(c => c.id === val)) {
+        alert("This column is already included in your layout viewports.");
+        return;
+    }
 
-            if (col.key === "llr_number") {
-                bodyHtmlRows += `<td data-cell-key="${col.key}" class="fw-bold text-dark small">${valueFieldData}</td>`;
-            } else if (col.key === "name") {
-                bodyHtmlRows += `<td data-cell-key="${col.key}" class="fw-semibold text-secondary small">${valueFieldData}</td>`;
-            } else if (col.key === "dl_issued") {
-                bodyHtmlRows += `<td data-cell-key="${col.key}"><span class="badge ${valueFieldData === 'Yes' ? 'bg-success' : 'bg-warning text-dark'}">${valueFieldData}</span></td>`;
+    const labelText = select.options[select.selectedIndex].text;
+    activeColumns.push({ id: val, label: labelText, visible: true });
+    
+    buildColumnConfigModalUI();
+    applyFiltersAndRender();
+    select.selectedIndex = 0;
+}
+
+// 5. Filtering & Rendering Engine
+function applyFiltersAndRender() {
+    const filterMode = document.getElementById("filterTypeDropdown")?.value || "ALL";
+    const targetDateVal = document.getElementById("filterTargetDate")?.value || "";
+    const startDateVal = document.getElementById("filterStartDate")?.value || "";
+    const endDateVal = document.getElementById("filterEndDate")?.value || "";
+    const vehicleClassVal = document.getElementById("filterVehicleClass")?.value || "ALL";
+    const searchQuery = (document.getElementById("liveSearchQuery")?.value || "").toLowerCase();
+    const hideDlIssued = document.getElementById("toggleDlIssuedVisibility")?.checked || false;
+
+    const today = new Date();
+    today.setHours(0,0,0,0);
+
+    const filtered = masterPrintCache.filter(row => {
+        // 1. Hide DL Issued filter
+        if (hideDlIssued && row.dl_issued === "Yes") return false;
+
+        // 2. Live Search Filter
+        if (searchQuery) {
+            const matches = 
+                (row.llr_number && row.llr_number.toLowerCase().includes(searchQuery)) ||
+                (row.name && row.name.toLowerCase().includes(searchQuery)) ||
+                (row.mobile_number && row.mobile_number.toLowerCase().includes(searchQuery));
+            if (!matches) return false;
+        }
+
+        // 3. Vehicle Class Filter
+        if (vehicleClassVal !== "ALL") {
+            const rClass = (row.vehicle_class || "").toUpperCase();
+            if (vehicleClassVal === "COMBINED") {
+                if (!rClass.includes("MCWOG") && !rClass.includes("MCWG") && !rClass.includes("LMV")) return false;
             } else {
-                bodyHtmlRows += `<td data-cell-key="${col.key}" class="small text-secondary">${valueFieldData}</td>`;
+                if (rClass !== vehicleClassVal) return false;
             }
-        });
-        
-        bodyHtmlRows += "</tr>";
-    });
-    bodyContainer.innerHTML = bodyHtmlRows;
-
-    applyRuntimeTableColumnVisibilityToggles();
-}
-
-function applyRuntimeTableColumnVisibilityToggles() {
-    MASTER_TABLE_COLUMNS_SCHEMA.forEach(col => {
-        const isVisible = localColumnsVisibilityState[col.key];
-        
-        const thElement = document.querySelector(`th[data-header-key="${col.key}"]`);
-        if (thElement) {
-            if (isVisible) thElement.classList.remove("col-hidden");
-            else thElement.classList.add("col-hidden");
         }
 
-        const tdCellsElementsList = document.querySelectorAll(`td[data-cell-key="${col.key}"]`);
-        tdCellsElementsList.forEach(td => {
-            if (isVisible) td.classList.remove("col-hidden");
-            else td.classList.add("col-hidden");
-        });
-    });
-}
-
-function parseStringToJsDate(dateStr) {
-    if (!dateStr || dateStr === "-") return null;
-    let cleanStr = dateStr.toString().split(" ")[0].trim().replace(/\//g, "-");
-    
-    if (cleanStr.includes("T")) {
-        cleanStr = cleanStr.split("T")[0];
-        let parts = cleanStr.split("-");
-        if (parts.length === 3 && parts[0].length === 4) {
-            return new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+        // 4. Date Mode Filter
+        const issueParts = (row.issue_date || "").split("-");
+        let issueDateISO = "";
+        let issueDateObj = null;
+        if (issueParts.length === 3) {
+            issueDateISO = `${issueParts[2]}-${issueParts[1]}-${issueParts[0]}`;
+            issueDateObj = new Date(issueDateISO);
         }
-    }
-    
-    let elements = cleanStr.split("-");
-    if (elements.length === 3 && elements[2].length === 4) {
-        return new Date(parseInt(elements[2], 10), parseInt(elements[1], 10) - 1, parseInt(elements[0], 10));
-    }
-    return null;
+
+        if (filterMode === "SINGLE_DATE" && targetDateVal) {
+            if (issueDateISO !== targetDateVal) return false;
+        } else if (filterMode === "CUSTOM_RANGE") {
+            if (startDateVal && issueDateISO < startDateVal) return false;
+            if (endDateVal && issueDateISO > endDateVal) return false;
+        } else if (filterMode === "ELIMINATED_31DAYS") {
+            if (!issueDateObj || isNaN(issueDateObj)) return false;
+            const diffDays = (today - issueDateObj) / (1000 * 60 * 60 * 24);
+            if (diffDays < 31) return false;
+        }
+
+        return true;
+    });
+
+    renderPrintTable(filtered);
 }
 
-function cleanIncomingDate(dateStr) {
-    if (!dateStr || dateStr === "-" || dateStr.toString().trim() === "") return "-";
-    if (dateStr.toString().includes("T")) {
-        try {
-            const dateObj = new Date(dateStr);
-            if (!isNaN(dateObj.getTime())) {
-                const day = String(dateObj.getDate()).padStart(2, '0');
-                const month = String(dateObj.getMonth() + 1).padStart(2, '0');
-                const year = dateObj.getFullYear();
-                return `${day}-${month}-${year}`;
-            }
-        } catch (e) {}
-    }
-    return dateStr.toString().replace(/\//g, "-").split(" ")[0].trim();
-}
+// 6. Table UI Rendering
+function renderPrintTable(records) {
+    const thead = document.getElementById("tableHeaderSelectors");
+    const tbody = document.getElementById("printTableBody");
+    const previewTitle = document.getElementById("previewTitle");
 
-function executeBrowserPrintSystemCall() {
-    if (document.querySelector("#printTableBody td[colspan]")) {
-        alert("Action Aborted:\nThere are currently no filtered row entries inside the preview manifest grid available to print.");
+    if (!thead || !tbody) return;
+
+    const visibleCols = activeColumns.filter(c => c.visible);
+
+    if (previewTitle) {
+        previewTitle.innerHTML = `<i class="bi bi-eye-fill"></i> Operational Print Manifest Preview <span class="badge bg-light text-dark ms-2" style="font-size: 0.75rem;">${records.length} Entries</span>`;
+    }
+
+    // Build Header
+    let headerHTML = `<tr><th class="ps-4" style="width: 50px;">#</th>`;
+    visibleCols.forEach(col => {
+        headerHTML += `<th>${col.label}</th>`;
+    });
+    headerHTML += `</tr>`;
+    thead.innerHTML = headerHTML;
+
+    // Build Body
+    tbody.innerHTML = "";
+    if (records.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="100" class="text-center py-5 text-muted fw-semibold small">No records found matching current print manifest filters.</td></tr>`;
         return;
     }
-    window.print();
+
+    records.forEach((row, idx) => {
+        const tr = document.createElement("tr");
+        let rowHTML = `<td class="ps-4 text-muted small fw-medium">${idx + 1}</td>`;
+
+        visibleCols.forEach(col => {
+            let val = row[col.id] || "-";
+            if (col.id === "llr_number") {
+                rowHTML += `<td class="font-monospace fw-bold text-dark">${val}</td>`;
+            } else if (col.id === "dl_issued") {
+                const isYes = val === "Yes";
+                rowHTML += `<td><span class="badge ${isYes ? 'bg-success bg-opacity-10 text-success border border-success' : 'bg-warning bg-opacity-10 text-warning border border-warning'} px-2 py-1">${val}</span></td>`;
+            } else if (col.id === "vehicle_class") {
+                rowHTML += `<td><span class="badge bg-light text-dark border px-2 py-1">${val}</span></td>`;
+            } else {
+                rowHTML += `<td>${val}</td>`;
+            }
+        });
+
+        tr.innerHTML = rowHTML;
+        tbody.appendChild(tr);
+    });
 }
