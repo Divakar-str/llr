@@ -3,11 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LLR Portal - All-in-One Operations & Data Copier Hub</title>
+    <title>LLR Portal - Operations &amp; Data Hub</title>
     <!-- Framework & Icons -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
-    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
     <!-- Unified SaaS Styling -->
     <style>
         :root {
@@ -17,16 +20,19 @@
             --text-primary: #0f172a;
             --text-secondary: #64748b;
             --accent-dark: #0f172a;
+            --accent-hover: #1e293b;
             --radius-card: 20px;
-            --radius-element: 12px;
+            --radius-element: 10px;
             --shadow-soft: 0 10px 30px -5px rgba(0, 0, 0, 0.04);
         }
 
         body {
             background-color: var(--bg-main);
-            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             color: var(--text-primary);
+            letter-spacing: -0.01em;
             overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
         }
 
         .glass-panel {
@@ -35,6 +41,11 @@
             border-radius: var(--radius-card);
             box-shadow: var(--shadow-soft);
             padding: 2rem;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .glass-panel:hover {
+            box-shadow: 0 12px 35px -5px rgba(0, 0, 0, 0.06);
         }
 
         .btn-dark-custom {
@@ -42,26 +53,82 @@
             color: #ffffff;
             border-radius: var(--radius-element);
             font-weight: 600;
-            padding: 0.7rem 1.4rem;
+            padding: 0.65rem 1.3rem;
             border: none;
-            transition: all 0.2s ease;
+            transition: all 0.15s ease-in-out;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
         }
 
         .btn-dark-custom:hover {
-            background-color: #1e293b;
+            background-color: var(--accent-hover);
             color: #ffffff;
             transform: translateY(-1px);
+        }
+
+        .btn-outline-custom {
+            border: 1px solid var(--border-default);
+            background: #ffffff;
+            color: var(--text-primary);
+            border-radius: var(--radius-element);
+            font-weight: 600;
+            padding: 0.65rem 1.3rem;
+            transition: all 0.15s ease-in-out;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-outline-custom:hover {
+            background-color: #f1f5f9;
+            color: #0f172a;
+            border-color: #cbd5e1;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        .status-dot.active {
+            background-color: #10b981;
+            box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
+        }
+
+        .status-dot.warning {
+            background-color: #ef4444;
+            box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.2);
         }
 
         #customAlertContainer {
             position: fixed;
             top: 24px;
-            right: 24px;
-            z-index: 1080;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1090;
             display: flex;
             flex-direction: column;
-            gap: 12px;
+            gap: 8px;
             pointer-events: none;
+        }
+
+        .toast-msg {
+            pointer-events: auto;
+            backdrop-filter: blur(8px);
+            border-radius: 12px;
+            padding: 0.75rem 1.25rem;
+            font-size: 0.85rem;
+            font-weight: 600;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+            animation: fadeInDown 0.25s ease-out;
+        }
+
+        @keyframes fadeInDown {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
     </style>
 </head>
@@ -70,80 +137,106 @@
     <div id="global-nav-container"></div>
 
     <!-- Main Workspace Container -->
-    <div class="container py-5">
+    <div class="container py-4">
         <div class="row justify-content-center">
             <div class="col-12 col-lg-10">
-                
-                <!-- Page Header Title -->
+                <!-- Page Title -->
                 <div class="d-flex align-items-center justify-content-between mb-4">
                     <div>
-                        <h2 class="fw-bold tracking-tight mb-1">Operations & Data Hub</h2>
-                        <p class="text-muted small mb-0">Manage bulk record migrations, schema mappings, and database backups.</p>
+                        <h3 class="fw-bold tracking-tight mb-1">Operations &amp; Data Hub</h3>
+                        <p class="text-muted small mb-0">Manage bulk record migrations, batch schema imports, and direct database backups.</p>
                     </div>
-                    <div class="fs-1 text-dark"><i class="bi bi-cpu-fill"></i></div>
+                    <div class="fs-1 text-dark d-none d-sm-block"><i class="bi bi-cpu-fill"></i></div>
                 </div>
 
-                <!-- Bulk CSV Uploader Card -->
+                <!-- 1. Bulk CSV Ingestion Engine Card -->
                 <div class="glass-panel mb-4">
-                    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+                    <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
                         <div>
-                            <h5 class="fw-bold mb-1"><i class="bi bi-file-earmark-arrow-up-fill text-primary me-2"></i> Bulk CSV Ingestion Engine</h5>
-                            <p class="text-muted small mb-0">Upload `data.csv` to securely sync entries directly to your Cloudflare D1 backend in batches.</p>
+                            <h5 class="fw-bold mb-1 d-flex align-items-center gap-2">
+                                <i class="bi bi-file-earmark-arrow-up-fill text-primary"></i> Bulk CSV Ingestion Engine
+                            </h5>
+                            <p class="text-muted small mb-0">Upload structured CSV archives to batch insert records directly into your Cloudflare D1 database.</p>
                         </div>
                         <button type="button" class="btn btn-dark-custom px-4" data-bs-toggle="modal" data-bs-target="#csvUploadModal">
-                            <i class="bi bi-upload me-1"></i> Launch Uploader
+                            <i class="bi bi-upload"></i> Launch Ingestion
                         </button>
                     </div>
                 </div>
 
-                <!-- System Diagnostic Status Tray -->
+                <!-- 2. Full Registry Backup & Export Engine Card (NEW) -->
+                <div class="glass-panel mb-4">
+                    <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
+                        <div>
+                            <h5 class="fw-bold mb-1 d-flex align-items-center gap-2">
+                                <i class="bi bi-cloud-arrow-down-fill text-success"></i> Full Registry Backup &amp; Schema Export
+                            </h5>
+                            <p class="text-muted small mb-0">Download the entire database archive matching the exact system schema for local recovery or spreadsheets.</p>
+                        </div>
+                        <div class="d-flex gap-2 w-100 w-md-auto">
+                            <button type="button" class="btn btn-dark-custom flex-grow-1" id="btnExportFullCsv" onclick="exportFullDatabase('csv')">
+                                <i class="bi bi-file-earmark-spreadsheet-fill text-info"></i> Backup to CSV
+                            </button>
+                            <button type="button" class="btn btn-outline-custom flex-grow-1" id="btnExportFullExcel" onclick="exportFullDatabase('excel')">
+                                <i class="bi bi-file-earmark-excel-fill text-success"></i> Backup to Excel
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3. System Diagnostic Status Tray -->
                 <div class="glass-panel p-4">
-                    <h6 class="fw-bold text-dark mb-3"><i class="bi bi-shield-check text-success me-2"></i> System Diagnostics & Connectivity</h6>
+                    <h6 class="fw-bold text-dark mb-3 d-flex align-items-center gap-2">
+                        <i class="bi bi-shield-check text-success"></i> System Diagnostics &amp; Cloudflare D1 State
+                    </h6>
                     <div class="d-flex align-items-center justify-content-between p-3 rounded-3 bg-light border">
                         <div class="d-flex align-items-center gap-2">
                             <span class="spinner-border spinner-border-sm text-primary" role="status" id="diagSpinner"></span>
+                            <span class="status-dot" id="diagStatusDot" style="display: none;"></span>
                             <span class="small fw-semibold text-secondary" id="diagStatusText">Checking Cloudflare D1 connection status...</span>
                         </div>
                         <button class="btn btn-sm btn-outline-secondary fw-bold" onclick="runDiagnostics()">Re-check</button>
                     </div>
                 </div>
-
             </div>
         </div>
     </div>
 
-    <!-- Animated Progress Modal for CSV Upload -->
+    <!-- Animated Progress Modal for CSV Ingestion -->
     <div class="modal fade" id="csvUploadModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content shadow-lg border-0 rounded-4 p-2">
-                <div class="modal-header border-bottom-0">
-                    <h5 class="modal-title fw-bold"><i class="bi bi-cloud-arrow-up-fill text-primary me-2"></i> Bulk CSV Ingestion Console</h5>
+                <div class="modal-header border-bottom-0 pb-1">
+                    <h6 class="modal-title fw-bold d-flex align-items-center gap-2">
+                        <i class="bi bi-cloud-arrow-up-fill text-primary"></i> Bulk CSV Ingestion Console
+                    </h6>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" id="closeCsvModalBtn"></button>
                 </div>
-                <div class="modal-body">
-                    <!-- Step 1: File Picker -->
+                <div class="modal-body p-3">
+                    <!-- Step 1: File Selection -->
                     <div id="csvUploadStep1">
                         <div class="mb-3">
-                            <label class="form-label small fw-bold text-secondary">Select `data.csv` File</label>
+                            <label class="form-label small fw-bold text-secondary">Select Compatible `.csv` File</label>
                             <input type="file" id="csvFileInput" class="form-control" accept=".csv">
                         </div>
-                        <div class="alert alert-info py-2 small rounded-3">
-                            <i class="bi bi-info-circle-fill me-1"></i> Headers match your exact CSV schema and date serial numbers normalize automatically.
+                        <div class="alert alert-light border small rounded-3 text-muted">
+                            <i class="bi bi-info-circle-fill text-primary me-1"></i> Headers will automatically map to your database schema, and Excel numeric date formats will be normalized to <code>DD-MM-YYYY</code>.
                         </div>
-                        <button type="button" id="startUploadBtn" class="btn btn-dark-custom w-100 py-2.5 fw-semibold mt-2">
-                            Start Secure Transfer 🚀
+                        <button type="button" id="startUploadBtn" class="btn btn-dark-custom w-100 py-2 fw-semibold justify-content-center mt-2">
+                            Start Batch Transfer 🚀
                         </button>
                     </div>
 
-                    <!-- Step 2: Animated Progress View -->
+                    <!-- Step 2: Ingestion Feedback -->
                     <div id="csvUploadStep2" class="d-none text-center py-4">
-                        <div class="spinner-border text-primary mb-3" style="width: 3rem; height: 3.5rem;" role="status"></div>
-                        <h5 class="fw-bold text-dark" id="uploadStatusTitle">Parsing CSV file...</h5>
-                        <p class="text-muted small mb-3" id="uploadStatusSub">Please keep this window open while records sync.</p>
-                        
-                        <div class="progress rounded-pill mb-3" style="height: 12px; background-color: #f1f5f9;">
+                        <div class="spinner-border text-primary mb-3" style="width: 2.5rem; height: 2.5rem;" role="status"></div>
+                        <h6 class="fw-bold text-dark" id="uploadStatusTitle">Parsing CSV file...</h6>
+                        <p class="text-muted small mb-3" id="uploadStatusSub">Please keep this browser window open while records sync.</p>
+
+                        <div class="progress rounded-pill mb-3" style="height: 10px; background-color: #f1f5f9;">
                             <div id="uploadProgressBar" class="progress-bar bg-primary progress-bar-striped progress-bar-animated rounded-pill" role="progressbar" style="width: 0%"></div>
                         </div>
+
                         <div class="d-flex justify-content-between text-muted small fw-semibold px-1">
                             <span id="uploadProgressCount">0 / 0 rows</span>
                             <span id="uploadProgressPercent">0%</span>
@@ -154,7 +247,7 @@
         </div>
     </div>
 
-    <!-- Global Toast Alert Container -->
+    <!-- Centered Notifications Tray -->
     <div id="customAlertContainer"></div>
 
     <!-- Scripts Hub -->
@@ -164,7 +257,7 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="js/navLoader.js"></script>
 
-    <!-- Embedded Copier & Uploader Script Logic -->
+    <!-- Operational Logic Script -->
     <script>
         document.addEventListener("DOMContentLoaded", () => {
             runDiagnostics();
@@ -174,9 +267,17 @@
             }
         });
 
+        // 1. Connection Diagnostic Routine
         async function runDiagnostics() {
             const txt = document.getElementById("diagStatusText");
             const spinner = document.getElementById("diagSpinner");
+            const dot = document.getElementById("diagStatusDot");
+
+            if (spinner) spinner.style.display = "inline-block";
+            if (dot) dot.style.display = "none";
+            txt.textContent = "Checking Cloudflare D1 connection status...";
+            txt.className = "small fw-semibold text-secondary";
+
             try {
                 const res = await fetch(`${ENV.SHEET_API_URL}?action=readAll`, { headers: getAuthHeaders() });
                 if (res.ok) {
@@ -184,18 +285,26 @@
                     const count = Array.isArray(json) ? json.length : (json.data ? json.data.length : 0);
                     txt.textContent = `Connected successfully! ${count} records active in Cloudflare D1.`;
                     txt.className = "small fw-semibold text-success";
-                    if (spinner) spinner.remove();
+                    if (dot) {
+                        dot.className = "status-dot active";
+                        dot.style.display = "inline-block";
+                    }
                 } else {
                     throw new Error("Server responded with code " + res.status);
                 }
             } catch (err) {
-                txt.textContent = "Connection warning: " + err.message;
+                txt.textContent = "Connection issue: " + err.message;
                 txt.className = "small fw-semibold text-danger";
-                if (spinner) spinner.remove();
+                if (dot) {
+                    dot.className = "status-dot warning";
+                    dot.style.display = "inline-block";
+                }
+            } finally {
+                if (spinner) spinner.style.display = "none";
             }
         }
 
-        // Robust Date Normalizer (Fixes Excel Serial numbers like 30442.0001 -> DD-MM-YYYY)
+        // 2. Normalizer for Excel Numeric Dates (e.g., 30442 -> DD-MM-YYYY)
         function normalizeDate(val) {
             if (!val) return "";
             let strVal = String(val).trim();
@@ -222,10 +331,11 @@
             return strVal;
         }
 
+        // 3. Batch CSV Ingestion
         async function handleCsvUploadProcess() {
             const fileInput = document.getElementById("csvFileInput");
             if (!fileInput || fileInput.files.length === 0) {
-                alert("Please select a valid .csv file first.");
+                showToast("Please choose a valid .csv file first.", "warning");
                 return;
             }
 
@@ -234,7 +344,7 @@
             document.getElementById("csvUploadStep2").classList.remove("d-none");
             document.getElementById("closeCsvModalBtn").classList.add("d-none");
 
-            updateProgressUI(5, "Reading CSV file stream...", "0 / 0 rows");
+            updateProgressUI(5, "Reading CSV data stream...", "0 / 0 rows");
 
             try {
                 const dataBuffer = await file.arrayBuffer();
@@ -243,24 +353,24 @@
                 const rawJsonRows = XLSX.utils.sheet_to_json(worksheet, { defval: "" });
 
                 if (!rawJsonRows || rawJsonRows.length === 0) {
-                    throw new Error("The uploaded CSV file is empty or formatted incorrectly.");
+                    throw new Error("The uploaded file contains no data rows.");
                 }
 
-                updateProgressUI(15, `Parsed ${rawJsonRows.length} rows. Normalizing dates & schema...`, `0 / ${rawJsonRows.length} rows`);
+                updateProgressUI(15, `Loaded ${rawJsonRows.length} rows. Sanitizing schema...`, `0 / ${rawJsonRows.length} rows`);
 
-                // Exact mapping based on your custom header attributes
+                // Map row headers to system schema
                 const sanitizedRows = rawJsonRows.map(row => ({
                     llr_number: String(row.llr_number || "").trim(),
                     name: String(row.name || "").trim(),
                     date_of_birth: normalizeDate(row.date_of_birth),
                     vehicle_class: String(row.vehicle_class || "").trim(),
-                    mobile_number: String(row.mobile_number || "").trim(),
+                    mobile_number: String(row.mobile_number || "").replace(/[^0-9]/g, "").trim(),
                     issue_date: normalizeDate(row.issue_date),
                     expiry_date: normalizeDate(row.expiry_date),
                     approved_date: normalizeDate(row.approved_date),
-                    relative_type: String(row.relative_type || "").trim(),
+                    relative_type: String(row.relative_type || "Father").trim(),
                     relative_name: String(row.relative_name || "").trim(),
-                    emergency_mobile: String(row.emergency_mobile || "").trim(),
+                    emergency_mobile: String(row.emergency_mobile || "").replace(/[^0-9]/g, "").trim(),
                     present_address: String(row.present_address || "").trim(),
                     permanent_address: String(row.permanent_address || "").trim(),
                     identification_mark_1: String(row.identification_mark_1 || "").trim(),
@@ -274,9 +384,13 @@
                     action: "insert"
                 })).filter(r => r.llr_number !== "");
 
-                updateProgressUI(30, `Starting batch transfer to Cloudflare D1...`, `0 / ${sanitizedRows.length} rows`);
+                if (sanitizedRows.length === 0) {
+                    throw new Error("No rows found with valid 'llr_number' values.");
+                }
 
-                const batchSize = 25;
+                updateProgressUI(30, `Starting batch insertion to Cloudflare D1...`, `0 / ${sanitizedRows.length} rows`);
+
+                const batchSize = 10;
                 let successCount = 0;
                 let duplicateCount = 0;
 
@@ -293,22 +407,22 @@
                             if (resJson.status === "success") successCount++;
                             else if (resJson.status === "duplicate") duplicateCount++;
                         } catch (err) {
-                            console.warn(`Failed row ${payload.llr_number}:`, err.message);
+                            console.warn(`Row skip (${payload.llr_number}):`, err.message);
                         }
                     }
 
                     const progressPct = Math.round(((i + chunk.length) / sanitizedRows.length) * 70) + 30;
-                    const currentProcessed = Math.min(i + batchSize, sanitizedRows.length);
-                    updateProgressUI(progressPct, `Transferring batch data (${currentProcessed}/${sanitizedRows.length})...`, `${currentProcessed} / ${sanitizedRows.length} rows`);
+                    const processed = Math.min(i + batchSize, sanitizedRows.length);
+                    updateProgressUI(progressPct, `Synchronizing records (${processed}/${sanitizedRows.length})...`, `${processed} / ${sanitizedRows.length} rows`);
                 }
 
-                updateProgressUI(100, `Upload Complete! Added ${successCount} entries (${duplicateCount} duplicates skipped).`, `${sanitizedRows.length} / ${sanitizedRows.length} rows`);
+                updateProgressUI(100, `Upload completed! Added ${successCount} entries (${duplicateCount} duplicates skipped).`, `${sanitizedRows.length} / ${sanitizedRows.length} rows`);
                 document.getElementById("uploadStatusTitle").textContent = "✓ Ingestion Successful!";
                 document.getElementById("closeCsvModalBtn").classList.remove("d-none");
-
+                runDiagnostics();
             } catch (error) {
-                console.error("CSV Upload Error:", error);
-                document.getElementById("uploadStatusTitle").textContent = "❌ Transfer Failed";
+                console.error("CSV Ingestion Error:", error);
+                document.getElementById("uploadStatusTitle").textContent = "❌ Ingestion Interrupted";
                 document.getElementById("uploadStatusSub").textContent = error.message;
                 document.getElementById("closeCsvModalBtn").classList.remove("d-none");
             }
@@ -324,6 +438,100 @@
             if (title && titleText) title.textContent = titleText;
             if (count && countText) count.textContent = countText;
             if (percentLbl) percentLbl.textContent = `${percent}%`;
+        }
+
+        // 4. Full Database Backup & Schema Exporter
+        async function exportFullDatabase(format = 'csv') {
+            const csvBtn = document.getElementById("btnExportFullCsv");
+            const excelBtn = document.getElementById("btnExportFullExcel");
+
+            csvBtn.disabled = true;
+            excelBtn.disabled = true;
+            showToast("Fetching entire database register for backup...", "info");
+
+            try {
+                const response = await fetch(`${ENV.SHEET_API_URL}?action=readAll`, { headers: getAuthHeaders() });
+                if (!response.ok) throw new Error(`HTTP Status ${response.status}`);
+
+                const data = await response.json();
+                const records = Array.isArray(data) ? data : (data.data || []);
+
+                if (!records || records.length === 0) {
+                    showToast("No database entries available to backup.", "warning");
+                    return;
+                }
+
+                const headers = [
+                    "llr_number", "name", "date_of_birth", "vehicle_class",
+                    "mobile_number", "emergency_mobile", "blood_group",
+                    "relative_type", "relative_name", "issue_date", "expiry_date",
+                    "approved_date", "dl_issued", "dl_number", "fees_number",
+                    "fee_amount", "present_address", "permanent_address",
+                    "identification_mark_1", "identification_mark_2", "remarks"
+                ];
+
+                if (format === 'csv') {
+                    let csvContent = headers.join(",") + "\r\n";
+                    records.forEach(row => {
+                        const rowVals = headers.map(header => {
+                            let val = row[header] !== null && row[header] !== undefined ? String(row[header]) : "";
+                            // Protect phone numbers and numeric codes from Excel scientific notation
+                            if (header === "mobile_number" || header === "emergency_mobile") {
+                                return `="${val}"`;
+                            }
+                            val = val.replace(/"/g, '""');
+                            if (val.includes(",") || val.includes("\n") || val.includes('"')) {
+                                val = `"${val}"`;
+                            }
+                            return val;
+                        });
+                        csvContent += rowVals.join(",") + "\r\n";
+                    });
+
+                    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+                    const url = URL.createObjectURL(blob);
+                    const link = document.createElement("a");
+                    link.href = url;
+                    link.download = `LLR_FULL_BACKUP_${new Date().toISOString().split("T")[0]}.csv`;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    showToast(`Successfully exported ${records.length} records to CSV!`, "success");
+                } else if (format === 'excel') {
+                    const ws = XLSX.utils.json_to_sheet(records, { header: headers });
+                    const wb = XLSX.utils.book_new();
+                    XLSX.utils.book_append_sheet(wb, ws, "Database Backup");
+                    XLSX.writeFile(wb, `LLR_FULL_BACKUP_${new Date().toISOString().split("T")[0]}.xlsx`);
+                    showToast(`Successfully exported ${records.length} records to Excel!`, "success");
+                }
+            } catch (err) {
+                console.error("Backup Export Error:", err);
+                showToast("Failed to backup registry: " + err.message, "danger");
+            } finally {
+                csvBtn.disabled = false;
+                excelBtn.disabled = false;
+            }
+        }
+
+        // 5. Toast Notification Helper
+        function showToast(message, type = "success") {
+            const container = document.getElementById("customAlertContainer");
+            if (!container) return;
+
+            const bgClass = type === "success" ? "bg-dark text-white" :
+                            type === "warning" ? "bg-warning text-dark" :
+                            type === "info" ? "bg-primary text-white" : "bg-danger text-white";
+
+            const toast = document.createElement("div");
+            toast.className = `toast-msg ${bgClass}`;
+            toast.textContent = message;
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                toast.style.transition = "opacity 0.3s ease";
+                toast.style.opacity = "0";
+                setTimeout(() => toast.remove(), 300);
+            }, 3500);
         }
     </script>
 </body>

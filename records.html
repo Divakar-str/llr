@@ -9,20 +9,18 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <!-- Linked to your external style sheet asset -->
     <link href="./css/recordsStyle.css" rel="stylesheet">
+    <link  href="css/style.css" rel="stylesheet">
 </head>
 <body>
     <div id="global-nav-container"></div>
     
     <div class="container-fluid px-3 px-md-4 pb-5 pt-4">
-        <!-- Top Dashboard Header & Navigation Tabs Selection -->
+        <!-- Dashboard Header & View Switching Tabs -->
         <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
             <div class="d-flex align-items-center gap-3">
-                <div class="fs-3 text-dark d-none d-sm-block"><i class="bi bi-database-fill-gear"></i></div>
                 <div>
-                    <h4 class="fw-bold text-dark mb-0">Records Hub</h4>
-                    <p class="text-muted small mb-0">View saved records, update existing information, or add new entries manually.</p>
+                    <h4 class="fw-bold text-dark mb-0"><i class="bi bi-database-fill-gear"></i> Records Hub</h4>
                 </div>
             </div>
             
@@ -40,9 +38,9 @@
             </ul>
         </div>
 
-        <!-- Tab Content Views Segment -->
+        <!-- Tab Views Container -->
         <div class="tab-content" id="crudTabContent">
-            <!-- TAB PANE 1: VIEW GRID DATA REGISTRY -->
+            <!-- TAB PANE 1: DATA REGISTRY TABLE -->
             <div class="tab-pane fade show active animated-pane" id="viewTablePane" role="tabpanel">
                 <div class="card shadow-sm border-0 bg-white p-3 mb-3">
                     <div class="row g-3 align-items-end">
@@ -53,40 +51,52 @@
                                 <input type="text" id="tableSearchInput" class="form-control border-start-0 ps-1" placeholder="Search across all columns...">
                             </div>
                         </div>
+
+                        <!-- Status Filter Dropdown -->
+                        <div class="col-12 col-sm-6 col-md-2">
+                            <label class="form-label"><i class="bi bi-funnel"></i> DL Status</label>
+                            <select id="filterDlStatus" class="form-select">
+                                <option value="ALL">All Statuses</option>
+                                <option value="Yes">DL Approved (Yes)</option>
+                                <option value="No">Pending LLR (No)</option>
+                            </select>
+                        </div>
+
                         <div class="col-12 col-sm-6 col-md-2 date-input-node">
                             <label class="form-label"><i class="bi bi-calendar-plus"></i> Issue Date From</label>
                             <div class="input-group">
                                 <input type="date" id="filterStartDate" class="form-control">
-                                <button class="btn btn-outline-secondary" type="button" onclick="clearDateFilter('filterStartDate')" title="Clear start date">
+                                <button class="btn btn-outline-secondary" type="button" onclick="clearDateFilter('filterStartDate')" title="Clear date">
                                     <i class="bi bi-x-lg"></i>
                                 </button>
                             </div>
                         </div>
+
                         <div class="col-12 col-sm-6 col-md-2 date-input-node">
                             <label class="form-label"><i class="bi bi-calendar-minus"></i> Issue Date To</label>
                             <div class="input-group">
                                 <input type="date" id="filterEndDate" class="form-control">
-                                <button class="btn btn-outline-secondary" type="button" onclick="clearDateFilter('filterEndDate')" title="Clear end date">
+                                <button class="btn btn-outline-secondary" type="button" onclick="clearDateFilter('filterEndDate')" title="Clear date">
                                     <i class="bi bi-x-lg"></i>
                                 </button>
                             </div>
                         </div>
-                        <div class="col-12 col-md-2 d-flex flex-column gap-2">
-                            <button id="refreshDataBtn" class="btn btn-dark-custom w-100 shadow-sm justify-content-center py-2.5">
+
+                        <div class="col-12 col-md-3 d-flex gap-2">
+                            <button id="refreshDataBtn" class="btn btn-dark w-50 shadow-sm justify-content-center py-2">
                                 <i class="bi bi-arrow-clockwise"></i> Sync DB
                             </button>
-                             <button id="exportCsvBtn" class="btn btn-outline-success w-100 shadow-sm justify-content-center py-2.5" onclick="exportTableToCSV('llr_records_export.csv')">
-                                <i class="bi bi-file-earmark-spreadsheet-fill"></i> Export CSV
+                            <button id="exportCsvBtn" class="btn btn-outline-success w-50 shadow-sm justify-content-center py-2" onclick="exportTableToCSV('llr_records_export.csv')">
+                                <i class="bi bi-file-earmark-spreadsheet-fill"></i> CSV
                             </button>
                         </div>
-                     
                     </div>
                 </div>
 
                 <div class="card shadow-sm border-0">
                     <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center py-3 px-4" style="border-radius: 24px 24px 0 0;">
                         <h6 class="mb-0 fw-bold text-light d-flex align-items-center gap-2">
-                            <i class="bi bi-cloud-check-fill"></i> Registry Database
+                            <i class="bi bi-cloud-check-fill"></i> Records
                         </h6>
                         <span id="recordCountBadge" class="badge bg-secondary text-white fw-bold px-3 py-2 small">Loading...</span>
                     </div>
@@ -95,14 +105,26 @@
                             <table class="table table-hover align-middle mb-0" id="dbMasterTable">
                                 <thead class="sticky-thead">
                                     <tr>
-                                        <th class="ps-4">LLR Number</th>
-                                        <th>Applicant Name</th>
-                                        <th>Date of Birth</th>
+                                        <th class="ps-4 sortable" onclick="handleSort('llr_number')">
+                                            LLR Number <i class="bi bi-arrow-down-up small ms-1 text-muted" id="sort-llr_number"></i>
+                                        </th>
+                                        <th class="sortable" onclick="handleSort('name')">
+                                            Applicant Name <i class="bi bi-arrow-down-up small ms-1 text-muted" id="sort-name"></i>
+                                        </th>
+                                        <th class="sortable" onclick="handleSort('date_of_birth')">
+                                            Date of Birth <i class="bi bi-arrow-down-up small ms-1 text-muted" id="sort-date_of_birth"></i>
+                                        </th>
                                         <th>Vehicle Class</th>
                                         <th>Mobile Number</th>
-                                        <th>Issue Date</th>
-                                        <th>Expiry Date</th>
-                                        <th>DL Status</th>
+                                        <th class="sortable" onclick="handleSort('issue_date')">
+                                            Issue Date <i class="bi bi-arrow-down-up small ms-1 text-muted" id="sort-issue_date"></i>
+                                        </th>
+                                        <th class="sortable" onclick="handleSort('expiry_date')">
+                                            Expiry Date <i class="bi bi-arrow-down-up small ms-1 text-muted" id="sort-expiry_date"></i>
+                                        </th>
+                                        <th class="sortable" onclick="handleSort('dl_issued')">
+                                            DL Status <i class="bi bi-arrow-down-up small ms-1 text-muted" id="sort-dl_issued"></i>
+                                        </th>
                                         <th>Remarks</th>
                                         <th class="text-center pe-4">Actions</th>
                                     </tr>
@@ -111,7 +133,8 @@
                             </table>
                         </div>
                     </div>
-                    <!-- PAGINATION FOOTER CONTAINER -->
+                    
+                    <!-- Pagination Footer Navigation -->
                     <div id="tablePaginationNav" class="d-flex justify-content-between align-items-center px-4 py-3 bg-light border-top" style="border-radius: 0 0 24px 24px;">
                         <span class="small text-muted">Showing <strong>0-0</strong> of <strong>0</strong> records</span>
                         <div class="btn-group btn-group-sm">
@@ -134,11 +157,6 @@
                     <form id="manualInsertForm" novalidate class="needs-validation">
                         <div class="card-body p-4">
                             <input type="hidden" name="action" value="insert">
-                            
-                            <div id="insertDuplicateWarning" class="alert alert-warning d-none align-items-center gap-2 mb-3" role="alert">
-                                <i class="bi bi-exclamation-triangle-fill fs-5"></i>
-                                <span id="insertDuplicateWarningText">Duplicate entry detected!</span>
-                            </div>
                             <div class="section-divider mt-0">
                                 <span class="section-title"><i class="bi bi-key-fill"></i> License Details</span>
                             </div>
@@ -171,6 +189,7 @@
                                     <input type="date" name="approved_date" id="addApprovedDate" class="form-control">
                                 </div>
                             </div>
+
                             <div class="section-divider">
                                 <span class="section-title"><i class="bi bi-person-bounding-box"></i> Personal Details</span>
                             </div>
@@ -185,7 +204,7 @@
                                 </div>
                                 <div class="col-12 col-sm-1">
                                     <label class="form-label"><i class="bi bi-droplet-fill text-danger"></i> Blood Group</label>
-                                    <input type="text" name="blood_group" id="addBloodGroup" class="form-control" placeholder="e.g. O+ve">
+                                    <input type="text" name="blood_group" id="addBloodGroup" class="form-control" placeholder="e.g. O+">
                                 </div>
                                 <div class="col-12 col-sm-2 col-md-3">
                                     <label class="form-label"><i class="bi bi-people-fill"></i> Relative Type</label>
@@ -209,6 +228,7 @@
                                     <input type="tel" name="emergency_mobile" id="addEmergencyMobile" class="form-control" placeholder="Backup tel" maxlength="10">
                                 </div>
                             </div>
+
                             <div class="section-divider">
                                 <span class="section-title"><i class="bi bi-geo-alt-fill"></i> Addresses & Identification Marks</span>
                             </div>
@@ -230,6 +250,7 @@
                                     <input type="text" name="identification_mark_2" id="addIdMark2" class="form-control">
                                 </div>
                             </div>
+
                             <div class="section-divider">
                                 <span class="section-title"><i class="bi bi-hourglass-split"></i> Status & Dates</span>
                             </div>
@@ -260,13 +281,74 @@
                             </div>
                         </div>
                         <div class="card-footer bg-light d-flex flex-column flex-sm-row justify-content-end gap-2 p-3" style="border-radius: 0 0 24px 24px;">
-                            <button type="reset" class="btn btn-outline-custom order-2 order-sm-1">Clear Fields</button>
-                            <button type="submit" id="saveInsertBtn" class="btn btn-dark-custom order-1 order-sm-2 px-4">
+                            <button type="reset" class="btn btn-outline-secondary order-2 order-sm-1">Clear Fields</button>
+                            <button type="submit" id="saveInsertBtn" class="btn btn-dark order-1 order-sm-2 px-4">
                                 <span>Save New Record</span> <i class="bi bi-cloud-arrow-up-fill"></i>
                             </button>
                         </div>
                     </form>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- QUICK EDIT DL STATUS MODAL (LIGHTWEIGHT POPUP) -->
+    <div class="modal fade" id="quickDlModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content shadow-lg border-0" style="border-radius: 20px;">
+                <div class="modal-header bg-dark text-white py-2.5 px-3" style="border-radius: 20px 20px 0 0;">
+                    <h6 class="modal-title fw-bold d-flex align-items-center gap-2 mb-0">
+                        <i class="bi bi-lightning-charge-fill text-warning"></i> Quick Update DL Status
+                    </h6>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form id="quickDlForm" novalidate>
+                    <div class="modal-body p-3">
+                        <input type="hidden" id="quickLlrNumber" name="llr_number">
+                        
+                        <!-- Small LLR Summary Card -->
+                        <div class="p-2.5 bg-light rounded-3 border mb-3">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <span class="fw-bold text-dark fs-6" id="quickNameText">Applicant Name</span>
+                                <span class="badge bg-secondary" id="quickVehicleText">LMV</span>
+                            </div>
+                            <div class="small text-muted font-monospace">
+                                LLR: <strong class="text-danger" id="quickLlrText">-</strong> | DOB: <span id="quickDobText">-</span>
+                            </div>
+                        </div>
+
+                        <div class="row g-2.5">
+                            <div class="col-12">
+                                <label class="form-label small fw-bold mb-1">DL Issued Status</label>
+                                <select id="quickDlIssued" name="dl_issued" class="form-select form-select-sm">
+                                    <option value="Yes">Yes (DL Approved)</option>
+                                    <option value="No">No (Pending LLR)</option>
+                                </select>
+                            </div>
+
+                            <div class="col-12">
+                                <label class="form-label small fw-bold mb-1">Permanent DL Number <span class="text-muted fw-normal">(Optional)</span></label>
+                                <input type="text" id="quickDlNumber" name="dl_number" class="form-control form-control-sm" placeholder="e.g. TN5220260000000">
+                            </div>
+
+                            <div class="col-12">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <label class="form-label small fw-bold mb-0">DL Approved Date <span class="text-muted fw-normal">(Optional)</span></label>
+                                    <button type="button" class="btn btn-xs btn-outline-primary py-0 px-1.5" style="font-size: 0.75rem;" onclick="setQuickDateToday()">
+                                        <i class="bi bi-calendar-event"></i> Today
+                                    </button>
+                                </div>
+                                <input type="date" id="quickApprovedDate" name="approved_date" class="form-control form-control-sm">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer bg-light p-2.5 d-flex justify-content-end gap-2" style="border-radius: 0 0 20px 20px;">
+                        <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" id="quickSaveBtn" class="btn btn-sm btn-dark">
+                            <span>Update Status</span> <i class="bi bi-check2"></i>
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
@@ -332,7 +414,7 @@
                                 <input type="date" name="approved_date" id="editApprovedDate" class="form-control">
                             </div>
                         </div>
-                        
+
                         <div class="section-divider">
                             <span class="section-title"><i class="bi bi-person-bounding-box"></i> Personal Details</span>
                         </div>
@@ -371,7 +453,7 @@
                                 <input type="text" name="blood_group" id="editBloodGroup" class="form-control">
                             </div>
                         </div>
-                        
+
                         <div class="section-divider">
                             <span class="section-title"><i class="bi bi-geo-alt-fill"></i> Addresses & Identification Marks</span>
                         </div>
@@ -393,7 +475,7 @@
                                 <input type="text" name="identification_mark_2" id="editIdMark2" class="form-control">
                             </div>
                         </div>
-                        
+
                         <div class="section-divider">
                             <span class="section-title"><i class="bi bi-hourglass-split"></i> Status & Dates</span>
                         </div>
@@ -410,8 +492,8 @@
                                 <input type="text" name="dl_number" id="editDlNumber" class="form-control" placeholder="e.g. TN5220260000000">
                             </div>
                             <div class="col-12 col-md-8">
-                                 <label class="form-label"><i class="bi bi-card-text"></i> Remarks</label>
-                                 <textarea id="editremarks" name="remarks" class="form-control" placeholder="Enter any remarks here..."></textarea>
+                                <label class="form-label"><i class="bi bi-card-text"></i> Remarks</label>
+                                <textarea id="editremarks" name="remarks" class="form-control" placeholder="Enter any remarks here..."></textarea>
                             </div>
                             <div class="col-12 col-md-6">
                                 <label class="form-label"><i class="bi bi-receipt"></i> Fees Number</label>
@@ -424,8 +506,8 @@
                         </div>
                     </div>
                     <div class="modal-footer bg-light d-flex flex-column flex-sm-row justify-content-between gap-2 p-3" style="border-radius: 0 0 24px 24px;">
-                        <button type="button" class="btn btn-outline-custom order-2 order-sm-1" data-bs-dismiss="modal">Cancel Changes</button>
-                        <button type="submit" id="saveEditBtn" class="btn btn-dark-custom order-1 order-sm-2">
+                        <button type="button" class="btn btn-outline-secondary order-2 order-sm-1" data-bs-dismiss="modal">Cancel Changes</button>
+                        <button type="submit" id="saveEditBtn" class="btn btn-dark order-1 order-sm-2">
                             <span>Save Changes</span> <i class="bi bi-cloud-arrow-up-fill"></i>
                         </button>
                     </div>

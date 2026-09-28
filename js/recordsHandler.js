@@ -1,4 +1,4 @@
-// js/recordsHandler.js - Ultimate Edition with Pagination, Global Search, CSV Export & Date Clearers
+// js/recordsHandler.js - Advanced Sorting, Filtering, Quick DL Editing & Professional UI Alignment
 document.addEventListener("DOMContentLoaded", () => {
     fetchAndRecordWithLoader();
 
@@ -8,6 +8,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const searchInput = document.getElementById("tableSearchInput");
     if (searchInput) searchInput.addEventListener("input", () => { currentPage = 1; filterTableRecords(); });
+
+    const statusFilter = document.getElementById("filterDlStatus");
+    if (statusFilter) statusFilter.addEventListener("change", () => { currentPage = 1; filterTableRecords(); });
 
     const startDateInput = document.getElementById("filterStartDate");
     const endDateInput = document.getElementById("filterEndDate");
@@ -22,6 +25,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const editForm = document.getElementById("modalEditForm");
     if (editForm) editForm.addEventListener("submit", handleModalEditSubmit);
+
+    const quickForm = document.getElementById("quickDlForm");
+    if (quickForm) quickForm.addEventListener("submit", handleQuickDlSubmit);
 });
 
 let globalRecordsCache = [];
@@ -31,7 +37,29 @@ let currentViewedRecord = null;
 let currentPage = 1;
 const pageSize = 10;
 
-// 1. Fetch Records & Maintain Active Filters
+// Sorting State Tracker
+let sortColumn = "llr_number";
+let sortDirection = "desc";
+
+/**
+ * Calculates calendar days elapsed between DD-MM-YYYY issue date and today.
+ */
+function calculateDaysPassed(issueDateStr) {
+    if (!issueDateStr || issueDateStr === "-") return 0;
+    const parts = issueDateStr.split("-");
+    if (parts.length !== 3) return 0;
+
+    const issueDate = new Date(`${parts[2]}-${parts[1]}-${parts[0]}`);
+    const today = new Date();
+    
+    issueDate.setHours(0, 0, 0, 0);
+    today.setHours(0, 0, 0, 0);
+
+    const diffTime = today - issueDate;
+    return Math.floor(diffTime / (1000 * 60 * 60 * 24));
+}
+
+// 1. Fetch Records
 async function fetchAndRecordWithLoader() {
     const tbody = document.getElementById("recordsTableBody");
     const badge = document.getElementById("recordCountBadge");
@@ -65,7 +93,7 @@ async function fetchAndRecordWithLoader() {
 
         const data = await response.json();
         globalRecordsCache = Array.isArray(data) ? data : (data.data || []);
-        
+
         filterTableRecords();
         showCustomAlert("Database synchronized successfully!", "success");
     } catch (error) {
@@ -76,17 +104,71 @@ async function fetchAndRecordWithLoader() {
     }
 }
 
-// 2. Render Table Rows with Pagination & Copiable Fields
+// 2. Multi-Column Sorting
+function handleSort(columnKey) {
+    if (sortColumn === columnKey) {
+        sortDirection = sortDirection === "asc" ? "desc" : "asc";
+    } else {
+        sortColumn = columnKey;
+        sortDirection = "asc";
+    }
+
+    document.querySelectorAll("th.sortable i").forEach(icon => {
+        icon.className = "bi bi-arrow-down-up small ms-1 text-muted";
+    });
+
+    const activeIcon = document.getElementById(`sort-${columnKey}`);
+    if (activeIcon) {
+        activeIcon.className = sortDirection === "asc" 
+            ? "bi bi-sort-down-alt small ms-1 text-primary fw-bold" 
+            : "bi bi-sort-down small ms-1 text-primary fw-bold";
+    }
+
+    applySorting();
+    renderTableRows();
+}
+
+function applySorting() {
+    filteredRecordsCache.sort((a, b) => {
+        let valA = a[sortColumn] || "";
+        let valB = b[sortColumn] || "";
+
+        if (["issue_date", "expiry_date", "date_of_birth"].includes(sortColumn)) {
+            const partsA = valA.split("-");
+            const partsB = valB.split("-");
+            if (partsA.length === 3) valA = `${partsA[2]}${partsA[1]}${partsA[0]}`;
+            if (partsB.length === 3) valB = `${partsB[2]}${partsB[1]}${partsB[0]}`;
+        }
+
+        if (typeof valA === "string") valA = valA.toLowerCase();
+        if (typeof valB === "string") valB = valB.toLowerCase();
+
+        if (valA < valB) return sortDirection === "asc" ? -1 : 1;
+        if (valA > valB) return sortDirection === "asc" ? 1 : -1;
+        return 0;
+    });
+}
+
+// 3. Render Table Rows with Professional Enterprise Layout & 30-Day Eligibility Rule
 function renderTableRows() {
     const tbody = document.getElementById("recordsTableBody");
     const badge = document.getElementById("recordCountBadge");
     if (!tbody) return;
 
     tbody.innerHTML = "";
-    if (badge) badge.textContent = `${filteredRecordsCache.length} Records Found`;
+    if (badge) badge.textContent = `${filteredRecordsCache.length} Active Records`;
 
     if (filteredRecordsCache.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="10" class="text-center py-5 text-muted fw-semibold">No records found matching criteria.</td></tr>`;
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="10" class="text-center py-5">
+                    <div class="py-4">
+                        <i class="bi bi-inbox text-muted fs-1 d-block mb-2"></i>
+                        <span class="text-secondary fw-medium">No matching registry records found</span>
+                    </div>
+                </td>
+            </tr>
+        `;
         updatePaginationNav(0, 0);
         return;
     }
@@ -104,39 +186,97 @@ function renderTableRows() {
         const tr = document.createElement("tr");
         tr.ondblclick = () => openViewModal(row);
         tr.style.cursor = "pointer";
-        tr.title = "Double-click to view full profile";
+        tr.title = "Double-click to open record drawer";
+
+        const isDlIssued = row.dl_issued === "Yes";
+        const daysPassed = calculateDaysPassed(row.issue_date);
+        const isEligibleForDl = daysPassed >= 30;
+        const daysRemaining = 30 - daysPassed;
 
         tr.innerHTML = `
-            <td class="ps-4 fw-bold font-monospace text-primary">
-                <span onclick="copyToClipboard('${row.llr_number || ""}')" title="Click to copy LLR" style="cursor: pointer;">
-                    ${row.llr_number || "-"} <i class="bi bi-clipboard small text-muted"></i>
-                </span>
+            <!-- 1. Single-Line LLR Number -->
+            <td class="ps-4 text-nowrap">
+                <div class="llr-nowrap">
+                    <span class="font-monospace fw-bold text-danger" onclick="copyToClipboard('${row.llr_number || ""}')" title="Click to copy LLR" style="cursor: pointer;">
+                        ${row.llr_number || "-"}
+                    </span>
+                   
+                </div>
             </td>
-            <td class="fw-semibold text-dark">${row.name || "-"}</td>
+
+            <!-- Applicant Name -->
             <td>
-                <span onclick="copyToClipboard('${row.date_of_birth || ""}')" title="Click to copy DOB" style="cursor: pointer;">
-                    ${row.date_of_birth || "-"} <i class="bi bi-clipboard small text-muted"></i>
-                </span>
+                <div class="fw-semibold text-dark text-nowrap">${row.name || "-"}</div>
+                <div class="text-muted" style="font-size: 0.72rem;">${row.relative_type || "Father"}: ${row.relative_name || "-"}</div>
             </td>
-            <td><span class="badge bg-light text-dark border px-2 py-1">${row.vehicle_class || "-"}</span></td>
-            <td class="font-monospace">
-                <span onclick="copyToClipboard('${row.mobile_number || ""}')" title="Click to copy Mobile" style="cursor: pointer;">
-                    ${row.mobile_number || "-"} <i class="bi bi-clipboard small text-muted"></i>
-                </span>
-            </td>
-            <td>${row.issue_date || "-"}</td>
-            <td>${row.expiry_date || "-"}</td>
+
+            <!-- 2. Bolder Date of Birth -->
+            <td class="font-monospace date-highlight">${row.date_of_birth || "-"}</td>
+
+            <!-- Vehicle Class -->
             <td>
-                <span class="badge ${row.dl_issued === 'Yes' ? 'bg-success bg-opacity-10 text-success border border-success' : 'bg-warning bg-opacity-10 text-warning border border-warning'} px-2 py-1">
-                    ${row.dl_issued || 'No'}
+                <span class="badge bg-light text-dark border px-2 py-1 font-monospace" style="font-size: 0.72rem;">
+                    ${row.vehicle_class || "-"}
                 </span>
             </td>
-            <td>${row.remarks && row.remarks !== '-' ? row.remarks : '<span class="text-muted">-</span>'}</td>
-            <td class="text-center pe-4" onclick="event.stopPropagation()">
-                <div class="btn-group btn-group-sm shadow-sm">
-                    <button class="btn btn-white border text-dark" onclick='openViewModal(${JSON.stringify(row).replace(/'/g, "&#39;")})' title="View Profile"><i class="bi bi-eye-fill"></i></button>
-                    <button class="btn btn-white border text-primary" onclick='openEditModal(${JSON.stringify(row).replace(/'/g, "&#39;")})' title="Edit Record"><i class="bi bi-pencil-fill"></i></button>
-                    <button class="btn btn-white border text-danger" onclick="deleteDatabaseRecord('${row.llr_number}')" title="Delete Record"><i class="bi bi-trash-fill"></i></button>
+
+            <!-- Mobile Number -->
+            <td>
+                <span class="font-monospace text-dark fw-medium text-nowrap" onclick="copyToClipboard('${row.mobile_number || ""}')" title="Click to copy mobile" style="cursor: pointer;">
+                    ${row.mobile_number || "-"}
+                </span>
+            </td>
+
+            <!-- 2. Bolder Issue Date -->
+            <td class="font-monospace date-highlight">${row.issue_date || "-"}</td>
+
+            <!-- 2. Bolder Expiry Date -->
+            <td class="font-monospace date-highlight">${row.expiry_date || "-"}</td>
+
+            <!-- Status Pill: If <30 days and not issued, quick edit is locked -->
+            <td>
+                <span class="status-pill ${isDlIssued ? 'status-pill-yes' : 'status-pill-no'} ${isEligibleForDl ? 'cursor-pointer' : ''}" 
+                      ${isEligibleForDl ? `onclick='event.stopPropagation(); openQuickDlModal(${JSON.stringify(row).replace(/'/g, "&#39;")})'` : ''}
+                      title="${isEligibleForDl ? 'Click to toggle status' : `Eligible in ${daysRemaining} day(s)`}">
+                    <i class="bi bi-circle-fill" style="font-size: 0.45rem;"></i>
+                    <span>${isDlIssued ? 'Yes' : 'No'}</span>
+                     ${!isEligibleForDl && !isDlIssued ? `
+                    
+                        <span class="eligibility-pill" title="Cannot apply for permanent DL until 30 days complete">
+                            <i class="bi bi-clock-history"></i> ${daysRemaining}d
+                        </span>
+                    
+                ` : ''}
+                </span>
+               
+            </td>
+
+            <!-- Remarks -->
+            <td>
+                <span class="text-truncate d-inline-block text-muted" style="max-width: 140px; font-size: 0.75rem;" title="${row.remarks || ""}">
+                    ${row.remarks && row.remarks !== '-' ? row.remarks : '-'}
+                </span>
+            </td>
+
+            <!-- Actions: Quick status hidden if < 30 days -->
+            <td class="text-end pe-4 text-nowrap" onclick="event.stopPropagation()">
+                <div class="d-inline-flex align-items-center gap-1">
+                    <button class="btn-action-icon" onclick='openViewModal(${JSON.stringify(row).replace(/'/g, "&#39;")})' title="View Profile">
+                        <i class="bi bi-eye"></i>
+                    </button>
+
+                    ${isEligibleForDl ? `
+                        <button class="btn-action-icon text-warning" onclick='openQuickDlModal(${JSON.stringify(row).replace(/'/g, "&#39;")})' title="Quick Status Update">
+                            <i class="bi bi-lightning-charge"></i>
+                        </button>
+                    ` : ''}
+
+                    <button class="btn-action-icon text-primary" onclick='openEditModal(${JSON.stringify(row).replace(/'/g, "&#39;")})' title="Edit Full Profile">
+                        <i class="bi bi-pencil"></i>
+                    </button>
+                    <button class="btn-action-icon text-danger" onclick="deleteDatabaseRecord('${row.llr_number}')" title="Delete">
+                        <i class="bi bi-trash"></i>
+                    </button>
                 </div>
             </td>
         `;
@@ -146,7 +286,119 @@ function renderTableRows() {
     updatePaginationNav(totalRecords, totalPages, startIdx + 1, endIdx);
 }
 
-// Update Pagination Footer UI & Controls
+// 4. Quick-Edit DL Modal Controls
+function openQuickDlModal(row) {
+    document.getElementById("quickLlrNumber").value = row.llr_number || "";
+    document.getElementById("quickLlrText").textContent = row.llr_number || "-";
+    document.getElementById("quickNameText").textContent = row.name || "Applicant";
+    document.getElementById("quickVehicleText").textContent = row.vehicle_class || "LMV";
+    document.getElementById("quickDobText").textContent = row.date_of_birth || "-";
+
+    document.getElementById("quickDlIssued").value = row.dl_issued === "Yes" ? "Yes" : "No";
+    document.getElementById("quickDlNumber").value = (row.dl_number && row.dl_number !== "-") ? row.dl_number : "";
+    document.getElementById("quickApprovedDate").value = formatDateToISO(row.approved_date) || "";
+
+    const modal = new bootstrap.Modal(document.getElementById("quickDlModal"));
+    modal.show();
+}
+
+function setQuickDateToday() {
+    const todayISO = new Date().toISOString().split("T")[0];
+    document.getElementById("quickApprovedDate").value = todayISO;
+}
+
+async function handleQuickDlSubmit(event) {
+    event.preventDefault();
+    const submitBtn = document.getElementById("quickSaveBtn");
+    const llrNumber = document.getElementById("quickLlrNumber").value;
+    const dlIssued = document.getElementById("quickDlIssued").value;
+    const dlNumber = document.getElementById("quickDlNumber").value.trim();
+    let approvedDate = document.getElementById("quickApprovedDate").value;
+
+    if (approvedDate) approvedDate = formatDateToDisplay(approvedDate);
+
+    const existing = globalRecordsCache.find(r => r.llr_number === llrNumber);
+    if (!existing) {
+        showCustomAlert("Error: Record not found in local cache.", "danger");
+        return;
+    }
+
+    const payload = {
+        ...existing,
+        action: "update",
+        dl_issued: dlIssued,
+        dl_number: dlNumber || "-",
+        approved_date: approvedDate || existing.approved_date || "-"
+    };
+
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = `<span>Updating...</span> <span class="spinner-border spinner-border-sm"></span>`;
+
+    try {
+        const response = await fetch(ENV.SHEET_API_URL, {
+            method: "POST",
+            headers: getAuthHeaders(),
+            body: JSON.stringify(payload)
+        });
+
+        const result = await response.json();
+        if (result.status === "success") {
+            showCustomAlert(`✓ DL status updated for ${existing.name || llrNumber}!`, "success");
+            bootstrap.Modal.getInstance(document.getElementById("quickDlModal")).hide();
+            fetchAndRecordWithLoader();
+        } else {
+            throw new Error(result.message || "Failed to update DL status.");
+        }
+    } catch (err) {
+        showCustomAlert("Error saving quick status: " + err.message, "danger");
+    } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = `<span>Update Status</span> <i class="bi bi-check2"></i>`;
+    }
+}
+
+// 5. Combined Search & Filtering
+function filterTableRecords() {
+    const searchInput = document.getElementById("tableSearchInput");
+    const query = searchInput.value.toLowerCase().trim();
+    const statusFilter = document.getElementById("filterDlStatus") ? document.getElementById("filterDlStatus").value : "ALL";
+    const startDate = document.getElementById("filterStartDate").value;
+    const endDate = document.getElementById("filterEndDate").value;
+
+    if (query !== "") {
+        searchInput.classList.add("border-primary", "shadow-sm", "bg-light");
+    } else {
+        searchInput.classList.remove("border-primary", "shadow-sm", "bg-light");
+    }
+
+    filteredRecordsCache = globalRecordsCache.filter(row => {
+        if (statusFilter !== "ALL") {
+            const rowStatus = row.dl_issued === "Yes" ? "Yes" : "No";
+            if (rowStatus !== statusFilter) return false;
+        }
+
+        const matchesQuery = query === "" || Object.values(row).some(val =>
+            val !== null && val !== undefined && String(val).toLowerCase().includes(query)
+        );
+        if (!matchesQuery) return false;
+
+        if (startDate || endDate) {
+            const parts = (row.issue_date || "").split("-");
+            if (parts.length === 3) {
+                const rowDateISO = `${parts[2]}-${parts[1]}-${parts[0]}`;
+                if (startDate && rowDateISO < startDate) return false;
+                if (endDate && rowDateISO > endDate) return false;
+            }
+        }
+        return true;
+    });
+
+    applySorting();
+    currentPage = 1;
+    renderTableRows();
+}
+
+// Pagination Controls
 function updatePaginationNav(total, totalPages, showingStart = 0, showingEnd = 0) {
     const nav = document.getElementById("tablePaginationNav");
     if (!nav) return;
@@ -170,42 +422,6 @@ function changePage(targetPage) {
     renderTableRows();
 }
 
-// 3. Global Search Across ALL Columns & Active State Highlight
-function filterTableRecords() {
-    const searchInput = document.getElementById("tableSearchInput");
-    const query = searchInput.value.toLowerCase().trim();
-    const startDate = document.getElementById("filterStartDate").value;
-    const endDate = document.getElementById("filterEndDate").value;
-
-    if (query !== "") {
-        searchInput.classList.add("border-primary", "shadow-sm", "bg-light");
-    } else {
-        searchInput.classList.remove("border-primary", "shadow-sm", "bg-light");
-    }
-
-    filteredRecordsCache = globalRecordsCache.filter(row => {
-        const matchesQuery = query === "" || Object.values(row).some(val => 
-            val !== null && val !== undefined && String(val).toLowerCase().includes(query)
-        );
-
-        if (!matchesQuery) return false;
-
-        if (startDate || endDate) {
-            const parts = (row.issue_date || "").split("-");
-            if (parts.length === 3) {
-                const rowDateISO = `${parts[2]}-${parts[1]}-${parts[0]}`;
-                if (startDate && rowDateISO < startDate) return false;
-                if (endDate && rowDateISO > endDate) return false;
-            }
-        }
-        return true;
-    });
-
-    currentPage = 1;
-    renderTableRows();
-}
-
-// Clear individual date filter helper
 function clearDateFilter(elementId) {
     const input = document.getElementById(elementId);
     if (input) {
@@ -228,18 +444,18 @@ function copyToClipboard(text) {
 // Export Filtered Records to CSV
 function exportTableToCSV(filename) {
     const dataToExport = filteredRecordsCache.length > 0 ? filteredRecordsCache : globalRecordsCache;
-    
+
     if (!dataToExport || dataToExport.length === 0) {
         showCustomAlert("No records available to export.", "warning");
         return;
     }
 
     const headers = [
-        "llr_number", "name", "date_of_birth", "vehicle_class", 
-        "mobile_number", "emergency_mobile", "blood_group", 
-        "relative_type", "relative_name", "issue_date", "expiry_date", 
-        "approved_date", "dl_issued", "dl_number", "fees_number", 
-        "fee_amount", "present_address", "permanent_address", 
+        "llr_number", "name", "date_of_birth", "vehicle_class",
+        "mobile_number", "emergency_mobile", "blood_group",
+        "relative_type", "relative_name", "issue_date", "expiry_date",
+        "approved_date", "dl_issued", "dl_number", "fees_number",
+        "fee_amount", "present_address", "permanent_address",
         "identification_mark_1", "identification_mark_2", "remarks"
     ];
 
@@ -261,11 +477,9 @@ function exportTableToCSV(filename) {
     const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
-    
     link.setAttribute("href", url);
     link.setAttribute("download", filename);
     link.style.visibility = "hidden";
-    
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -288,14 +502,14 @@ function formatDateToISO(displayDate) {
     return displayDate;
 }
 
-// Modern Toggleable "Today's Issue" Filter Button
+// Today Filter Injection Button
 function injectTodayFilterButton() {
     const filterContainer = document.querySelector("#filterEndDate")?.closest(".row");
     if (filterContainer && !document.getElementById("filterTodayBtn")) {
         const col = document.createElement("div");
         col.className = "col-12 col-md-2 d-flex align-items-end";
         col.innerHTML = `
-            <button id="filterTodayBtn" type="button" class="btn btn-outline-dark w-100 py-2.5 shadow-sm rounded-pill fw-semibold transition-all">
+            <button id="filterTodayBtn" type="button" class="btn btn-outline-dark w-100 py-2 shadow-sm rounded-3 fw-semibold transition-all">
                 <i class="bi bi-calendar-check me-1"></i> Today's Issue
             </button>
         `;
@@ -311,14 +525,14 @@ function injectTodayFilterButton() {
                 startInput.value = todayISO;
                 endInput.value = todayISO;
                 isTodayFilterActive = true;
-                btn.className = "btn btn-dark w-100 py-2.5 shadow-sm rounded-pill fw-semibold active shadow";
+                btn.className = "btn btn-dark w-100 py-2 shadow-sm rounded-3 fw-semibold active";
                 btn.innerHTML = `<i class="bi bi-calendar-check-fill me-1"></i> Showing Today`;
                 showCustomAlert("Filtered by today's issue date.", "info");
             } else {
                 startInput.value = "";
                 endInput.value = "";
                 isTodayFilterActive = false;
-                btn.className = "btn btn-outline-dark w-100 py-2.5 shadow-sm rounded-pill fw-semibold";
+                btn.className = "btn btn-outline-dark w-100 py-2 shadow-sm rounded-3 fw-semibold";
                 btn.innerHTML = `<i class="bi bi-calendar-check me-1"></i> Today's Issue`;
                 showCustomAlert("Filter cleared. Showing all records.", "info");
             }
@@ -333,13 +547,13 @@ function resetTodayButtonState() {
         isTodayFilterActive = false;
         const btn = document.getElementById("filterTodayBtn");
         if (btn) {
-            btn.className = "btn btn-outline-dark w-100 py-2.5 shadow-sm rounded-pill fw-semibold";
+            btn.className = "btn btn-outline-dark w-100 py-2 shadow-sm rounded-3 fw-semibold";
             btn.innerHTML = `<i class="bi bi-calendar-check me-1"></i> Today's Issue`;
         }
     }
 }
 
-// 4. Manual Insert with Validation
+// 6. Manual Insert with Validation
 async function handleManualInsert(event) {
     event.preventDefault();
     const form = event.target;
@@ -353,7 +567,7 @@ async function handleManualInsert(event) {
 
     const formData = new FormData(form);
     const payload = Object.fromEntries(formData.entries());
-    
+
     if (payload.issue_date) payload.issue_date = formatDateToDisplay(payload.issue_date);
     if (payload.expiry_date) payload.expiry_date = formatDateToDisplay(payload.expiry_date);
     if (payload.approved_date) payload.approved_date = formatDateToDisplay(payload.approved_date);
@@ -389,7 +603,7 @@ async function handleManualInsert(event) {
     }
 }
 
-// 5. Edit Modal Handling
+// 7. Full Edit Modal Handling
 function openEditModal(row) {
     document.getElementById("editLlrNumber").value = row.llr_number || "";
     document.getElementById("editVehicleClass").value = row.vehicle_class || "LMV";
@@ -458,7 +672,7 @@ async function handleModalEditSubmit(event) {
     }
 }
 
-// 6. Delete Routine
+// 8. Delete Routine
 async function deleteDatabaseRecord(llrNumber) {
     if (!confirm(`Are you sure you want to delete LLR record: ${llrNumber}?`)) return;
 
@@ -481,56 +695,143 @@ async function deleteDatabaseRecord(llrNumber) {
     }
 }
 
-// 7. Profile View Modal
+// 9. Profile View Modal (Symmetrical Enterprise UI)
 function openViewModal(row) {
     currentViewedRecord = row;
     const body = document.getElementById("viewRecordModalBody");
+    const isDlIssued = row.dl_issued === "Yes";
 
     body.innerHTML = `
         <div class="container-fluid p-0">
-            <div class="d-flex justify-content-between align-items-center bg-light p-3 rounded-4 border mb-3">
+            <!-- Header Identity Card -->
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center bg-light p-3 rounded-3 border mb-3 gap-2">
                 <div>
-                    <h5 class="fw-bold text-dark mb-0"><i class="bi bi-person-circle text-primary me-2"></i> ${row.name || "N/A"}</h5>
-                    <span class="text-muted small font-monospace">LLR: ${row.llr_number || "N/A"}</span>
+                    <div class="d-flex align-items-center gap-2 mb-1">
+                        <h5 class="fw-bold text-dark mb-0">${row.name || "N/A"}</h5>
+                        <span class="badge bg-dark font-monospace">${row.vehicle_class || "N/A"}</span>
+                        <span class="status-pill ${isDlIssued ? 'status-pill-yes' : 'status-pill-no'}">
+                            <i class="bi bi-circle-fill" style="font-size: 0.45rem;"></i>
+                            ${isDlIssued ? 'DL Issued' : 'Pending LLR'}
+                        </span>
+                    </div>
+                    <div class="font-monospace text-muted small">
+                        LLR: <span class="text-primary fw-bold">${row.llr_number || "-"}</span> 
+                        &bull; Invoice: <span>${row.fees_number || "-"}</span>
+                    </div>
                 </div>
-                <button type="button" class="btn btn-primary px-4 rounded-pill fw-semibold shadow-sm" onclick="switchToEditFromView()">
-                    <i class="bi bi-pencil-square me-1"></i> Edit Profile
-                </button>
+                <div class="d-flex gap-2">
+                    <button type="button" class="btn btn-sm btn-outline-dark" onclick="copyToClipboard('${row.llr_number || ""}')">
+                        <i class="bi bi-clipboard me-1"></i> Copy LLR
+                    </button>
+                    <button type="button" class="btn btn-sm btn-primary px-3 fw-medium" onclick="switchToEditFromView()">
+                        <i class="bi bi-pencil-square me-1"></i> Edit Profile
+                    </button>
+                </div>
             </div>
+
+            <!-- Two-Column Symmetric Spec Sheet -->
             <div class="row g-3">
+                <!-- Personal Credentials -->
                 <div class="col-12 col-md-6">
-                    <div class="p-3 border rounded-3 bg-white h-100">
-                        <h6 class="text-muted small fw-bold text-uppercase mb-2"><i class="bi bi-info-circle me-1"></i> General Details</h6>
-                        <p class="mb-1"><strong>DOB:</strong> ${row.date_of_birth || "-"}</p>
-                        <p class="mb-1"><strong>Vehicle Class:</strong> <span class="badge bg-secondary">${row.vehicle_class || "-"}</span></p>
-                        <p class="mb-1"><strong>Blood Group:</strong> <span class="text-danger fw-bold">${row.blood_group || "-"}</span></p>
-                        <p class="mb-0"><strong>Relative:</strong> ${row.relative_type || "Father"}: ${row.relative_name || "-"}</p>
+                    <div class="p-3 border rounded-3 bg-white h-100 shadow-sm">
+                        <div class="d-flex align-items-center gap-2 mb-3 pb-2 border-bottom">
+                            <i class="bi bi-person-vcard text-primary"></i>
+                            <h6 class="fw-bold text-dark mb-0 small text-uppercase">Applicant Bio</h6>
+                        </div>
+                        <div class="row g-2">
+                            <div class="col-6">
+                                <div class="meta-label">Date of Birth</div>
+                                <div class="meta-value font-monospace">${row.date_of_birth || "-"}</div>
+                            </div>
+                            <div class="col-6">
+                                <div class="meta-label">Blood Group</div>
+                                <div class="meta-value font-monospace text-danger fw-bold">${row.blood_group || "-"}</div>
+                            </div>
+                            <div class="col-6">
+                                <div class="meta-label">Relation</div>
+                                <div class="meta-value">${row.relative_type || "Father"}</div>
+                            </div>
+                            <div class="col-6">
+                                <div class="meta-label">Relative Name</div>
+                                <div class="meta-value">${row.relative_name || "-"}</div>
+                            </div>
+                        </div>
                     </div>
                 </div>
+
+                <!-- Contact & Validity Status -->
                 <div class="col-12 col-md-6">
-                    <div class="p-3 border rounded-3 bg-white h-100">
-                        <h6 class="text-muted small fw-bold text-uppercase mb-2"><i class="bi bi-telephone me-1"></i> Contact Information</h6>
-                        <p class="mb-1"><strong>Mobile:</strong> <span class="font-monospace">${row.mobile_number || "-"}</span></p>
-                        <p class="mb-1"><strong>Emergency:</strong> <span class="font-monospace">${row.emergency_mobile || "-"}</span></p>
-                        <p class="mb-1"><strong>DL Issued:</strong> <span class="badge ${row.dl_issued === 'Yes' ? 'bg-success' : 'bg-warning text-dark'}">${row.dl_issued || "No"}</span></p>
-                        <p class="mb-0"><strong>DL Number:</strong> <span class="font-monospace">${row.dl_number || "-"}</span></p>
+                    <div class="p-3 border rounded-3 bg-white h-100 shadow-sm">
+                        <div class="d-flex align-items-center gap-2 mb-3 pb-2 border-bottom">
+                            <i class="bi bi-shield-check text-success"></i>
+                            <h6 class="fw-bold text-dark mb-0 small text-uppercase">License & Contact</h6>
+                        </div>
+                        <div class="row g-2">
+                            <div class="col-6">
+                                <div class="meta-label">Primary Mobile</div>
+                                <div class="meta-value font-monospace">${row.mobile_number || "-"}</div>
+                            </div>
+                            <div class="col-6">
+                                <div class="meta-label">Emergency Contact</div>
+                                <div class="meta-value font-monospace">${row.emergency_mobile || "-"}</div>
+                            </div>
+                            <div class="col-6">
+                                <div class="meta-label">Permanent DL No</div>
+                                <div class="meta-value font-monospace text-success fw-bold">${row.dl_number && row.dl_number !== '-' ? row.dl_number : 'Not Generated'}</div>
+                            </div>
+                            <div class="col-6">
+                                <div class="meta-label">Approved Date</div>
+                                <div class="meta-value font-monospace">${row.approved_date || "-"}</div>
+                            </div>
+                        </div>
                     </div>
                 </div>
+
+                <!-- Complete Address Section -->
                 <div class="col-12">
-                    <div class="p-3 border rounded-3 bg-white">
-                        <h6 class="text-muted small fw-bold text-uppercase mb-2"><i class="bi bi-geo-alt me-1"></i> Addresses & Marks</h6>
-                        <p class="mb-1"><strong>Present Address:</strong> ${row.present_address || "-"}</p>
-                        <p class="mb-1"><strong>Permanent Address:</strong> ${row.permanent_address || "-"}</p>
-                        <p class="mb-1"><strong>Identification Mark 1:</strong> ${row.identification_mark_1 || "-"}</p>
-                        <p class="mb-0"><strong>Identification Mark 2:</strong> ${row.identification_mark_2 || "-"}</p>
+                    <div class="p-3 border rounded-3 bg-white shadow-sm">
+                        <div class="d-flex align-items-center gap-2 mb-3 pb-2 border-bottom">
+                            <i class="bi bi-geo-alt text-dark"></i>
+                            <h6 class="fw-bold text-dark mb-0 small text-uppercase">Address & Marks</h6>
+                        </div>
+                        <div class="row g-2">
+                            <div class="col-12 col-md-6">
+                                <div class="meta-label">Present Address</div>
+                                <div class="meta-value text-muted" style="line-height: 1.45;">${row.present_address || "-"}</div>
+                            </div>
+                            <div class="col-12 col-md-6">
+                                <div class="meta-label">Permanent Address</div>
+                                <div class="meta-value text-muted" style="line-height: 1.45;">${row.permanent_address || "-"}</div>
+                            </div>
+                            <div class="col-12 col-md-6 mt-2">
+                                <div class="meta-label">Mark 1</div>
+                                <div class="meta-value small">${row.identification_mark_1 || "-"}</div>
+                            </div>
+                            <div class="col-12 col-md-6 mt-2">
+                                <div class="meta-label">Mark 2</div>
+                                <div class="meta-value small">${row.identification_mark_2 || "-"}</div>
+                            </div>
+                        </div>
                     </div>
                 </div>
+
+                <!-- Financial Ledger & Validity -->
                 <div class="col-12">
-                    <div class="p-3 border rounded-3 bg-white">
-                        <h6 class="text-muted small fw-bold text-uppercase mb-2"><i class="bi bi-receipt me-1"></i> Financials & Validity</h6>
-                        <p class="mb-1"><strong>Fee Reference:</strong> ${row.fees_number || "-"} | ₹${row.fee_amount || "-"}</p>
-                        <p class="mb-1"><strong>Validity:</strong> From ${row.issue_date || "-"} To ${row.expiry_date || "-"}</p>
-                        <p class="mb-0"><strong>Remarks:</strong> ${row.remarks || "-"}</p>
+                    <div class="p-3 border rounded-3 bg-light d-flex flex-wrap justify-content-between align-items-center gap-3">
+                        <div>
+                            <div class="meta-label">Validity Period</div>
+                            <div class="meta-value font-monospace small">
+                                <span class="text-success">${row.issue_date || "-"}</span> &rarr; <span class="text-danger">${row.expiry_date || "-"}</span>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="meta-label">Fees Paid</div>
+                            <div class="meta-value font-monospace">₹${row.fee_amount || "0"}</div>
+                        </div>
+                        <div class="flex-grow-1 text-md-end">
+                            <div class="meta-label">Audit Remarks</div>
+                            <div class="meta-value small text-muted">${row.remarks && row.remarks !== '-' ? row.remarks : 'No remarks attached'}</div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -551,23 +852,24 @@ function switchToEditFromView() {
     }
 }
 
-// 8. Custom Toast Alert Notifications
+// 10. Centralized Toast Alerts
 function showCustomAlert(message, type = "success") {
     let alertContainer = document.getElementById("customAlertContainer");
     if (!alertContainer) {
         alertContainer = document.createElement("div");
         alertContainer.id = "customAlertContainer";
-        alertContainer.style.cssText = "position: fixed; top: 20px; right: 20px; z-index: 1055; max-width: 380px;";
+        alertContainer.className = "toast-container position-fixed top-0 start-50 translate-middle-x p-3";
+        alertContainer.style.zIndex = "1080";
         document.body.appendChild(alertContainer);
     }
 
     const alertId = "alert-" + Date.now();
-    const bgColors = { success: "bg-success", danger: "bg-danger", warning: "bg-warning text-dark", info: "bg-dark text-white" };
-    const icons = { success: "bi-check-circle-fill", danger: "bi-exclamation-triangle-fill", warning: "bi-exclamation-octagon-fill", info: "bi-info-circle-fill" };
+    const bgColors = { success: "bg-dark text-white", danger: "bg-danger text-white", warning: "bg-warning text-dark", info: "bg-dark text-white" };
+    const icons = { success: "bi-check-circle-fill text-success", danger: "bi-exclamation-triangle-fill text-white", warning: "bi-exclamation-octagon-fill text-dark", info: "bi-info-circle-fill text-info" };
 
     const alertEl = document.createElement("div");
     alertEl.id = alertId;
-    alertEl.className = `alert ${bgColors[type] || 'bg-dark'} text-white shadow-lg border-0 rounded-4 p-3 d-flex align-items-center gap-3 alert-dismissible fade show`;
+    alertEl.className = `alert ${bgColors[type] || 'bg-dark text-white'} shadow-lg border-0 rounded-4 p-3 d-flex align-items-center gap-3 alert-dismissible fade show`;
     alertEl.innerHTML = `
         <i class="bi ${icons[type] || 'bi-bell-fill'} fs-4"></i>
         <div class="flex-grow-1 small fw-semibold">${message}</div>

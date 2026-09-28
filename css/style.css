@@ -1,18 +1,123 @@
+/* Navigation Polish & Active States */
+.hover-opacity-100:hover {
+    opacity: 1 !important;
+    background-color: rgba(255, 255, 255, 0.08);
+}
 
-        body {
-            background: #f4f6f9;
+.transition-all {
+    transition: all 0.15s ease-in-out;
+}
+
+.active-portal-link {
+    background-color: #0d6efd !important;
+    color: #ffffff !important;
+}
+
+/* Online Pulse Status Dot */
+.status-pulse-dot {
+    width: 7px;
+    height: 7px;
+    background-color: #10b981;
+    border-radius: 50%;
+    display: inline-block;
+    box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
+}
+
+/* Auto-hide during standard browser printing */
+@media print {
+    #global-nav-container,
+    .navbar {
+        display: none !important;
+    }
+}
+
+
+ body { 
+            background: #f8fafc; 
+            font-family: system-ui, -apple-system, sans-serif; 
+            overflow-x: hidden; 
+            color: #0f172a;
         }
-        .card {
-            border-radius: 12px;
+
+        .portal-header { 
+            padding: 4rem 1rem 3rem 1rem; 
+            background: #ffffff; 
+            border-bottom: 1px solid #e2e8f0; 
+            animation: fadeInDown 0.5s ease-out;
         }
-        .card-header {
-            border-radius: 12px 12px 0 0 !important;
+
+        .portal-header h1 { 
+            font-weight: 800; 
+            letter-spacing: -0.03em; 
+            color: #0f172a; 
         }
-        textarea {
-            font-size: 14px;
-            line-height: 1.6;
+
+        /* Staggered entry animation */
+        .col-12 {
+            opacity: 0;
+            animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
-        .table th {
-            width: 250px;
-            background: #f8f9fa;
+        .col-12:nth-child(1) { animation-delay: 0.1s; }
+        .col-12:nth-child(2) { animation-delay: 0.2s; }
+        .col-12:nth-child(3) { animation-delay: 0.3s; }
+
+        @keyframes fadeInDown {
+            from { opacity: 0; transform: translateY(-15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .nav-block { 
+            background: #ffffff; 
+            border: 1px solid #e2e8f0; 
+            border-radius: 16px; 
+            text-decoration: none; 
+            transition: all 0.25s ease; 
+        }
+
+        .icon-circle { 
+            font-size: 1.5rem; 
+            width: 56px; 
+            height: 56px; 
+            background: #f1f5f9; 
+            border-radius: 14px; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            color: #334155;
+            transition: transform 0.25s ease, background 0.25s ease, color 0.25s ease;
+        }
+
+        .action-btn { 
+            background: #0f172a; 
+            color: #ffffff; 
+            border: none; 
+            border-radius: 10px; 
+            font-weight: 600; 
+            font-size: 0.9rem;
+            padding: 0.6rem 1rem; 
+            width: 100%; 
+            transition: background 0.2s ease;
+        }
+
+        .action-btn:hover {
+            background: #1e293b;
+            color: #ffffff;
+        }
+
+        @media (min-width: 768px) { 
+            .nav-block:hover { 
+                transform: translateY(-5px); 
+                box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.05); 
+                border-color: #cbd5e1; 
+            }
+            .nav-block:hover .icon-circle {
+                background: #0f172a;
+                color: #ffffff;
+                transform: scale(1.05);
+            }
         }

@@ -3,74 +3,358 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LLR Portal - Login</title>
+    <title>LLR Portal - Administrative Login</title>
+    <!-- Framework & Icon Assets -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
     <style>
-        body { background: #f8fafc; font-family: system-ui, -apple-system, sans-serif; height: 100vh; display: flex; align-items: center; justify-content: center; }
-        .login-card { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 20px; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05); width: 100%; max-width: 420px; padding: 2.5rem; }
-        .btn-custom { background: #0f172a; color: #ffffff; border-radius: 12px; font-weight: 600; padding: 0.75rem; transition: background 0.2s; }
-        .btn-custom:hover { background: #1e293b; color: #ffffff; }
+        :root {
+            --primary-dark: #0f172a;
+            --primary-hover: #1e293b;
+            --accent-blue: #0d6efd;
+            --saas-border: #e2e8f0;
+            --card-radius: 20px;
+            --input-radius: 8px;
+        }
+
+        body {
+            background-color: #f1f5f9;
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            color: #0f172a;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0;
+            padding: 1rem;
+            letter-spacing: -0.01em;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Glass / Card Container */
+        .login-card {
+            background: #ffffff;
+            border: 1px solid var(--saas-border);
+            border-radius: var(--card-radius);
+            box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.08), 0 8px 10px -6px rgba(15, 23, 42, 0.04);
+            width: 100%;
+            max-width: 420px;
+            padding: 2.5rem 2rem;
+            animation: fadeInUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(16px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Shake Feedback on Authentication Failure */
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-6px); }
+            40%, 80% { transform: translateX(6px); }
+        }
+
+        .shake {
+            animation: shake 0.35s ease-in-out;
+        }
+
+        /* Form Controls */
+        .form-label {
+            font-size: 0.78rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            color: #64748b;
+            margin-bottom: 0.35rem;
+        }
+
+        .input-group-text {
+            background-color: #ffffff;
+            border-color: #cbd5e1;
+            color: #64748b;
+            border-radius: var(--input-radius) 0 0 var(--input-radius);
+        }
+
+        .form-control {
+            border-radius: var(--input-radius);
+            border: 1px solid #cbd5e1;
+            padding: 0.6rem 0.85rem;
+            font-size: 0.875rem;
+            color: #0f172a;
+            transition: all 0.15s ease-in-out;
+        }
+
+        .input-group .form-control {
+            border-radius: 0;
+        }
+
+        .input-group .password-toggle-btn {
+            border-color: #cbd5e1;
+            border-radius: 0 var(--input-radius) var(--input-radius) 0;
+            background: #ffffff;
+            color: #64748b;
+        }
+
+        .input-group .password-toggle-btn:hover {
+            background: #f8fafc;
+            color: #0f172a;
+        }
+
+        .form-control:focus, .password-toggle-btn:focus {
+            border-color: var(--accent-blue);
+            box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.12);
+            z-index: 3;
+        }
+
+        /* Login Button */
+        .btn-custom {
+            background: var(--primary-dark);
+            color: #ffffff;
+            border-radius: var(--input-radius);
+            font-weight: 600;
+            font-size: 0.875rem;
+            padding: 0.7rem;
+            border: none;
+            transition: background 0.15s ease, transform 0.1s ease;
+        }
+
+        .btn-custom:hover {
+            background: var(--primary-hover);
+            color: #ffffff;
+        }
+
+        .btn-custom:active {
+            transform: scale(0.98);
+        }
+
+        .brand-icon-box {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            background: #0f172a;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 6px -1px rgba(15, 23, 42, 0.15);
+        }
     </style>
 </head>
 <body>
-    <div class="login-card">
+
+    <div class="login-card" id="loginCard">
+        <!-- Brand Lockup -->
         <div class="text-center mb-4">
-            <div class="fs-1 text-dark mb-2"><i class="bi bi-shield-lock-fill"></i></div>
-            <h3 class="fw-bold text-dark">LLR Portal Access</h3>
-            <p class="text-muted small">Enter your Cloudflare Worker credentials</p>
+            <div class="brand-icon-box mb-2">
+                <i class="bi bi-shield-lock-fill text-white fs-4"></i>
+            </div>
+            <h4 class="fw-bold text-dark mb-1">LLR Portal</h4>
+            <p class="text-muted small mb-0">Sign in with your administrative credentials</p>
         </div>
-        <form id="dedicatedLoginForm" onsubmit="handleDedicatedLogin(event)">
+
+        <form id="dedicatedLoginForm" novalidate onsubmit="handleDedicatedLogin(event)">
+            <!-- Username Input -->
             <div class="mb-3">
-                <label class="form-label small fw-semibold text-secondary">Username</label>
-                <input type="text" id="usernameInput" class="form-control rounded-3 py-2" required placeholder="admin">
+                <label for="usernameInput" class="form-label">Username</label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="bi bi-person"></i></span>
+                    <input type="text" id="usernameInput" class="form-control" required placeholder="Enter username" autocomplete="username">
+                </div>
             </div>
-            <div class="mb-4">
-                <label class="form-label small fw-semibold text-secondary">Password</label>
-                <input type="password" id="passwordInput" class="form-control rounded-3 py-2" required placeholder="••••••••">
+
+            <!-- Password Input with Show/Hide Toggle -->
+            <div class="mb-3">
+                <label for="passwordInput" class="form-label">Password</label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="bi bi-key"></i></span>
+                    <input type="password" id="passwordInput" class="form-control" required placeholder="••••••••" autocomplete="current-password">
+                    <button class="btn btn-outline-secondary password-toggle-btn" type="button" id="togglePasswordBtn" onclick="togglePasswordVisibility()" title="Show/Hide Password">
+                        <i class="bi bi-eye" id="passwordToggleIcon"></i>
+                    </button>
+                </div>
             </div>
-            <div id="errorAlert" class="alert alert-danger py-2 small d-none" role="alert">
-                Invalid username or password.
+
+            <!-- Remember Option -->
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="rememberMeCheckbox" style="cursor: pointer;">
+                    <label class="form-check-label small text-muted" for="rememberMeCheckbox" style="cursor: pointer; user-select: none;">
+                        Remember username
+                    </label>
+                </div>
             </div>
-            <button type="submit" class="btn btn-custom w-100">Sign In to Dashboard</button>
+
+            <!-- Dynamic Error Feedback Alert -->
+            <div id="errorAlert" class="alert alert-danger py-2 px-3 small d-none mb-3 d-flex align-items-center gap-2 rounded-3 border-0 shadow-sm" role="alert">
+                <i class="bi bi-exclamation-triangle-fill"></i>
+                <span id="errorMessage">Invalid username or password.</span>
+            </div>
+
+            <!-- Submit Button -->
+            <button type="submit" id="submitBtn" class="btn btn-custom w-100 shadow-sm">
+                <span id="btnText">Sign In</span>
+                <span id="btnSpinner" class="spinner-border spinner-border-sm d-none ms-1" role="status" aria-hidden="true"></span>
+            </button>
         </form>
+
+        <div class="text-center mt-4">
+            <span class="text-muted" style="font-size: 0.72rem;">Designed By Divakar_str </span>
+        </div>
     </div>
 
-    <!-- Load env.js before auth check -->
+    <!-- External Configuration -->
     <script src="env.js"></script>
+
     <script>
         const WORKER_URL = (typeof ENV !== 'undefined' && ENV.SHEET_API_URL) ? ENV.SHEET_API_URL : "";
 
-        window.onload = function() {
-            if (sessionStorage.getItem("authBasic")) { 
-                window.location.href = "index.html"; 
+        // Check for existing session or remembered credentials
+        window.addEventListener("DOMContentLoaded", () => {
+            if (sessionStorage.getItem("authBasic")) {
+                window.location.href = "index.html";
+                return;
             }
-        };
 
+            // Restore remembered username if set
+            const savedUsername = localStorage.getItem("savedUsername");
+            if (savedUsername) {
+                const userField = document.getElementById("usernameInput");
+                const rememberBox = document.getElementById("rememberMeCheckbox");
+                if (userField) userField.value = savedUsername;
+                if (rememberBox) rememberBox.checked = true;
+                document.getElementById("passwordInput")?.focus();
+            } else {
+                document.getElementById("usernameInput")?.focus();
+            }
+
+            // Clear errors on typing
+            document.querySelectorAll('#usernameInput, #passwordInput').forEach(input => {
+                input.addEventListener('input', () => {
+                    document.getElementById("errorAlert").classList.add("d-none");
+                });
+            });
+        });
+
+        // Toggle Password Show/Hide
+        function togglePasswordVisibility() {
+            const passwordInput = document.getElementById("passwordInput");
+            const toggleIcon = document.getElementById("passwordToggleIcon");
+            if (!passwordInput || !toggleIcon) return;
+
+            if (passwordInput.type === "password") {
+                passwordInput.type = "text";
+                toggleIcon.className = "bi bi-eye-slash";
+            } else {
+                passwordInput.type = "password";
+                toggleIcon.className = "bi bi-eye";
+            }
+        }
+
+        // Dedicated Authentication Controller
         async function handleDedicatedLogin(event) {
             event.preventDefault();
-            const user = document.getElementById("usernameInput").value.trim();
-            const pass = document.getElementById("passwordInput").value.trim();
-            const token = "Basic " + btoa(user + ":" + pass);
+
+            const submitBtn = document.getElementById("submitBtn");
+            const btnText = document.getElementById("btnText");
+            const btnSpinner = document.getElementById("btnSpinner");
+            const errorAlert = document.getElementById("errorAlert");
+            const errorMessage = document.getElementById("errorMessage");
+            const loginCard = document.getElementById("loginCard");
+
+            const usernameField = document.getElementById("usernameInput");
+            const passwordField = document.getElementById("passwordInput");
+            const rememberMe = document.getElementById("rememberMeCheckbox")?.checked;
+
+            const user = usernameField.value.trim();
+            const pass = passwordField.value.trim();
+
+            if (!user || !pass) {
+                showError("Please enter both username and password.");
+                return;
+            }
+
+            if (!WORKER_URL) {
+                showError("Configuration error: API endpoint not defined in env.js.");
+                return;
+            }
+
+            // Generate Unicode-Safe Basic Authentication Token
+            const token = "Basic " + btoa(unescape(encodeURIComponent(`${user}:${pass}`)));
+
+            // Loading UI state
+            submitBtn.disabled = true;
+            btnText.textContent = "Authenticating...";
+            btnSpinner.classList.remove("d-none");
+            errorAlert.classList.add("d-none");
+
+            // Setup 8-second request abort controller
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 8000);
 
             try {
-                const response = await fetch(`${WORKER_URL}?action=readAll`, { 
-                    headers: { "Authorization": token } 
+                const response = await fetch(`${WORKER_URL}?action=readAll`, {
+                    method: "GET",
+                    headers: { "Authorization": token },
+                    signal: controller.signal
                 });
 
-                if (response.status === 401) { 
-                    document.getElementById("errorAlert").classList.remove("d-none"); 
-                    return; 
+                clearTimeout(timeoutId);
+
+                if (response.status === 401) {
+                    showError("Invalid username or password.");
+                    triggerShake();
+                    passwordField.value = "";
+                    passwordField.focus();
+                    return;
                 }
 
-                if (response.ok) { 
-                    sessionStorage.setItem("authBasic", token); 
-                    window.location.href = "index.html"; 
-                } else { 
-                    alert("Cloudflare server error."); 
+                if (response.ok) {
+                    // Store credentials & active username
+                    sessionStorage.setItem("authBasic", token);
+                    sessionStorage.setItem("activeUser", user);
+
+                    if (rememberMe) {
+                        localStorage.setItem("savedUsername", user);
+                    } else {
+                        localStorage.removeItem("savedUsername");
+                    }
+
+                    // Forward to main dashboard
+                    window.location.href = "index.html";
+                } else {
+                    showError(`Server error (${response.status}). Please try again later.`);
                 }
-            } catch (err) { 
-                alert("Network failure: Could not connect to Worker API."); 
+            } catch (err) {
+                if (err.name === 'AbortError') {
+                    showError("Connection timed out. Check your network or Cloudflare Worker.");
+                } else {
+                    showError("Network failure: Unable to reach the database endpoint.");
+                }
+            } finally {
+                submitBtn.disabled = false;
+                btnText.textContent = "Sign In";
+                btnSpinner.classList.add("d-none");
+            }
+
+            function showError(msg) {
+                errorMessage.textContent = msg;
+                errorAlert.classList.remove("d-none");
+            }
+
+            function triggerShake() {
+                loginCard.classList.remove("shake");
+                void loginCard.offsetWidth; // Force DOM reflow
+                loginCard.classList.add("shake");
             }
         }
     </script>

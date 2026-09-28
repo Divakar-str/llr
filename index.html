@@ -1,125 +1,71 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-     <meta charset="UTF-8">
-     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-     <title>LLR Portal - Home</title>
-     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
-     <style>
-         body {
-              background: #fdfdfd;
-              font-family: system-ui, -apple-system, sans-serif;
-              overflow-x: hidden;
-         }
-         .portal-header {
-             padding: 3.5rem 1rem;
-             background: #ffffff;
-             border-bottom: 1px solid #f1f5f9;
-         }
-         .portal-header h1 {
-             font-weight: 800;
-             letter-spacing: -0.03em;
-             color: #0f172a;
-         }
-         .nav-block {
-             background: #ffffff;
-             border: 1px solid #e2e8f0;
-             border-radius: 20px;
-             text-decoration: none;
-             transition: all 0.3s ease;
-         }
-         .icon-circle {
-             font-size: 1.8rem;
-             width: 64px;
-             height: 64px;
-             background: #f8fafc;
-             border-radius: 16px;
-             display: flex;
-             align-items: center;
-             justify-content: center;
-         }
-         .action-btn {
-             background: #0f172a;
-             color: #ffffff;
-             border: none;
-             border-radius: 12px;
-             font-weight: 600;
-             padding: 0.6rem 1rem;
-             width: 100%;
-         }
-         .action-btn-outline {
-             background: transparent;
-             color: #0f172a;
-             border: 1px solid #e2e8f0;
-             border-radius: 12px;
-             font-weight: 600;
-             padding: 0.6rem 1.2rem;
-         }
-         @media (min-width: 768px) {
-             .nav-block:hover {
-                 transform: translateY(-6px);
-                 box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.03);
-                 border-color: #cbd5e1;
-             }
-         }
-     </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LLR Portal - Home</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <link  href="css/style.css" rel="stylesheet">
+    <style>
+       
+    </style>
 </head>
 <body>
-     <!-- Dynamic Navigation Bar Container -->
-     <div id="global-nav-container"></div>
-     
-     <!-- Header Section -->
-     <header class="portal-header text-center">
-         <div class="container px-3">
-             <h1 class="display-6">LLR Manage</h1>
-             <p class="small text-muted font-monospace">Cloudflare D1 Data Management Portal</p>
-         </div>
-     </header>
+    <!-- Dynamic Navigation Bar Container -->
+    <div id="global-nav-container"></div>
+        
+    <!-- Header Section -->
+    <header class="portal-header text-center">
+        <div class="container px-3">
+            <h1 class="display-6 mb-2">LLR Manage</h1>
+            <p class="small text-muted font-monospace mb-0">Cloudflare D1 Data Management Portal</p>
+        </div>
+    </header>
 
-     <!-- Main Grid -->
-     <main class="container px-3 px-md-4 py-5">
-         <div class="row g-4">
-             <!-- CARD 1: EXTRACTION -->
-             <div class="col-12 col-md-4">
-                 <a href="extractor.html" class="card shadow-sm h-100 nav-block p-4 d-flex flex-column align-items-center text-center">
-                     <div class="icon-circle mb-3">📄</div>
-                     <h4 class="fw-bold text-dark mb-1 fs-5">Data Extraction</h4>
-                     <span class="text-muted small font-monospace">Data Processing</span>
-                     <div class="mt-4 w-100">
-                         <button class="action-btn">Open Page →</button>
-                     </div>
-                 </a>
-             </div>
-             <!-- CARD 2: RECORDS -->
-             <div class="col-12 col-md-4">
-                 <a href="records.html" class="card shadow-sm h-100 nav-block p-4 d-flex flex-column align-items-center text-center">
-                     <div class="icon-circle mb-3">📋</div>
-                     <h4 class="fw-bold text-dark mb-1 fs-5">Records Table</h4>
-                     <span class="text-muted small font-monospace">Data Records</span>
-                     <div class="mt-4 w-100">
-                         <button class="action-btn">Open Page →</button>
-                     </div>
-                 </a>
-             </div>
-             <!-- CARD 3: REPORTS -->
-             <div class="col-12 col-md-4">
-                 <a href="reports.html" class="card shadow-sm h-100 nav-block p-4 d-flex flex-column align-items-center text-center">
-                     <div class="icon-circle mb-3">📊</div>
-                     <h4 class="fw-bold text-dark mb-1 fs-5">Reports Page</h4>
-                     <span class="text-muted small font-monospace">Report Manage</span>
-                     <div class="mt-4 w-100">
-                         <button class="action-btn">Open Page →</button>
-                     </div>
-                 </a>
-             </div>
-         </div>
-     </main>
+    <!-- Main Grid -->
+    <main class="container px-3 px-md-4 py-5">
+        <div class="row g-4 justify-content-center">
+            <!-- CARD 1: EXTRACTION -->
+            <div class="col-12 col-md-4">
+                <a href="extractor.html" class="card shadow-sm h-100 nav-block p-4 d-flex flex-column align-items-center text-center">
+                    <div class="icon-circle mb-3"><i class="bi bi-file-earmark-text"></i></div>
+                    <h4 class="fw-bold text-dark mb-1 fs-5">Data Extraction</h4>
+                    <span class="text-muted small font-monospace">Data Processing</span>
+                    <div class="mt-4 w-100">
+                        <button class="action-btn">Open Page &rarr;</button>
+                    </div>
+                </a>
+            </div>
+            <!-- CARD 2: RECORDS -->
+            <div class="col-12 col-md-4">
+                <a href="records.html" class="card shadow-sm h-100 nav-block p-4 d-flex flex-column align-items-center text-center">
+                    <div class="icon-circle mb-3"><i class="bi bi-table"></i></div>
+                    <h4 class="fw-bold text-dark mb-1 fs-5">Records Table</h4>
+                    <span class="text-muted small font-monospace">Data Records</span>
+                    <div class="mt-4 w-100">
+                        <button class="action-btn">Open Page &rarr;</button>
+                    </div>
+                </a>
+            </div>
+            <!-- CARD 3: REPORTS -->
+            <div class="col-12 col-md-4">
+                <a href="reports.html" class="card shadow-sm h-100 nav-block p-4 d-flex flex-column align-items-center text-center">
+                    <div class="icon-circle mb-3"><i class="bi bi-bar-chart-line"></i></div>
+                    <h4 class="fw-bold text-dark mb-1 fs-5">Reports Page</h4>
+                    <span class="text-muted small font-monospace">Report Manage</span>
+                    <div class="mt-4 w-100">
+                        <button class="action-btn">Open Page &rarr;</button>
+                    </div>
+                </a>
+            </div>
+        </div>
+    </main>
 
-     <!-- Scripts -->
-     <script src="env.js"></script>
-     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-     <script src="js/auth.js"></script>
-     <script src="js/navLoader.js"></script>
+    <!-- Scripts -->
+    <script src="env.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/navLoader.js"></script>
 </body>
 </html>

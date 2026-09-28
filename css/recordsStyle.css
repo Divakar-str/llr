@@ -6,17 +6,66 @@
     --primary-color: #212529;
     --primary-hover: #343a40;
     --accent-color: #0d6efd;
-    --bg-body: #f8f9fa;
-    --card-radius: 24px;
+    --accent-hover: #0b5ed7;
+    --bg-body: #f1f5f9;
+    
+    /* SaaS Tokens */
+    --saas-border: #e2e8f0;
+    --saas-border-subtle: #f1f5f9;
+    --saas-bg-subtle: #f8fafc;
+    --saas-text-muted: #64748b;
+    --saas-text-dark: #0f172a;
+
+    --card-radius: 20px;
     --input-radius: 8px;
-    --transition-speed: 0.2s ease-in-out;
+    --transition-speed: 0.15s ease-in-out;
 }
 
 body {
-    font-family: 'Inter', sans-serif;
+    font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     background-color: var(--bg-body);
-    color: #333333;
+    color: var(--saas-text-dark);
+    letter-spacing: -0.01em;
     -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* Monospace numerals with tabular figures */
+.font-monospace {
+    font-variant-numeric: tabular-nums;
+}
+
+/* Single-line LLR layout */
+.llr-nowrap {
+    white-space: nowrap !important;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 1rem;
+
+}
+
+/* High-contrast bold date styling */
+.date-highlight {
+    font-weight: 700 !important;
+    color: #0f172a !important;
+    white-space: nowrap !important;
+    letter-spacing: -0.01em;
+}
+
+/* Eligibility badge when < 30 days */
+.eligibility-pill {
+    font-size: 0.68rem;
+    font-weight: 600;
+    padding: 2px 7px;
+    border-radius: 9999px;
+    background-color: #f1f5f9;
+    color: #64748b;
+    border: 1px solid #cbd5e1;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    white-space: nowrap;
 }
 
 /* ==========================================================================
@@ -27,13 +76,14 @@ body {
     font-weight: 500;
     border-radius: 6px;
     padding: 8px 16px;
+    font-size: 0.875rem;
     transition: all var(--transition-speed);
 }
 
 .nav-pills .nav-link.active {
     background-color: var(--primary-color) !important;
     color: #ffffff !important;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
 }
 
 .nav-pills .nav-link:hover:not(.active) {
@@ -41,7 +91,7 @@ body {
 }
 
 /* ==========================================================================
-   2. Buttons Hub
+   2. Buttons Hub & Action Controls
    ========================================================================== */
 .btn-dark-custom {
     background-color: var(--primary-color);
@@ -92,43 +142,68 @@ body {
     z-index: 2;
 }
 
+.btn-action-icon {
+    width: 30px;
+    height: 30px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    border-radius: 6px;
+    border: 1px solid var(--saas-border);
+    background: #ffffff;
+    color: #475569;
+    font-size: 0.85rem;
+    transition: all var(--transition-speed);
+}
+
+.btn-action-icon:hover {
+    background: #f1f5f9;
+    color: #0f172a;
+    border-color: #cbd5e1;
+    transform: translateY(-1px);
+}
+
 /* ==========================================================================
    3. Cards, Containers & Dividers
    ========================================================================== */
 .card {
     border-radius: var(--card-radius) !important;
-    border: none;
-    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    border: 1px solid var(--saas-border);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02);
+    transition: box-shadow 0.2s ease;
 }
 
 .card:hover {
-    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.05) !important;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.06), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
 }
 
 .card-header {
     border-top-left-radius: var(--card-radius) !important;
     border-top-right-radius: var(--card-radius) !important;
+    border-bottom: 1px solid var(--saas-border);
 }
 
-/* Form Section Dividers */
 .section-divider {
     position: relative;
-    border-top: 1px solid #dee2e6;
+    text-align: left;
     margin: 1.75rem 0 1.25rem 0;
+    border-bottom: 1px solid var(--saas-border);
 }
 
 .section-title {
     position: absolute;
-    top: -12px;
-    left: 16px;
+    top: -11px;
+    left: 14px;
     background-color: #ffffff;
     padding: 0 10px;
-    font-size: 0.85rem;
-    font-weight: 600;
-    color: #495057;
-    display: flex;
-    align-items:center;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--saas-text-muted);
+    display: inline-flex;
+    align-items: center;
     gap: 6px;
 }
 
@@ -137,9 +212,10 @@ body {
    ========================================================================== */
 .form-control, .form-select {
     border-radius: var(--input-radius);
-    border-color: #ced4da;
-    padding: 0.55rem 0.75rem;
-    font-size: 0.95rem;
+    border: 1px solid #cbd5e1;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.875rem;
+    color: var(--saas-text-dark);
     transition: border-color var(--transition-speed), box-shadow var(--transition-speed);
 }
 
@@ -153,24 +229,48 @@ body {
     z-index: 3;
 }
 
-/* Active Search Highlight Animation */
-#tableSearchInput.border-primary {
-    transition: all 0.25s ease-in-out;
+.status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: 9999px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    line-height: 1.2;
+    transition: opacity 0.15s ease;
 }
 
-/* Professional Soft Badges */
-.badge.bg-success {
-    background-color: rgba(25, 135, 84, 0.1) !important;
-    color: #198754 !important;
-    border: 1px solid rgba(25, 135, 84, 0.2);
-    font-weight: 600;
+.status-pill:hover {
+    opacity: 0.85;
 }
 
-.badge.bg-warning {
-    background-color: rgba(255, 193, 7, 0.1) !important;
-    color: #ffc107 !important;
-    border: 1px solid rgba(255, 193, 7, 0.2);
-    font-weight: 600;
+.status-pill-yes {
+    background-color: rgba(16, 185, 129, 0.12);
+    color: #047857;
+    border: 1px solid rgba(16, 185, 129, 0.25);
+}
+
+.status-pill-no {
+    background-color: rgba(245, 158, 11, 0.12);
+    color: #b45309;
+    border: 1px solid rgba(245, 158, 11, 0.25);
+}
+
+.meta-label {
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--saas-text-muted);
+    margin-bottom: 2px;
+}
+
+.meta-value {
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--saas-text-dark);
+    word-break: break-word;
 }
 
 /* ==========================================================================
@@ -181,36 +281,55 @@ body {
     border-bottom-right-radius: var(--card-radius);
 }
 
+#dbMasterTable {
+    border-collapse: separate;
+    border-spacing: 0;
+    width: 100%;
+}
+
 .sticky-thead th {
     position: sticky;
     top: 0;
-    background-color: var(--primary-color) !important;
-    color: #ffffff;
-    z-index: 10;
-    font-weight: 600;
-    font-size: 0.85rem;
+    background-color: #ffffff !important;
+    color: var(--saas-text-muted);
+    font-size: 0.72rem;
+    font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
-    padding-top: 14px;
-    padding-bottom: 14px;
-    border: none !important;
+    letter-spacing: 0.05em;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--saas-border) !important;
+    vertical-align: middle;
+    white-space: nowrap;
+    z-index: 10;
 }
 
-#dbMasterTable tbody tr {
+th.sortable {
+    cursor: pointer;
+    user-select: none;
+}
+
+th.sortable:hover {
+    background-color: #f8fafc !important;
+    color: var(--saas-text-dark) !important;
+}
+
+#dbMasterTable tbody td {
+    padding: 13px 16px;
+    font-size: 0.84rem;
+    vertical-align: middle;
+    border-bottom: 1px solid var(--saas-border);
+    background-color: #ffffff;
     transition: background-color 0.15s ease-in-out;
 }
 
-#dbMasterTable tbody tr:hover {
-    background-color: rgba(13, 110, 253, 0.04) !important;
+#dbMasterTable tbody tr:hover td {
+    background-color: #f8fafc;
 }
 
-#dbMasterTable td {
-    padding-top: 12px;
-    padding-bottom: 12px;
-    vertical-align: middle;
+.cursor-pointer {
+    cursor: pointer;
 }
 
-/* Interactive Copiable Elements */
 td span[onclick], th span[onclick] {
     transition: color 0.15s ease-in-out;
 }
@@ -225,7 +344,7 @@ td span[onclick]:hover {
 .modal-content {
     border-radius: var(--card-radius) !important;
     border: none;
-    box-shadow: 0 1rem 3rem rgba(0, 0, 0, 0.175);
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
 }
 
 .modal-header {
@@ -255,13 +374,13 @@ td span[onclick]:hover {
 
 .table-responsive::-webkit-scrollbar-thumb,
 .modal-body::-webkit-scrollbar-thumb {
-    background: #ced4da;
+    background: #cbd5e1;
     border-radius: 4px;
 }
 
 .table-responsive::-webkit-scrollbar-thumb:hover,
 .modal-body::-webkit-scrollbar-thumb:hover {
-    background: #adb5bd;
+    background: #94a3b8;
 }
 
 .animated-pane {
@@ -271,7 +390,7 @@ td span[onclick]:hover {
 @keyframes fadeInPane {
     from {
         opacity: 0;
-        transform: translateY(6px);
+        transform: translateY(4px);
     }
     to {
         opacity: 1;
@@ -279,7 +398,6 @@ td span[onclick]:hover {
     }
 }
 
-/* Toast Container Polish */
 #customAlertContainer .alert {
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
@@ -302,7 +420,7 @@ td span[onclick]:hover {
    ========================================================================== */
 @media (max-width: 768px) {
     .container-fluid {
-        padding-left: 1rem !important;
-        padding-right: 1rem !important;
+        padding-left: 0.75rem !important;
+        padding-right: 0.75rem !important;
     }
 }
