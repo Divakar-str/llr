@@ -146,35 +146,43 @@ body {
     align-items: center;
     cursor: pointer;
     min-height: 38px;
+    position: relative;
+    z-index: 1001;
 }
+
 
 .custom-multiselect-menu {
     position: absolute;
-    top: 105%;
+    top: calc(100% + 5px);
     left: 0;
-    right: 0;
+    width: 100%;
     background: #ffffff;
-    border: 1px solid var(--saas-border);
+    border: 1px solid #cbd5e1;
     border-radius: var(--input-radius);
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-    z-index: 1000;
-    padding: 8px;
-    max-height: 250px;
+    box-shadow: 0 10px 25px rgba(15, 23, 42, 0.15);
+    z-index: 99999;
+
+    /* Important */
+    max-height: 280px;
     overflow-y: auto;
 }
 
-.menu-item-option {
+/* Dropdown options */
+.custom-multiselect-menu .menu-item-option {
     display: flex;
     align-items: center;
-    gap: 8px;
-    padding: 6px 8px;
-    border-radius: 6px;
-    font-size: 0.82rem;
+    padding: 8px 12px;
     cursor: pointer;
 }
 
-.menu-item-option:hover {
-    background-color: var(--saas-bg-subtle);
+.custom-multiselect-menu .menu-item-option:hover {
+    background: #f1f5f9;
+}
+
+/* Keep the whole column above the next form elements */
+.col-12.col-md-4:has(.custom-multiselect-container) {
+    position: relative;
+    z-index: 1000;
 }
 
 /* Export Buttons */
