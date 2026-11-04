@@ -1,18 +1,17 @@
 /* ==========================================================================
    LLR Portal - Reports Engine Console Styling
    ========================================================================== */
-
 :root {
-    --primary-color: #212529;
-    --primary-hover: #343a40;
-    --accent-color: #0d6efd;
-    --bg-body: #f1f5f9;
-
+    --primary-color: #0f172a;
+    --primary-hover: #1e293b;
+    --accent-color: #2563eb;
+    --accent-glow: rgba(37, 99, 235, 0.18);
+    --bg-body: #f8fafc;
+    --glass-bg: rgba(255, 255, 255, 0.94);
     --saas-border: #e2e8f0;
-    --saas-bg-subtle: #f8fafc;
+    --saas-bg-subtle: #f1f5f9;
     --saas-text-muted: #64748b;
     --saas-text-dark: #0f172a;
-
     --card-radius: 20px;
     --input-radius: 8px;
     --transition-speed: 0.15s ease-in-out;
@@ -20,7 +19,8 @@
 
 body {
     font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    background-color: var(--bg-body);
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    background-attachment: fixed;
     color: var(--saas-text-dark);
     letter-spacing: -0.01em;
     -webkit-font-smoothing: antialiased;
@@ -46,7 +46,7 @@ body {
 .eligibility-pill {
     font-size: 0.68rem;
     font-weight: 600;
-    padding: 2px 7px;
+    padding: 3px 8px;
     border-radius: 9999px;
     background-color: #f1f5f9;
     color: #64748b;
@@ -57,49 +57,58 @@ body {
     white-space: nowrap;
 }
 
-/* Control Panel Bar */
+/* Glassmorphism Panel Bar */
 .glass-panel-bar {
-    background: #ffffff;
-    border: 1px solid var(--saas-border);
+    background: var(--glass-bg);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.7);
     border-radius: var(--card-radius);
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+    box-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02);
 }
 
-.panel-section-label {
+/* Color-Coded Vehicle Class Chips */
+.vehicle-chips-bar {
     display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
     align-items: center;
-    gap: 8px;
-    margin-bottom: 8px;
 }
 
-.step-num-indicator {
-    width: 20px;
-    height: 20px;
-    border-radius: 50%;
-    background-color: var(--primary-color);
-    color: #ffffff;
+.vehicle-chip {
+    background-color: #ffffff;
+    border: 1px solid #cbd5e1;
+    color: var(--saas-text-muted);
     font-size: 0.72rem;
-    font-weight: 700;
+    font-weight: 600;
+    padding: 4px 11px;
+    border-radius: 9999px;
+    cursor: pointer;
+    transition: all var(--transition-speed);
+    user-select: none;
     display: inline-flex;
     align-items: center;
-    justify-content: center;
 }
 
-.label-text-node {
-    font-size: 0.78rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-    color: var(--saas-text-muted);
+.vehicle-chip:hover {
+    opacity: 0.85;
 }
+
+.vehicle-chip[data-value="ALL"].active { background-color: #0f172a; border-color: #0f172a; color: #fff; }
+.vehicle-chip.chip-mcwg.active { background-color: #0d6efd; border-color: #0d6efd; color: #fff; box-shadow: 0 2px 5px rgba(13, 110, 253, 0.3); }
+.vehicle-chip.chip-mcwog.active { background-color: #6f42c1; border-color: #6f42c1; color: #fff; box-shadow: 0 2px 5px rgba(111, 66, 193, 0.3); }
+.vehicle-chip.chip-lmv.active { background-color: #198754; border-color: #198754; color: #fff; box-shadow: 0 2px 5px rgba(25, 135, 84, 0.3); }
+.vehicle-chip.chip-trans.active { background-color: #fd7e14; border-color: #fd7e14; color: #fff; box-shadow: 0 2px 5px rgba(253, 126, 20, 0.3); }
+.vehicle-chip.chip-mcwg-lmv.active { background-color: #20c997; border-color: #20c997; color: #fff; box-shadow: 0 2px 5px rgba(32, 201, 151, 0.3); }
+.vehicle-chip.chip-mcwog-lmv.active { background-color: #d63384; border-color: #d63384; color: #fff; box-shadow: 0 2px 5px rgba(214, 51, 132, 0.3); }
 
 /* Input Fields */
 .form-control-premium, .form-select-premium {
     width: 100%;
     border-radius: var(--input-radius);
     border: 1px solid #cbd5e1;
-    padding: 0.45rem 0.75rem;
-    font-size: 0.85rem;
+    padding: 0.4rem 0.75rem;
+    font-size: 0.82rem;
     color: var(--saas-text-dark);
     background-color: #ffffff;
     transition: all var(--transition-speed);
@@ -108,7 +117,7 @@ body {
 .form-control-premium:focus, .form-select-premium:focus {
     outline: none;
     border-color: var(--accent-color);
-    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.12);
+    box-shadow: 0 0 0 0.2rem var(--accent-glow);
 }
 
 .premium-search-input-group, .premium-date-input-group {
@@ -117,110 +126,36 @@ body {
     align-items: center;
 }
 
-.premium-search-input-group .input-icon-node, 
+.premium-search-input-group .input-icon-node,
 .premium-date-input-group .input-icon-node {
     position: absolute;
     left: 10px;
-    color: var(--saas-text-muted);
-    font-size: 0.85rem;
+    color: var(--accent-color);
+    font-size: 0.8rem;
     pointer-events: none;
+    z-index: 2;
 }
 
-.premium-search-input-group input, 
+.premium-search-input-group input,
 .premium-date-input-group input {
     padding-left: 32px;
 }
 
-/* Multiselect Dropdown */
-.custom-multiselect-container {
-    position: relative;
-}
-
-.custom-multiselect-trigger {
-    border: 1px solid #cbd5e1;
-    border-radius: var(--input-radius);
-    padding: 6px 12px;
-    background: #ffffff;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    cursor: pointer;
-    min-height: 38px;
-    position: relative;
-    z-index: 1001;
-}
-
-
-.custom-multiselect-menu {
-    position: absolute;
-    top: calc(100% + 5px);
-    left: 0;
-    width: 100%;
-    background: #ffffff;
-    border: 1px solid #cbd5e1;
-    border-radius: var(--input-radius);
-    box-shadow: 0 10px 25px rgba(15, 23, 42, 0.15);
-    z-index: 99999;
-
-    /* Important */
-    max-height: 280px;
-    overflow-y: auto;
-}
-
-/* Dropdown options */
-.custom-multiselect-menu .menu-item-option {
-    display: flex;
-    align-items: center;
-    padding: 8px 12px;
-    cursor: pointer;
-}
-
-.custom-multiselect-menu .menu-item-option:hover {
-    background: #f1f5f9;
-}
-
-/* Keep the whole column above the next form elements */
-.col-12.col-md-4:has(.custom-multiselect-container) {
-    position: relative;
-    z-index: 1000;
-}
-
-/* Export Buttons */
-.premium-secondary-action-btn {
-    border-radius: var(--input-radius);
-    font-size: 0.82rem;
-    font-weight: 600;
-    border: 1px solid var(--saas-border);
-    background: #ffffff;
-    color: var(--saas-text-dark);
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-    transition: all var(--transition-speed);
-}
-
-.premium-secondary-action-btn.excel-variant:hover {
-    background: rgba(25, 135, 84, 0.1);
-    border-color: #198754;
-    color: #198754;
-}
-
-.premium-secondary-action-btn.csv-variant:hover {
-    background: rgba(13, 110, 253, 0.1);
-    border-color: #0d6efd;
-    color: #0d6efd;
-}
-
 /* Metrics Ribbon */
 .premium-ribbon-card {
-    background: #ffffff;
+    background: rgba(255, 255, 255, 0.92);
+    backdrop-filter: blur(8px);
     border: 1px solid var(--saas-border);
     border-radius: 12px;
-    padding: 12px 14px;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+    padding: 14px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
     position: relative;
     overflow: hidden;
+    transition: transform 0.15s ease;
+}
+
+.premium-ribbon-card:hover {
+    transform: translateY(-2px);
 }
 
 .premium-ribbon-card::before {
@@ -234,7 +169,7 @@ body {
 
 .border-left-success::before { background-color: #10b981; }
 .border-left-danger::before { background-color: #ef4444; }
-.border-left-primary::before { background-color: #0d6efd; }
+.border-left-primary::before { background-color: var(--accent-color); }
 .border-left-warning::before { background-color: #f59e0b; }
 
 .ribbon-label {
@@ -244,22 +179,22 @@ body {
     letter-spacing: 0.04em;
     color: var(--saas-text-muted);
     display: block;
-    margin-bottom: 2px;
+    margin-bottom: 3px;
 }
 
 .ribbon-value {
-    font-size: 1.35rem;
+    font-size: 1.3rem;
     font-weight: 700;
     line-height: 1;
 }
 
 /* Workspace Card */
 .premium-main-workspace-card {
-    background: #ffffff;
+    background: rgba(255, 255, 255, 0.94);
+    backdrop-filter: blur(12px);
     border: 1px solid var(--saas-border);
     border-radius: var(--card-radius);
-    padding: 24px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+    box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.04);
 }
 
 /* On-Screen Table Styling */
@@ -270,14 +205,14 @@ body {
 }
 
 #reportDataTable thead th {
-    background-color: #ffffff;
+    background-color: #f8fafc;
     color: var(--saas-text-muted);
     font-size: 0.72rem;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.05em;
     padding: 12px 16px;
-    border-bottom: 1px solid var(--saas-border) !important;
+    border-bottom: 2px solid var(--saas-border) !important;
     vertical-align: middle;
     white-space: nowrap;
     position: sticky;
@@ -291,7 +226,7 @@ th.sortable {
 }
 
 th.sortable:hover {
-    background-color: #f8fafc !important;
+    background-color: #f1f5f9 !important;
     color: var(--saas-text-dark) !important;
 }
 
@@ -301,7 +236,7 @@ th.sortable:hover {
     vertical-align: middle;
     border-bottom: 1px solid var(--saas-border);
     background-color: #ffffff;
-    transition: background-color 0.15s ease-in-out;
+    transition: background-color 0.1s ease;
 }
 
 #reportDataTable tbody tr:hover td {
@@ -332,16 +267,16 @@ th.sortable:hover {
 
 .premium-print-btn {
     border-radius: var(--input-radius);
-    font-size: 0.82rem;
+    font-size: 0.8rem;
     font-weight: 600;
-    background: #0f172a;
+    background: var(--primary-color);
     color: #ffffff;
     border: none;
     transition: all var(--transition-speed);
 }
 
 .premium-print-btn:hover {
-    background: #334155;
+    background: var(--primary-hover);
 }
 
 .premium-counter-badge {
@@ -373,16 +308,15 @@ th.sortable:hover {
         font-size: 9pt !important;
     }
 
-    .no-print, 
-    #global-nav-container, 
+    .no-print,
+    #global-nav-container,
     .toast-container,
-    .btn, 
-    button, 
+    .btn,
+    button,
     .modal {
         display: none !important;
     }
 
-    /* Formal Table Header */
     .print-document-header {
         display: block !important;
         margin-bottom: 12px;
@@ -402,13 +336,14 @@ th.sortable:hover {
         border: none !important;
         box-shadow: none !important;
         padding: 0 !important;
+        background: #ffffff !important;
     }
 
     .table-responsive {
         overflow: visible !important;
+        border: none !important;
     }
 
-    /* Pure Government Format Data Grid */
     #reportDataTable {
         width: 100% !important;
         border-collapse: collapse !important;
@@ -432,7 +367,6 @@ th.sortable:hover {
         color: #000000 !important;
     }
 
-    /* Print without interactive badges or soft pills */
     .status-pill, .badge {
         border: none !important;
         background: transparent !important;
