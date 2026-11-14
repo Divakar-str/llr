@@ -24,12 +24,12 @@ function calculateDaysPassed(issueDateStr) {
     if (!issueDateStr || issueDateStr === "-") return 0;
     const parts = issueDateStr.split("-");
     if (parts.length !== 3) return 0;
-    
+
     const issueDate = new Date(`${parts[2]}-${parts[1]}-${parts[0]}`);
     const today = new Date();
     issueDate.setHours(0, 0, 0, 0);
     today.setHours(0, 0, 0, 0);
-    
+
     const diffTime = today - issueDate;
     return Math.floor(diffTime / (1000 * 60 * 60 * 24));
 }
@@ -38,10 +38,10 @@ function calculateDaysPassed(issueDateStr) {
 function populateYearDropdown() {
     const yearSelectEl = document.getElementById("filterYearSelect");
     if (!yearSelectEl) return;
-    
+
     yearSelectEl.innerHTML = '<option value="">All Years</option>';
     const uniqueYears = new Set();
-    
+
     masterRecordsCache.forEach(row => {
         const parts = (row.issue_date || "").split("-");
         if (parts.length === 3) {
@@ -49,7 +49,7 @@ function populateYearDropdown() {
             if (year) uniqueYears.add(year);
         }
     });
-    
+
     const sortedYears = Array.from(uniqueYears).sort().reverse();
     sortedYears.forEach(year => {
         const option = document.createElement("option");
@@ -121,11 +121,10 @@ async function fetchReportDataRegistry() {
 
         const data = await response.json();
         masterRecordsCache = Array.isArray(data) ? data : (data.data || []);
-        
+
         populateYearDropdown();
         toggleStatusTray(false);
-
-        executeReportGeneration();
+        executeReportGeneration(); // Initial load with loader
     } catch (error) {
         console.error("Fetch Error:", error);
         toggleStatusTray(false);
@@ -139,7 +138,7 @@ function setupEventListeners() {
     if (reportTypeSelect) {
         reportTypeSelect.addEventListener("change", () => {
             currentPage = 1;
-            executeReportGeneration();
+            refreshReportView();
         });
     }
 
@@ -163,7 +162,7 @@ function setupEventListeners() {
             populateMonthDropdownForYear(e.target.value);
             if (document.getElementById("reportTypeSelect").value) {
                 currentPage = 1;
-                executeReportGeneration();
+                refreshReportView();
             }
         });
     }
@@ -173,14 +172,14 @@ function setupEventListeners() {
             el.addEventListener("input", () => {
                 if (document.getElementById("reportTypeSelect").value) {
                     currentPage = 1;
-                    executeReportGeneration();
+                    refreshReportView();
                 }
             });
             if (el.tagName === "SELECT") {
                 el.addEventListener("change", () => {
                     if (document.getElementById("reportTypeSelect").value) {
                         currentPage = 1;
-                        executeReportGeneration();
+                        refreshReportView();
                     }
                 });
             }
@@ -201,7 +200,7 @@ function setupEventListeners() {
             handleVehicleChipClick(val);
             if (document.getElementById("reportTypeSelect").value) {
                 currentPage = 1;
-                executeReportGeneration();
+                refreshReportView();
             }
         });
     });
@@ -211,7 +210,7 @@ function setupEventListeners() {
         printBtn.addEventListener("click", () => {
             const reportSelect = document.getElementById("reportTypeSelect");
             const activeTitle = reportSelect.options[reportSelect.selectedIndex]?.text || "LLR MASTER REGISTER";
-            
+
             document.getElementById("lblPrintReportTitle").textContent = activeTitle;
             document.getElementById("lblPrintTimestamp").textContent = new Date().toLocaleString([], {
                 year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
@@ -263,7 +262,7 @@ function resetAllFilters() {
     });
 
     currentPage = 1;
-    executeReportGeneration();
+    refreshReportView();
     showStyledAlert("All filters cleared successfully.", "info");
 }
 
@@ -286,10 +285,8 @@ function handleVehicleChipClick(val) {
     }
 }
 
+// Initial full generation with loading skeleton (used on page load)
 function executeReportGeneration() {
-    const reportTypeSelect = document.getElementById("reportTypeSelect");
-    const reportType = reportTypeSelect.value || "COMPLETE_REGISTER";
-
     const placeholder = document.getElementById("reportPlaceholderView");
     const loader = document.getElementById("reportLoaderView");
     const displayView = document.getElementById("reportDisplayView");
@@ -299,15 +296,30 @@ function executeReportGeneration() {
     loader.classList.remove("d-none");
 
     setTimeout(() => {
-        currentFilteredData = filterRecordsByCriteria(reportType);
-        sortReportData();
-        renderReportTable(currentFilteredData, reportType);
-        updateSummaryRibbon(currentFilteredData);
-        updateActiveFilterBadge();
-
+        refreshReportView();
         loader.classList.add("d-none");
         displayView.classList.remove("d-none");
     }, 50);
+}
+
+// Instant refresh for filtering, searching, and month/year selection without flickering
+function refreshReportView() {
+    const reportTypeSelect = document.getElementById("reportTypeSelect");
+    const reportType = reportTypeSelect ? reportTypeSelect.value : "COMPLETE_REGISTER";
+
+    const placeholder = document.getElementById("reportPlaceholderView");
+    const loader = document.getElementById("reportLoaderView");
+    const displayView = document.getElementById("reportDisplayView");
+
+    if (placeholder) placeholder.classList.add("d-none");
+    if (loader) loader.classList.add("d-none");
+    if (displayView) displayView.classList.remove("d-none");
+
+    currentFilteredData = filterRecordsByCriteria(reportType);
+    sortReportData();
+    renderReportTable(currentFilteredData, reportType);
+    updateSummaryRibbon(currentFilteredData);
+    updateActiveFilterBadge();
 }
 
 function updateActiveFilterBadge() {
@@ -466,8 +478,8 @@ function filterRecordsByCriteria(reportType) {
                 return masterRecordsCache.filter(r => r.mobile_number === mobile).length > 1;
             case "MISSING_INFORMATION":
                 const isBasicMissing = !row.name || row.name === "-" ||
-                                         !row.date_of_birth || row.date_of_birth === "-" ||
-                                         !row.mobile_number || row.mobile_number === "-";
+                                       !row.date_of_birth || row.date_of_birth === "-" ||
+                                       !row.mobile_number || row.mobile_number === "-";
                 const isDateMissing = !row.issue_date || row.issue_date === "-" ||
                                       !row.expiry_date || row.expiry_date === "-";
                 const isDlMissing = (row.dl_issued === "Yes") && (!row.dl_number || row.dl_number === "-" || row.dl_number.trim() === "");
@@ -494,19 +506,19 @@ function renderReportTable(data, reportType) {
     };
 
     header.innerHTML = `
-         <tr>
-              <th class="ps-3" style="width: 40px;">#</th>
-              <th class="sortable text-nowrap" onclick="handleReportSort('llr_number')">LLR Number ${getSortIcon('llr_number')}</th>
-              <th class="sortable text-nowrap" onclick="handleReportSort('name')">Applicant Name ${getSortIcon('name')}</th>
-              <th class="sortable text-nowrap" onclick="handleReportSort('date_of_birth')">DOB ${getSortIcon('date_of_birth')}</th>
-              <th class="text-nowrap">Class</th>
-              <th class="text-nowrap">Mobile</th>
-              <th class="sortable text-nowrap" onclick="handleReportSort('issue_date')">Issue Date ${getSortIcon('issue_date')}</th>
-              <th class="sortable text-nowrap" onclick="handleReportSort('expiry_date')">Expiry Date ${getSortIcon('expiry_date')}</th>
-              <th class="sortable text-nowrap" onclick="handleReportSort('dl_issued')">DL Status ${getSortIcon('dl_issued')}</th>
-              <th class="pe-3 text-nowrap">Remarks</th>
-         </tr>
-      `;
+        <tr>
+            <th class="ps-3" style="width: 40px;">#</th>
+            <th class="sortable text-nowrap" onclick="handleReportSort('llr_number')">LLR Number ${getSortIcon('llr_number')}</th>
+            <th class="sortable text-nowrap" onclick="handleReportSort('name')">Applicant Name ${getSortIcon('name')}</th>
+            <th class="sortable text-nowrap" onclick="handleReportSort('date_of_birth')">DOB ${getSortIcon('date_of_birth')}</th>
+            <th class="text-nowrap">Class</th>
+            <th class="text-nowrap">Mobile</th>
+            <th class="sortable text-nowrap" onclick="handleReportSort('issue_date')">Issue Date ${getSortIcon('issue_date')}</th>
+            <th class="sortable text-nowrap" onclick="handleReportSort('expiry_date')">Expiry Date ${getSortIcon('expiry_date')}</th>
+            <th class="sortable text-nowrap" onclick="handleReportSort('dl_issued')">DL Status ${getSortIcon('dl_issued')}</th>
+            <th class="pe-3 text-nowrap">Remarks</th>
+        </tr>
+    `;
 
     tbody.innerHTML = "";
     if (data.length === 0) {
@@ -593,7 +605,7 @@ function renderReportTable(data, reportType) {
                     ${row.remarks && row.remarks !== '-' ? row.remarks : '-'}
                 </span>
             </td>
-         `;
+        `;
         tbody.appendChild(tr);
     });
 }
@@ -738,10 +750,7 @@ async function handleQuickDlSubmit(event) {
             showStyledAlert("✓ DL Status updated successfully!", "success");
             bootstrap.Modal.getInstance(document.getElementById("editDlStatusModal")).hide();
 
-            currentFilteredData = filterRecordsByCriteria(document.getElementById("reportTypeSelect").value);
-            sortReportData();
-            renderReportTable(currentFilteredData, document.getElementById("reportTypeSelect").value);
-            updateSummaryRibbon(currentFilteredData);
+            refreshReportView();
         } else {
             throw new Error(result.message);
         }
