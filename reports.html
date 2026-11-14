@@ -67,7 +67,7 @@
                 <div class="col-6 col-md-auto" style="width: 140px;">
                     <input type="date" id="filterFromDate" class="form-control-premium form-control-sm" style="height: 36px; font-size: 0.8rem;" title="From Issue Date">
                 </div>
-                 To  
+                To
                 <div class="col-6 col-md-auto" style="width: 140px;">
                     <input type="date" id="filterToDate" class="form-control-premium form-control-sm" style="height: 36px; font-size: 0.8rem;" title="To Issue Date">
                 </div>
@@ -90,12 +90,24 @@
                 <div class="col-12 pt-2 border-top mt-2 d-flex align-items-center flex-wrap gap-1.5">
                     <div class="vehicle-chips-bar" id="vehicleChipsContainer">
                         <button type="button" class="vehicle-chip active" data-value="ALL">All Classes</button>
-                        <button type="button" class="vehicle-chip chip-mcwg" data-value="MCWG_ONLY">MCWG Only</button>
-                        <button type="button" class="vehicle-chip chip-mcwog" data-value="MCWOG_ONLY">MCWOG Only</button>
-                        <button type="button" class="vehicle-chip chip-lmv" data-value="LMV_ONLY">LMV Only</button>
-                        <button type="button" class="vehicle-chip chip-trans" data-value="TRANS_ONLY">TRANS Only</button>
-                        <button type="button" class="vehicle-chip chip-mcwg-lmv" data-value="MCWG_LMV">MCWG &amp; LMV</button>
-                        <button type="button" class="vehicle-chip chip-mcwog-lmv" data-value="MCWOG_LMV">MCWOG &amp; LMV</button>
+                        <button type="button" class="vehicle-chip chip-mcwg" data-value="MCWG_ONLY">
+                            <img src="images/MCWG.PNG" alt="MCWG" width="40" height="30" class="filter-chip-icon" /> MCWG Only
+                        </button>
+                        <button type="button" class="vehicle-chip chip-mcwog" data-value="MCWOG_ONLY">
+                            <img src="images/MCWOG.PNG" alt="MCWOG" width="40" height="30" class="filter-chip-icon" /> MCWOG Only
+                        </button>
+                        <button type="button" class="vehicle-chip chip-lmv" data-value="LMV_ONLY">
+                            <img src="images/LMV.PNG" alt="LMV" width="40" height="30" class="filter-chip-icon" /> LMV Only
+                        </button>
+                        <button type="button" class="vehicle-chip chip-trans" data-value="TRANS_ONLY">
+                            <img src="images/TRANS.PNG" alt="TRANS" width="40" height="30" class="filter-chip-icon" /> TRANS Only
+                        </button>
+                        <button type="button" class="vehicle-chip chip-mcwg-lmv" data-value="MCWG_LMV">
+                            <img src="images/MCWG-LMV.PNG" alt="MCWG & LMV" width="40" height="30" class="filter-chip-icon" /> MCWG &amp; LMV
+                        </button>
+                        <button type="button" class="vehicle-chip chip-mcwog-lmv" data-value="MCWOG_LMV">
+                            <img src="images/MCWOG-LMV.PNG" alt="MCWOG & LMV" width="40" height="30" class="filter-chip-icon" /> MCWOG &amp; LMV
+                        </button>
                     </div>
                 </div>
             </div>
@@ -113,6 +125,7 @@
     <!-- Main Workspace -->
     <div class="container-fluid px-3 px-md-4 py-3" id="wideReportWorkspace">
         <div class="premium-main-workspace-card min-view-height d-flex flex-column justify-content-start position-relative w-100 p-4">
+            
             <!-- Empty Placeholder -->
             <div id="reportPlaceholderView" class="text-center my-auto py-5 no-print d-none">
                 <i class="bi bi-layers-half text-primary fs-1"></i>
@@ -233,7 +246,8 @@
                                 LLR: <strong class="text-danger" id="editLlrText">-</strong> | Issue: <span id="editIssueText">-</span>
                             </div>
                         </div>
-                         <div class="row g-3">
+
+                        <div class="row g-3">
                             <div class="col-12">
                                 <label class="form-label small fw-bold mb-1">DL Issued Status</label>
                                 <select id="editDlIssuedSelect" class="form-select form-select-sm">

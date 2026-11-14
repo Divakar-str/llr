@@ -490,6 +490,32 @@ function filterRecordsByCriteria(reportType) {
     });
 }
 
+// Helper to map vehicle class string to the corresponding chip color class
+function getVehicleBadgeClass(vehicleClass) {
+    if (!vehicleClass) return "chip-default";
+    const v = vehicleClass.toUpperCase().trim();
+    if (v === "MCWG") return "chip-mcwg";
+    if (v === "MCWOG") return "chip-mcwog";
+    if (v === "LMV") return "chip-lmv";
+    if (v === "TRANS") return "chip-trans";
+    if (v.includes("MCWG") && v.includes("LMV")) return "chip-mcwg-lmv";
+    if (v.includes("MCWOG") && v.includes("LMV")) return "chip-mcwog-lmv";
+    return "chip-default";
+}
+
+// Helper to get the correct icon path for a vehicle class (40x30 image sizing)
+function getVehicleIconPath(vehicleClass) {
+    if (!vehicleClass) return "";
+    const v = vehicleClass.toUpperCase().trim();
+    if (v === "MCWG") return "images/MCWG.PNG";
+    if (v === "MCWOG") return "images/MCWOG.PNG";
+    if (v === "LMV") return "images/LMV.PNG";
+    if (v === "TRANS") return "images/TRANS.PNG";
+    if (v.includes("MCWG") && v.includes("LMV")) return "images/MCWG-LMV.PNG";
+    if (v.includes("MCWOG") && v.includes("LMV")) return "images/MCWOG-LMV.PNG";
+    return "";
+}
+
 function renderReportTable(data, reportType) {
     const header = document.getElementById("reportDataTableHeader");
     const tbody = document.getElementById("reportDataTableBody");
@@ -558,6 +584,13 @@ function renderReportTable(data, reportType) {
         tr.style.cursor = "pointer";
 
         const isMissingDlNumber = isDlIssued && (!row.dl_number || row.dl_number === "-");
+        const vehicleClassStr = row.vehicle_class || "-";
+        const badgeColorClass = getVehicleBadgeClass(vehicleClassStr);
+        const iconPath = getVehicleIconPath(vehicleClassStr);
+
+        const vehicleIconHtml = iconPath 
+            ? `<img src="${iconPath}" alt="${vehicleClassStr}" width="40" height="30" style="width: 40px; height: 30px; object-fit: contain; margin-right: 6px; vertical-align: middle;" />` 
+            : '';
 
         tr.innerHTML = `
             <td class="ps-3 text-muted small">${startIdx + idx + 1}</td>
@@ -573,7 +606,11 @@ function renderReportTable(data, reportType) {
                 <div class="text-muted small" style="font-size: 0.72rem;">${row.relative_type || "Father"}: ${row.relative_name || "-"}</div>
             </td>
             <td class="font-monospace date-highlight">${row.date_of_birth && row.date_of_birth !== '-' ? row.date_of_birth : '<span class="text-danger fw-bold">Missing</span>'}</td>
-            <td><span class="badge bg-light text-dark border px-2 py-1 font-monospace" style="font-size: 0.72rem;">${row.vehicle_class || "-"}</span></td>
+            <td>
+                <span class="vehicle-badge ${badgeColorClass} font-monospace d-inline-flex align-items-center">
+                    ${vehicleIconHtml}${vehicleClassStr}
+                </span>
+            </td>
             <td>
                 <span class="font-monospace text-dark fw-medium text-nowrap" onclick="copyToClipboard('${row.mobile_number || ""}')" style="cursor: pointer;">
                     ${row.mobile_number && row.mobile_number !== '-' ? row.mobile_number : '<span class="text-danger fw-bold">Missing</span>'}
