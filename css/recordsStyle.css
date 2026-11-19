@@ -1,5 +1,5 @@
 /* ==========================================================================
-   LLR Portal - Comprehensive Records Management Design System
+   LLR Portal - Records Management Design System (Lag-Free)
    ========================================================================== */
 
 :root {
@@ -8,7 +8,7 @@
     --accent-color: #0d6efd;
     --accent-hover: #0b5ed7;
     --bg-body: #f1f5f9;
-    
+
     /* SaaS Tokens */
     --saas-border: #e2e8f0;
     --saas-border-subtle: #f1f5f9;
@@ -30,22 +30,18 @@ body {
     -moz-osx-font-smoothing: grayscale;
 }
 
-/* Monospace numerals with tabular figures */
 .font-monospace {
     font-variant-numeric: tabular-nums;
 }
 
-/* Single-line LLR layout */
 .llr-nowrap {
     white-space: nowrap !important;
     display: inline-flex;
     align-items: center;
     gap: 6px;
     font-size: 1rem;
-
 }
 
-/* High-contrast bold date styling */
 .date-highlight {
     font-weight: 700 !important;
     color: #0f172a !important;
@@ -53,7 +49,6 @@ body {
     letter-spacing: -0.01em;
 }
 
-/* Eligibility badge when < 30 days */
 .eligibility-pill {
     font-size: 0.68rem;
     font-weight: 600;
@@ -68,6 +63,15 @@ body {
     white-space: nowrap;
 }
 
+@keyframes spin360 {
+    to { transform: rotate(360deg); }
+}
+
+.spin-icon {
+    display: inline-block;
+    animation: spin360 0.8s linear infinite;
+}
+
 /* ==========================================================================
    1. Dashboard Header & Navigation Tabs
    ========================================================================== */
@@ -77,7 +81,7 @@ body {
     border-radius: 6px;
     padding: 8px 16px;
     font-size: 0.875rem;
-    transition: all var(--transition-speed);
+    transition: background-color var(--transition-speed), color var(--transition-speed);
 }
 
 .nav-pills .nav-link.active {
@@ -99,7 +103,7 @@ body {
     border: none;
     border-radius: var(--input-radius);
     font-weight: 500;
-    transition: all var(--transition-speed);
+    transition: background-color var(--transition-speed), color var(--transition-speed);
 }
 
 .btn-dark-custom:hover {
@@ -113,7 +117,7 @@ body {
     background-color: #ffffff;
     border-radius: var(--input-radius);
     font-weight: 500;
-    transition: all var(--transition-speed);
+    transition: background-color var(--transition-speed), border-color var(--transition-speed);
 }
 
 .btn-outline-custom:hover {
@@ -124,22 +128,13 @@ body {
 .btn-outline-success {
     border-radius: var(--input-radius);
     font-weight: 500;
-    transition: all var(--transition-speed);
+    transition: background-color var(--transition-speed), border-color var(--transition-speed), color var(--transition-speed);
 }
 
 .btn-outline-success:hover {
     background-color: rgba(25, 135, 84, 0.1);
     border-color: #198754;
     color: #198754;
-}
-
-.btn-group .btn {
-    transition: all 0.15s ease-in-out;
-}
-
-.btn-group .btn:hover {
-    transform: translateY(-1px);
-    z-index: 2;
 }
 
 .btn-action-icon {
@@ -154,14 +149,13 @@ body {
     background: #ffffff;
     color: #475569;
     font-size: 0.85rem;
-    transition: all var(--transition-speed);
+    transition: background-color var(--transition-speed), color var(--transition-speed), border-color var(--transition-speed);
 }
 
 .btn-action-icon:hover {
     background: #f1f5f9;
     color: #0f172a;
     border-color: #cbd5e1;
-    transform: translateY(-1px);
 }
 
 /* ==========================================================================
@@ -171,11 +165,7 @@ body {
     border-radius: var(--card-radius) !important;
     border: 1px solid var(--saas-border);
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02);
-    transition: box-shadow 0.2s ease;
-}
-
-.card:hover {
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.06), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+    contain: layout style;
 }
 
 .card-header {
@@ -238,7 +228,7 @@ body {
     font-size: 0.72rem;
     font-weight: 600;
     line-height: 1.2;
-    transition: opacity 0.15s ease;
+    transition: opacity var(--transition-speed);
 }
 
 .status-pill:hover {
@@ -279,6 +269,7 @@ body {
 .table-responsive {
     border-bottom-left-radius: var(--card-radius);
     border-bottom-right-radius: var(--card-radius);
+    contain: layout style;
 }
 
 #dbMasterTable {
@@ -319,7 +310,7 @@ th.sortable:hover {
     vertical-align: middle;
     border-bottom: 1px solid var(--saas-border);
     background-color: #ffffff;
-    transition: background-color 0.15s ease-in-out;
+    transition: background-color var(--transition-speed);
 }
 
 #dbMasterTable tbody tr:hover td {
@@ -330,11 +321,7 @@ th.sortable:hover {
     cursor: pointer;
 }
 
-td span[onclick], th span[onclick] {
-    transition: color 0.15s ease-in-out;
-}
-
-td span[onclick]:hover {
+[data-action="copy"]:hover {
     color: var(--accent-color) !important;
 }
 
@@ -358,60 +345,39 @@ td span[onclick]:hover {
 }
 
 /* ==========================================================================
-   7. Custom Sleek Scrollbars & Animations
+   7. Custom Scrollbars & Lightweight Animations
    ========================================================================== */
-.table-responsive::-webkit-scrollbar,
-.modal-body::-webkit-scrollbar {
+.table-responsive::-webkit-scrollbar, .modal-body::-webkit-scrollbar {
     width: 6px;
     height: 6px;
 }
 
-.table-responsive::-webkit-scrollbar-track,
-.modal-body::-webkit-scrollbar-track {
+.table-responsive::-webkit-scrollbar-track, .modal-body::-webkit-scrollbar-track {
     background: #f1f3f5;
     border-radius: 4px;
 }
 
-.table-responsive::-webkit-scrollbar-thumb,
-.modal-body::-webkit-scrollbar-thumb {
+.table-responsive::-webkit-scrollbar-thumb, .modal-body::-webkit-scrollbar-thumb {
     background: #cbd5e1;
     border-radius: 4px;
 }
 
-.table-responsive::-webkit-scrollbar-thumb:hover,
-.modal-body::-webkit-scrollbar-thumb:hover {
+.table-responsive::-webkit-scrollbar-thumb:hover, .modal-body::-webkit-scrollbar-thumb:hover {
     background: #94a3b8;
 }
 
-.animated-pane {
-    animation: fadeInPane 0.25s ease-in-out forwards;
+#customAlertContainer .alert {
+    animation: slideInTop 0.22s ease-out forwards;
 }
 
-@keyframes fadeInPane {
+@keyframes slideInTop {
     from {
         opacity: 0;
-        transform: translateY(4px);
+        transform: translateY(-10px);
     }
     to {
         opacity: 1;
         transform: translateY(0);
-    }
-}
-
-#customAlertContainer .alert {
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
-    animation: slideInRight 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-}
-
-@keyframes slideInRight {
-    from {
-        opacity: 0;
-        transform: translateX(40px);
-    }
-    to {
-        opacity: 1;
-        transform: translateX(0);
     }
 }
 

@@ -1,25 +1,65 @@
-// js/recordsHandler.js - Advanced Sorting, Filtering, Quick DL Editing & Professional UI Alignment
+// js/recordsHandler.js - Clean, Zero-Lag Registry Handler with Dynamic Filters & Edge-Case Fixes
 document.addEventListener("DOMContentLoaded", () => {
     fetchAndRecordWithLoader();
 
-    // Event Listeners
     const refreshBtn = document.getElementById("refreshDataBtn");
     if (refreshBtn) refreshBtn.addEventListener("click", fetchAndRecordWithLoader);
 
     const searchInput = document.getElementById("tableSearchInput");
-    if (searchInput) searchInput.addEventListener("input", () => { currentPage = 1; filterTableRecords(); });
+    let searchDebounceTimer;
+    if (searchInput) {
+        searchInput.addEventListener("input", () => {
+            clearTimeout(searchDebounceTimer);
+            searchDebounceTimer = setTimeout(filterTableRecords, 180);
+        });
+    }
+
+    const classFilter = document.getElementById("filterVehicleClass");
+    if (classFilter) classFilter.addEventListener("change", filterTableRecords);
+
+    const yearFilter = document.getElementById("filterIssueYear");
+    if (yearFilter) {
+        yearFilter.addEventListener("change", () => {
+            populateMonthDropdown(yearFilter.value);
+            filterTableRecords();
+        });
+    }
+
+    const monthFilter = document.getElementById("filterIssueMonth");
+    if (monthFilter) monthFilter.addEventListener("change", filterTableRecords);
 
     const statusFilter = document.getElementById("filterDlStatus");
-    if (statusFilter) statusFilter.addEventListener("change", () => { currentPage = 1; filterTableRecords(); });
+    if (statusFilter) statusFilter.addEventListener("change", filterTableRecords);
 
     const startDateInput = document.getElementById("filterStartDate");
     const endDateInput = document.getElementById("filterEndDate");
-    if (startDateInput) startDateInput.addEventListener("change", () => { resetTodayButtonState(); currentPage = 1; filterTableRecords(); });
-    if (endDateInput) endDateInput.addEventListener("change", () => { resetTodayButtonState(); currentPage = 1; filterTableRecords(); });
+    if (startDateInput) {
+        startDateInput.addEventListener("change", () => {
+            resetTodayButtonState();
+            filterTableRecords();
+        });
+    }
+    if (endDateInput) {
+        endDateInput.addEventListener("change", () => {
+            resetTodayButtonState();
+            filterTableRecords();
+        });
+    }
+
+    const resetFiltersBtn = document.getElementById("resetAllFiltersBtn");
+    if (resetFiltersBtn) resetFiltersBtn.addEventListener("click", resetAllFilters);
+
+    const viewModalBody = document.getElementById("viewRecordModalBody");
+    if (viewModalBody) {
+        viewModalBody.addEventListener("click", (e) => {
+            const copyBtn = e.target.closest("[data-copy-text]");
+            if (copyBtn) copyToClipboard(copyBtn.dataset.copyText);
+        });
+    }
 
     injectTodayFilterButton();
+    setupTableEventDelegation();
 
-    // Form Submissions
     const manualForm = document.getElementById("manualInsertForm");
     if (manualForm) manualForm.addEventListener("submit", handleManualInsert);
 
@@ -31,38 +71,230 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 let globalRecordsCache = [];
+let recordLookupMap = new Map();
 let filteredRecordsCache = [];
 let isTodayFilterActive = false;
 let currentViewedRecord = null;
 let currentPage = 1;
 const pageSize = 10;
 
-// Sorting State Tracker
 let sortColumn = "llr_number";
 let sortDirection = "desc";
 
+const MONTH_NAMES = {
+    "01": "January", "02": "February", "03": "March", "04": "April",
+    "05": "May", "06": "June", "07": "July", "08": "August",
+    "09": "September", "10": "October", "11": "November", "12": "December"
+};
+
+function escapeHtml(value) {
+    if (value === null || value === undefined) return "";
+    return String(value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+}
+
+function getLocalTodayISO() {
+    const now = new Date();
+    const y = now.getFullYear();
+    const m = String(now.getMonth() + 1).padStart(2, "0");
+    const d = String(now.getDate()).padStart(2, "0");
+    return `${y}-${m}-${d}`;
+}
+
 /**
- * Calculates calendar days elapsed between DD-MM-YYYY issue date and today.
+ * Parses DD-MM-YYYY, DD/MM/YYYY, or YYYY-MM-DD into { year, month, day, iso, ms } or null.
  */
-function calculateDaysPassed(issueDateStr) {
-    if (!issueDateStr || issueDateStr === "-") return 0;
-    const parts = issueDateStr.split("-");
-    if (parts.length !== 3) return 0;
+function parseRecordDate(dateStr) {
+    if (!dateStr || typeof dateStr !== "string") return null;
+    const trimmed = dateStr.trim();
+    if (!trimmed || trimmed === "-") return null;
 
-    const issueDate = new Date(`${parts[2]}-${parts[1]}-${parts[0]}`);
+    const sep = trimmed.includes("/") ? "/" : trimmed.includes("-") ? "-" : null;
+    if (!sep) return null;
+
+    const parts = trimmed.split(sep);
+    if (parts.length !== 3) return null;
+
+    let year, month, day;
+    if (parts[0].length === 4) {
+        year = parts[0];
+        month = parts[1].padStart(2, "0");
+        day = parts[2].padStart(2, "0");
+    } else if (parts[2].length === 4) {
+        day = parts[0].padStart(2, "0");
+        month = parts[1].padStart(2, "0");
+        year = parts[2];
+    } else {
+        return null;
+    }
+
+    const iso = `${year}-${month}-${day}`;
+    const ms = new Date(`${iso}T00:00:00`).getTime();
+    if (isNaN(ms)) return null;
+
+    return { year, month, day, iso, ms };
+}
+
+function preprocessRecords(rawList) {
     const today = new Date();
-    
-    issueDate.setHours(0, 0, 0, 0);
     today.setHours(0, 0, 0, 0);
+    const todayMs = today.getTime();
 
-    const diffTime = today - issueDate;
-    return Math.floor(diffTime / (1000 * 60 * 60 * 24));
+    recordLookupMap.clear();
+
+    const processed = rawList.map((row) => {
+        const parsedIssue = parseRecordDate(row.issue_date);
+        const parsedExpiry = parseRecordDate(row.expiry_date);
+        const parsedDob = parseRecordDate(row.date_of_birth);
+
+        const daysPassed = parsedIssue ? Math.floor((todayMs - parsedIssue.ms) / 86400000) : 0;
+
+        const searchIndex = Object.values(row)
+            .filter((v) => v !== null && v !== undefined)
+            .join(" ")
+            .toLowerCase();
+
+        const enriched = {
+            ...row,
+            _daysPassed: daysPassed,
+            _isEligible: daysPassed >= 30,
+            _daysRemaining: Math.max(0, 30 - daysPassed),
+            _issueIso: parsedIssue ? parsedIssue.iso : "",
+            _issueYear: parsedIssue ? parsedIssue.year : "",
+            _issueMonth: parsedIssue ? parsedIssue.month : "",
+            _sort_issue_date: parsedIssue ? parsedIssue.iso : "",
+            _sort_expiry_date: parsedExpiry ? parsedExpiry.iso : "",
+            _sort_date_of_birth: parsedDob ? parsedDob.iso : "",
+            _searchIndex: searchIndex
+        };
+
+        if (row.llr_number) {
+            recordLookupMap.set(String(row.llr_number), enriched);
+        }
+        return enriched;
+    });
+
+    populateDynamicFilterDropdowns(processed);
+    return processed;
+}
+
+function populateDynamicFilterDropdowns(records) {
+    const classSelect = document.getElementById("filterVehicleClass");
+    const yearSelect = document.getElementById("filterIssueYear");
+
+    const prevClass = classSelect ? classSelect.value : "ALL";
+    const prevYear = yearSelect ? yearSelect.value : "ALL";
+
+    const classes = new Set();
+    const years = new Set();
+
+    for (const r of records) {
+        if (r.vehicle_class && String(r.vehicle_class).trim() !== "" && r.vehicle_class !== "-") {
+            classes.add(String(r.vehicle_class).trim().toUpperCase());
+        }
+        if (r._issueYear) {
+            years.add(r._issueYear);
+        }
+    }
+
+    if (classSelect) {
+        const sortedClasses = Array.from(classes).sort();
+        classSelect.innerHTML = `<option value="ALL">All Classes (${sortedClasses.length})</option>`;
+        for (const vc of sortedClasses) {
+            const safeVc = escapeHtml(vc);
+            classSelect.innerHTML += `<option value="${safeVc}">${safeVc}</option>`;
+        }
+        classSelect.value = sortedClasses.includes(prevClass) ? prevClass : "ALL";
+    }
+
+    if (yearSelect) {
+        const sortedYears = Array.from(years).sort((a, b) => b.localeCompare(a));
+        yearSelect.innerHTML = `<option value="ALL">All Years</option>`;
+        for (const yr of sortedYears) {
+            const safeYr = escapeHtml(yr);
+            yearSelect.innerHTML += `<option value="${safeYr}">${safeYr}</option>`;
+        }
+        yearSelect.value = sortedYears.includes(prevYear) ? prevYear : "ALL";
+    }
+
+    populateMonthDropdown(yearSelect ? yearSelect.value : "ALL");
+}
+
+function populateMonthDropdown(selectedYear) {
+    const monthSelect = document.getElementById("filterIssueMonth");
+    if (!monthSelect) return;
+
+    const prevMonth = monthSelect.value;
+    const months = new Set();
+
+    for (const r of globalRecordsCache) {
+        if (!r._issueMonth) continue;
+        if (selectedYear && selectedYear !== "ALL" && r._issueYear !== selectedYear) continue;
+        months.add(r._issueMonth);
+    }
+
+    const sortedMonths = Array.from(months).sort();
+    monthSelect.innerHTML = `<option value="ALL">All Months</option>`;
+    for (const m of sortedMonths) {
+        const label = MONTH_NAMES[m] ? `${MONTH_NAMES[m]} (${m})` : m;
+        monthSelect.innerHTML += `<option value="${escapeHtml(m)}">${escapeHtml(label)}</option>`;
+    }
+
+    monthSelect.value = sortedMonths.includes(prevMonth) ? prevMonth : "ALL";
+}
+
+function updateActiveFilterBadge() {
+    const badge = document.getElementById("activeFilterCountBadge");
+    if (!badge) return;
+
+    let count = 0;
+    if ((document.getElementById("filterVehicleClass")?.value || "ALL") !== "ALL") count++;
+    if ((document.getElementById("filterIssueYear")?.value || "ALL") !== "ALL") count++;
+    if ((document.getElementById("filterIssueMonth")?.value || "ALL") !== "ALL") count++;
+    if ((document.getElementById("filterDlStatus")?.value || "ALL") !== "ALL") count++;
+    if (document.getElementById("filterStartDate")?.value) count++;
+    if (document.getElementById("filterEndDate")?.value) count++;
+
+    if (count > 0) {
+        badge.textContent = count;
+        badge.classList.remove("d-none");
+    } else {
+        badge.classList.add("d-none");
+    }
+}
+
+function resetAllFilters() {
+    const classSelect = document.getElementById("filterVehicleClass");
+    const yearSelect = document.getElementById("filterIssueYear");
+    const monthSelect = document.getElementById("filterIssueMonth");
+    const statusSelect = document.getElementById("filterDlStatus");
+    const startInput = document.getElementById("filterStartDate");
+    const endInput = document.getElementById("filterEndDate");
+
+    if (classSelect) classSelect.value = "ALL";
+    if (yearSelect) yearSelect.value = "ALL";
+    populateMonthDropdown("ALL");
+    if (monthSelect) monthSelect.value = "ALL";
+    if (statusSelect) statusSelect.value = "ALL";
+    if (startInput) startInput.value = "";
+    if (endInput) endInput.value = "";
+
+    resetTodayButtonState();
+    filterTableRecords();
+    showCustomAlert("All filters cleared.", "info");
 }
 
 // 1. Fetch Records
 async function fetchAndRecordWithLoader() {
     const tbody = document.getElementById("recordsTableBody");
     const badge = document.getElementById("recordCountBadge");
+    const refreshIcon = document.querySelector("#refreshDataBtn i");
+
+    if (refreshIcon) refreshIcon.classList.add("spin-icon");
 
     if (tbody) {
         tbody.innerHTML = `
@@ -85,22 +317,27 @@ async function fetchAndRecordWithLoader() {
 
         if (response.status === 401) {
             showCustomAlert("Session expired or unauthorized. Redirecting to login...", "danger");
-            setTimeout(() => window.location.href = "login.html", 1500);
+            setTimeout(() => (window.location.href = "login.html"), 1500);
             return;
         }
 
         if (!response.ok) throw new Error(`Server returned status: ${response.status}`);
 
         const data = await response.json();
-        globalRecordsCache = Array.isArray(data) ? data : (data.data || []);
+        const rawList = Array.isArray(data) ? data : data.data || [];
+        globalRecordsCache = preprocessRecords(rawList);
 
         filterTableRecords();
         showCustomAlert("Database synchronized successfully!", "success");
     } catch (error) {
         console.error("Fetch Error:", error);
         if (badge) badge.textContent = "Error";
-        showCustomAlert("Failed to fetch records: " + error.message, "danger");
-        if (tbody) tbody.innerHTML = `<tr><td colspan="10" class="text-center py-4 text-danger">Failed to load data from server.</td></tr>`;
+        showCustomAlert("Failed to fetch records: " + escapeHtml(error.message), "danger");
+        if (tbody) {
+            tbody.innerHTML = `<tr><td colspan="10" class="text-center py-4 text-danger">Failed to load data from server.</td></tr>`;
+        }
+    } finally {
+        if (refreshIcon) refreshIcon.classList.remove("spin-icon");
     }
 }
 
@@ -113,15 +350,16 @@ function handleSort(columnKey) {
         sortDirection = "asc";
     }
 
-    document.querySelectorAll("th.sortable i").forEach(icon => {
-        icon.className = "bi bi-arrow-down-up small ms-1 text-muted";
+    document.querySelectorAll("th.sortable i.sort-indicator").forEach((icon) => {
+        icon.className = "bi bi-arrow-down-up small ms-1 text-muted sort-indicator";
     });
 
     const activeIcon = document.getElementById(`sort-${columnKey}`);
     if (activeIcon) {
-        activeIcon.className = sortDirection === "asc" 
-            ? "bi bi-sort-down-alt small ms-1 text-primary fw-bold" 
-            : "bi bi-sort-down small ms-1 text-primary fw-bold";
+        activeIcon.className =
+            sortDirection === "asc"
+                ? "bi bi-sort-down-alt small ms-1 text-primary fw-bold sort-indicator"
+                : "bi bi-sort-down small ms-1 text-primary fw-bold sort-indicator";
     }
 
     applySorting();
@@ -129,36 +367,69 @@ function handleSort(columnKey) {
 }
 
 function applySorting() {
-    filteredRecordsCache.sort((a, b) => {
-        let valA = a[sortColumn] || "";
-        let valB = b[sortColumn] || "";
+    const isDateCol = ["issue_date", "expiry_date", "date_of_birth"].includes(sortColumn);
+    const sortKey = isDateCol ? `_sort_${sortColumn}` : sortColumn;
+    const dir = sortDirection === "asc" ? 1 : -1;
 
-        if (["issue_date", "expiry_date", "date_of_birth"].includes(sortColumn)) {
-            const partsA = valA.split("-");
-            const partsB = valB.split("-");
-            if (partsA.length === 3) valA = `${partsA[2]}${partsA[1]}${partsA[0]}`;
-            if (partsB.length === 3) valB = `${partsB[2]}${partsB[1]}${partsB[0]}`;
-        }
+    filteredRecordsCache.sort((a, b) => {
+        let valA = a[sortKey] ?? "";
+        let valB = b[sortKey] ?? "";
 
         if (typeof valA === "string") valA = valA.toLowerCase();
         if (typeof valB === "string") valB = valB.toLowerCase();
 
-        if (valA < valB) return sortDirection === "asc" ? -1 : 1;
-        if (valA > valB) return sortDirection === "asc" ? 1 : -1;
+        if (valA < valB) return -1 * dir;
+        if (valA > valB) return 1 * dir;
         return 0;
     });
 }
 
-// 3. Render Table Rows with Professional Enterprise Layout & 30-Day Eligibility Rule
+// 3. Event Delegation
+function setupTableEventDelegation() {
+    const tbody = document.getElementById("recordsTableBody");
+    if (!tbody) return;
+
+    tbody.addEventListener("click", (e) => {
+        const actionBtn = e.target.closest("[data-action]");
+        if (!actionBtn) return;
+
+        e.stopPropagation();
+        const action = actionBtn.dataset.action;
+        const llr = actionBtn.dataset.llr || "";
+        const copyVal = actionBtn.dataset.copy || "";
+
+        if (action === "copy") {
+            copyToClipboard(copyVal);
+            return;
+        }
+
+        const record = recordLookupMap.get(llr);
+        if (!record) return;
+
+        if (action === "view") openViewModal(record);
+        else if (action === "quick-dl") openQuickDlModal(record);
+        else if (action === "edit") openEditModal(record);
+        else if (action === "delete") deleteDatabaseRecord(llr);
+    });
+
+    tbody.addEventListener("dblclick", (e) => {
+        const tr = e.target.closest("tr[data-llr]");
+        if (!tr) return;
+        const record = recordLookupMap.get(tr.dataset.llr || "");
+        if (record) openViewModal(record);
+    });
+}
+
+// 4. Render Table Rows
 function renderTableRows() {
     const tbody = document.getElementById("recordsTableBody");
     const badge = document.getElementById("recordCountBadge");
     if (!tbody) return;
 
-    tbody.innerHTML = "";
-    if (badge) badge.textContent = `${filteredRecordsCache.length} Active Records`;
+    const totalRecords = filteredRecordsCache.length;
+    if (badge) badge.textContent = `${totalRecords} Active Records`;
 
-    if (filteredRecordsCache.length === 0) {
+    if (totalRecords === 0) {
         tbody.innerHTML = `
             <tr>
                 <td colspan="10" class="text-center py-5">
@@ -173,7 +444,6 @@ function renderTableRows() {
         return;
     }
 
-    const totalRecords = filteredRecordsCache.length;
     const totalPages = Math.ceil(totalRecords / pageSize) || 1;
     if (currentPage > totalPages) currentPage = totalPages;
     if (currentPage < 1) currentPage = 1;
@@ -182,111 +452,103 @@ function renderTableRows() {
     const endIdx = Math.min(startIdx + pageSize, totalRecords);
     const paginatedItems = filteredRecordsCache.slice(startIdx, endIdx);
 
-    paginatedItems.forEach((row) => {
+    const fragment = document.createDocumentFragment();
+
+    for (let i = 0; i < paginatedItems.length; i++) {
+        const row = paginatedItems[i];
         const tr = document.createElement("tr");
-        tr.ondblclick = () => openViewModal(row);
+        const safeLlr = escapeHtml(row.llr_number || "");
+        tr.dataset.llr = safeLlr;
         tr.style.cursor = "pointer";
         tr.title = "Double-click to open record drawer";
 
         const isDlIssued = row.dl_issued === "Yes";
-        const daysPassed = calculateDaysPassed(row.issue_date);
-        const isEligibleForDl = daysPassed >= 30;
-        const daysRemaining = 30 - daysPassed;
+        const isEligibleForDl = row._isEligible;
+        const daysRemaining = row._daysRemaining;
 
         tr.innerHTML = `
-            <!-- 1. Single-Line LLR Number -->
             <td class="ps-4 text-nowrap">
                 <div class="llr-nowrap">
-                    <span class="font-monospace fw-bold text-danger" onclick="copyToClipboard('${row.llr_number || ""}')" title="Click to copy LLR" style="cursor: pointer;">
-                        ${row.llr_number || "-"}
+                    <span class="font-monospace fw-bold text-danger" data-action="copy" data-copy="${safeLlr}" title="Click to copy LLR" style="cursor: pointer;">
+                        ${safeLlr || "-"}
                     </span>
-                   
                 </div>
             </td>
 
-            <!-- Applicant Name -->
             <td>
-                <div class="fw-semibold text-dark text-nowrap">${row.name || "-"}</div>
-                <div class="text-muted" style="font-size: 0.72rem;">${row.relative_type || "Father"}: ${row.relative_name || "-"}</div>
+                <div class="fw-semibold text-dark text-nowrap">${escapeHtml(row.name) || "-"}</div>
+                <div class="text-muted" style="font-size: 0.72rem;">${escapeHtml(row.relative_type) || "Father"}: ${escapeHtml(row.relative_name) || "-"}</div>
             </td>
 
-            <!-- 2. Bolder Date of Birth -->
-            <td class="font-monospace date-highlight">${row.date_of_birth || "-"}</td>
+            <td class="font-monospace date-highlight text-nowrap">${escapeHtml(row.date_of_birth) || "-"}</td>
 
-            <!-- Vehicle Class -->
             <td>
                 <span class="badge bg-light text-dark border px-2 py-1 font-monospace" style="font-size: 0.72rem;">
-                    ${row.vehicle_class || "-"}
+                    ${escapeHtml(row.vehicle_class) || "-"}
                 </span>
             </td>
 
-            <!-- Mobile Number -->
             <td>
-                <span class="font-monospace text-dark fw-medium text-nowrap" onclick="copyToClipboard('${row.mobile_number || ""}')" title="Click to copy mobile" style="cursor: pointer;">
-                    ${row.mobile_number || "-"}
+                <span class="font-monospace text-dark fw-medium text-nowrap" data-action="copy" data-copy="${escapeHtml(row.mobile_number || "")}" title="Click to copy mobile" style="cursor: pointer;">
+                    ${escapeHtml(row.mobile_number) || "-"}
                 </span>
             </td>
 
-            <!-- 2. Bolder Issue Date -->
-            <td class="font-monospace date-highlight">${row.issue_date || "-"}</td>
+            <td class="font-monospace date-highlight text-nowrap">${escapeHtml(row.issue_date) || "-"}</td>
 
-            <!-- 2. Bolder Expiry Date -->
-            <td class="font-monospace date-highlight">${row.expiry_date || "-"}</td>
+            <td class="font-monospace date-highlight text-nowrap">${escapeHtml(row.expiry_date) || "-"}</td>
 
-            <!-- Status Pill: If <30 days and not issued, quick edit is locked -->
             <td>
-                <span class="status-pill ${isDlIssued ? 'status-pill-yes' : 'status-pill-no'} ${isEligibleForDl ? 'cursor-pointer' : ''}" 
-                      ${isEligibleForDl ? `onclick='event.stopPropagation(); openQuickDlModal(${JSON.stringify(row).replace(/'/g, "&#39;")})'` : ''}
-                      title="${isEligibleForDl ? 'Click to toggle status' : `Eligible in ${daysRemaining} day(s)`}">
+                <span class="status-pill ${isDlIssued ? "status-pill-yes" : "status-pill-no"} ${isEligibleForDl ? "cursor-pointer" : ""}"
+                      ${isEligibleForDl ? `data-action="quick-dl" data-llr="${safeLlr}"` : ""}
+                      title="${isEligibleForDl ? "Click to toggle status" : `Eligible in ${daysRemaining} day(s)`}">
                     <i class="bi bi-circle-fill" style="font-size: 0.45rem;"></i>
-                    <span>${isDlIssued ? 'Yes' : 'No'}</span>
-                     ${!isEligibleForDl && !isDlIssued ? `
-                    
-                        <span class="eligibility-pill" title="Cannot apply for permanent DL until 30 days complete">
-                            <i class="bi bi-clock-history"></i> ${daysRemaining}d
-                        </span>
-                    
-                ` : ''}
+                    <span>${isDlIssued ? "Yes" : "No"}</span>
+                    ${
+                        !isEligibleForDl && !isDlIssued
+                            ? `<span class="eligibility-pill" title="Cannot apply for permanent DL until 30 days complete">
+                                   <i class="bi bi-clock-history"></i> ${daysRemaining}d
+                               </span>`
+                            : ""
+                    }
                 </span>
-               
             </td>
 
-            <!-- Remarks -->
             <td>
-                <span class="text-truncate d-inline-block text-muted" style="max-width: 140px; font-size: 0.75rem;" title="${row.remarks || ""}">
-                    ${row.remarks && row.remarks !== '-' ? row.remarks : '-'}
+                <span class="text-truncate d-inline-block text-muted" style="max-width: 140px; font-size: 0.75rem;" title="${escapeHtml(row.remarks || "")}">
+                    ${row.remarks && row.remarks !== "-" ? escapeHtml(row.remarks) : "-"}
                 </span>
             </td>
 
-            <!-- Actions: Quick status hidden if < 30 days -->
-            <td class="text-end pe-4 text-nowrap" onclick="event.stopPropagation()">
+            <td class="text-end pe-4 text-nowrap">
                 <div class="d-inline-flex align-items-center gap-1">
-                    <button class="btn-action-icon" onclick='openViewModal(${JSON.stringify(row).replace(/'/g, "&#39;")})' title="View Profile">
+                    <button class="btn-action-icon" data-action="view" data-llr="${safeLlr}" title="View Profile">
                         <i class="bi bi-eye"></i>
                     </button>
-
-                    ${isEligibleForDl ? `
-                        <button class="btn-action-icon text-warning" onclick='openQuickDlModal(${JSON.stringify(row).replace(/'/g, "&#39;")})' title="Quick Status Update">
-                            <i class="bi bi-lightning-charge"></i>
-                        </button>
-                    ` : ''}
-
-                    <button class="btn-action-icon text-primary" onclick='openEditModal(${JSON.stringify(row).replace(/'/g, "&#39;")})' title="Edit Full Profile">
+                    ${
+                        isEligibleForDl
+                            ? `<button class="btn-action-icon text-warning" data-action="quick-dl" data-llr="${safeLlr}" title="Quick Status Update">
+                                   <i class="bi bi-lightning-charge"></i>
+                               </button>`
+                            : ""
+                    }
+                    <button class="btn-action-icon text-primary" data-action="edit" data-llr="${safeLlr}" title="Edit Full Profile">
                         <i class="bi bi-pencil"></i>
                     </button>
-                    <button class="btn-action-icon text-danger" onclick="deleteDatabaseRecord('${row.llr_number}')" title="Delete">
+                    <button class="btn-action-icon text-danger" data-action="delete" data-llr="${safeLlr}" title="Delete">
                         <i class="bi bi-trash"></i>
                     </button>
                 </div>
             </td>
         `;
-        tbody.appendChild(tr);
-    });
+        fragment.appendChild(tr);
+    }
 
+    tbody.replaceChildren(fragment);
     updatePaginationNav(totalRecords, totalPages, startIdx + 1, endIdx);
 }
 
-// 4. Quick-Edit DL Modal Controls
+// 5. Quick-Edit DL Modal
 function openQuickDlModal(row) {
     document.getElementById("quickLlrNumber").value = row.llr_number || "";
     document.getElementById("quickLlrText").textContent = row.llr_number || "-";
@@ -295,16 +557,23 @@ function openQuickDlModal(row) {
     document.getElementById("quickDobText").textContent = row.date_of_birth || "-";
 
     document.getElementById("quickDlIssued").value = row.dl_issued === "Yes" ? "Yes" : "No";
-    document.getElementById("quickDlNumber").value = (row.dl_number && row.dl_number !== "-") ? row.dl_number : "";
-    document.getElementById("quickApprovedDate").value = formatDateToISO(row.approved_date) || "";
+    document.getElementById("quickDlNumber").value = row.dl_number && row.dl_number !== "-" ? row.dl_number : "";
+    const parsedApproved = parseRecordDate(row.approved_date);
+    document.getElementById("quickApprovedDate").value = parsedApproved ? parsedApproved.iso : "";
 
-    const modal = new bootstrap.Modal(document.getElementById("quickDlModal"));
-    modal.show();
+    bootstrap.Modal.getOrCreateInstance(document.getElementById("quickDlModal")).show();
 }
 
 function setQuickDateToday() {
-    const todayISO = new Date().toISOString().split("T")[0];
-    document.getElementById("quickApprovedDate").value = todayISO;
+    document.getElementById("quickApprovedDate").value = getLocalTodayISO();
+}
+
+function stripInternalFields(record) {
+    const clean = {};
+    for (const [key, val] of Object.entries(record)) {
+        if (!key.startsWith("_")) clean[key] = val;
+    }
+    return clean;
 }
 
 async function handleQuickDlSubmit(event) {
@@ -317,14 +586,14 @@ async function handleQuickDlSubmit(event) {
 
     if (approvedDate) approvedDate = formatDateToDisplay(approvedDate);
 
-    const existing = globalRecordsCache.find(r => r.llr_number === llrNumber);
+    const existing = recordLookupMap.get(llrNumber);
     if (!existing) {
         showCustomAlert("Error: Record not found in local cache.", "danger");
         return;
     }
 
     const payload = {
-        ...existing,
+        ...stripInternalFields(existing),
         action: "update",
         dl_issued: dlIssued,
         dl_number: dlNumber || "-",
@@ -343,53 +612,66 @@ async function handleQuickDlSubmit(event) {
 
         const result = await response.json();
         if (result.status === "success") {
-            showCustomAlert(`✓ DL status updated for ${existing.name || llrNumber}!`, "success");
+            showCustomAlert(`DL status updated for ${escapeHtml(existing.name || llrNumber)}!`, "success");
             bootstrap.Modal.getInstance(document.getElementById("quickDlModal")).hide();
             fetchAndRecordWithLoader();
         } else {
             throw new Error(result.message || "Failed to update DL status.");
         }
     } catch (err) {
-        showCustomAlert("Error saving quick status: " + err.message, "danger");
+        showCustomAlert("Error saving quick status: " + escapeHtml(err.message), "danger");
     } finally {
         submitBtn.disabled = false;
         submitBtn.innerHTML = `<span>Update Status</span> <i class="bi bi-check2"></i>`;
     }
 }
 
-// 5. Combined Search & Filtering
+// 6. Combined Search & Filtering
 function filterTableRecords() {
     const searchInput = document.getElementById("tableSearchInput");
-    const query = searchInput.value.toLowerCase().trim();
-    const statusFilter = document.getElementById("filterDlStatus") ? document.getElementById("filterDlStatus").value : "ALL";
-    const startDate = document.getElementById("filterStartDate").value;
-    const endDate = document.getElementById("filterEndDate").value;
+    const query = searchInput ? searchInput.value.toLowerCase().trim() : "";
+    const classFilter = document.getElementById("filterVehicleClass")?.value || "ALL";
+    const yearFilter = document.getElementById("filterIssueYear")?.value || "ALL";
+    const monthFilter = document.getElementById("filterIssueMonth")?.value || "ALL";
+    const statusFilter = document.getElementById("filterDlStatus")?.value || "ALL";
+    const startDate = document.getElementById("filterStartDate")?.value || "";
+    const endDate = document.getElementById("filterEndDate")?.value || "";
 
-    if (query !== "") {
-        searchInput.classList.add("border-primary", "shadow-sm", "bg-light");
-    } else {
-        searchInput.classList.remove("border-primary", "shadow-sm", "bg-light");
+    updateActiveFilterBadge();
+
+    if (searchInput) {
+        searchInput.classList.toggle("border-primary", query !== "");
+        searchInput.classList.toggle("shadow-sm", query !== "");
+        searchInput.classList.toggle("bg-light", query !== "");
     }
 
-    filteredRecordsCache = globalRecordsCache.filter(row => {
+    filteredRecordsCache = globalRecordsCache.filter((row) => {
+        if (classFilter !== "ALL" && String(row.vehicle_class || "").trim().toUpperCase() !== classFilter) {
+            return false;
+        }
+
+        if (yearFilter !== "ALL" && row._issueYear !== yearFilter) {
+            return false;
+        }
+
+        if (monthFilter !== "ALL" && row._issueMonth !== monthFilter) {
+            return false;
+        }
+
         if (statusFilter !== "ALL") {
             const rowStatus = row.dl_issued === "Yes" ? "Yes" : "No";
             if (rowStatus !== statusFilter) return false;
         }
 
-        const matchesQuery = query === "" || Object.values(row).some(val =>
-            val !== null && val !== undefined && String(val).toLowerCase().includes(query)
-        );
-        if (!matchesQuery) return false;
-
-        if (startDate || endDate) {
-            const parts = (row.issue_date || "").split("-");
-            if (parts.length === 3) {
-                const rowDateISO = `${parts[2]}-${parts[1]}-${parts[0]}`;
-                if (startDate && rowDateISO < startDate) return false;
-                if (endDate && rowDateISO > endDate) return false;
-            }
+        if (query !== "" && !row._searchIndex.includes(query)) {
+            return false;
         }
+
+        if ((startDate || endDate) && row._issueIso) {
+            if (startDate && row._issueIso < startDate) return false;
+            if (endDate && row._issueIso > endDate) return false;
+        }
+
         return true;
     });
 
@@ -406,11 +688,11 @@ function updatePaginationNav(total, totalPages, showingStart = 0, showingEnd = 0
     nav.innerHTML = `
         <span class="small text-muted">Showing <strong>${showingStart}-${showingEnd}</strong> of <strong>${total}</strong> records</span>
         <div class="btn-group btn-group-sm">
-            <button class="btn btn-outline-secondary" ${currentPage <= 1 ? 'disabled' : ''} onclick="changePage(${currentPage - 1})">
+            <button class="btn btn-outline-secondary" ${currentPage <= 1 ? "disabled" : ""} onclick="changePage(${currentPage - 1})">
                 <i class="bi bi-chevron-left"></i> Prev
             </button>
             <button class="btn btn-outline-secondary disabled fw-bold text-dark">Page ${currentPage} of ${totalPages || 1}</button>
-            <button class="btn btn-outline-secondary" ${currentPage >= totalPages ? 'disabled' : ''} onclick="changePage(${currentPage + 1})">
+            <button class="btn btn-outline-secondary" ${currentPage >= totalPages ? "disabled" : ""} onclick="changePage(${currentPage + 1})">
                 Next <i class="bi bi-chevron-right"></i>
             </button>
         </div>
@@ -434,11 +716,12 @@ function clearDateFilter(elementId) {
 // Clipboard Helper
 function copyToClipboard(text) {
     if (!text || text === "-") return;
-    navigator.clipboard.writeText(text).then(() => {
-        showCustomAlert(`Copied to clipboard: <strong>${text}</strong>`, "info");
-    }).catch(err => {
-        console.error("Failed to copy:", err);
-    });
+    navigator.clipboard
+        .writeText(text)
+        .then(() => {
+            showCustomAlert(`Copied to clipboard: <strong>${escapeHtml(text)}</strong>`, "info");
+        })
+        .catch((err) => console.error("Failed to copy:", err));
 }
 
 // Export Filtered Records to CSV
@@ -459,30 +742,25 @@ function exportTableToCSV(filename) {
         "identification_mark_1", "identification_mark_2", "remarks"
     ];
 
-    let csvContent = "";
-    csvContent += headers.join(",") + "\r\n";
-
-    dataToExport.forEach(row => {
-        let rowValues = headers.map(header => {
+    const rows = [headers.join(",")];
+    for (const row of dataToExport) {
+        const line = headers.map((header) => {
             let val = row[header] !== null && row[header] !== undefined ? String(row[header]) : "";
             val = val.replace(/"/g, '""');
-            if (val.includes(",") || val.includes("\n") || val.includes('"')) {
-                val = `"${val}"`;
-            }
-            return val;
+            return val.includes(",") || val.includes("\n") || val.includes('"') ? `"${val}"` : val;
         });
-        csvContent += rowValues.join(",") + "\r\n";
-    });
+        rows.push(line.join(","));
+    }
 
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const blob = new Blob([rows.join("\r\n")], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
-    link.setAttribute("href", url);
-    link.setAttribute("download", filename);
-    link.style.visibility = "hidden";
+    link.href = url;
+    link.download = filename;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    URL.revokeObjectURL(url);
 
     showCustomAlert(`Successfully exported ${dataToExport.length} records to CSV!`, "success");
 }
@@ -491,29 +769,23 @@ function exportTableToCSV(filename) {
 function formatDateToDisplay(isoDate) {
     if (!isoDate) return "";
     const parts = isoDate.split("-");
-    if (parts.length === 3) return `${parts[2]}-${parts[1]}-${parts[0]}`;
-    return isoDate;
+    return parts.length === 3 ? `${parts[2]}-${parts[1]}-${parts[0]}` : isoDate;
 }
 
 function formatDateToISO(displayDate) {
-    if (!displayDate) return "";
-    const parts = displayDate.split("-");
-    if (parts.length === 3) return `${parts[2]}-${parts[1]}-${parts[0]}`;
-    return displayDate;
+    const parsed = parseRecordDate(displayDate);
+    return parsed ? parsed.iso : "";
 }
 
-// Today Filter Injection Button
+// Today Filter Button
 function injectTodayFilterButton() {
-    const filterContainer = document.querySelector("#filterEndDate")?.closest(".row");
-    if (filterContainer && !document.getElementById("filterTodayBtn")) {
-        const col = document.createElement("div");
-        col.className = "col-12 col-md-2 d-flex align-items-end";
-        col.innerHTML = `
-            <button id="filterTodayBtn" type="button" class="btn btn-outline-dark w-100 py-2 shadow-sm rounded-3 fw-semibold transition-all">
+    const slot = document.getElementById("quickFilterSlot");
+    if (slot && !document.getElementById("filterTodayBtn")) {
+        slot.innerHTML = `
+            <button id="filterTodayBtn" type="button" class="btn btn-sm btn-outline-dark px-3 py-1.5 rounded-3 fw-semibold">
                 <i class="bi bi-calendar-check me-1"></i> Today's Issue
             </button>
         `;
-        filterContainer.appendChild(col);
 
         document.getElementById("filterTodayBtn").addEventListener("click", () => {
             const startInput = document.getElementById("filterStartDate");
@@ -521,22 +793,21 @@ function injectTodayFilterButton() {
             const btn = document.getElementById("filterTodayBtn");
 
             if (!isTodayFilterActive) {
-                const todayISO = new Date().toISOString().split("T")[0];
+                const todayISO = getLocalTodayISO();
                 startInput.value = todayISO;
                 endInput.value = todayISO;
                 isTodayFilterActive = true;
-                btn.className = "btn btn-dark w-100 py-2 shadow-sm rounded-3 fw-semibold active";
+                btn.className = "btn btn-sm btn-dark px-3 py-1.5 rounded-3 fw-semibold active";
                 btn.innerHTML = `<i class="bi bi-calendar-check-fill me-1"></i> Showing Today`;
                 showCustomAlert("Filtered by today's issue date.", "info");
             } else {
                 startInput.value = "";
                 endInput.value = "";
                 isTodayFilterActive = false;
-                btn.className = "btn btn-outline-dark w-100 py-2 shadow-sm rounded-3 fw-semibold";
+                btn.className = "btn btn-sm btn-outline-dark px-3 py-1.5 rounded-3 fw-semibold";
                 btn.innerHTML = `<i class="bi bi-calendar-check me-1"></i> Today's Issue`;
                 showCustomAlert("Filter cleared. Showing all records.", "info");
             }
-            currentPage = 1;
             filterTableRecords();
         });
     }
@@ -547,13 +818,13 @@ function resetTodayButtonState() {
         isTodayFilterActive = false;
         const btn = document.getElementById("filterTodayBtn");
         if (btn) {
-            btn.className = "btn btn-outline-dark w-100 py-2 shadow-sm rounded-3 fw-semibold";
+            btn.className = "btn btn-sm btn-outline-dark px-3 py-1.5 rounded-3 fw-semibold";
             btn.innerHTML = `<i class="bi bi-calendar-check me-1"></i> Today's Issue`;
         }
     }
 }
 
-// 6. Manual Insert with Validation
+// 7. Manual Insert
 async function handleManualInsert(event) {
     event.preventDefault();
     const form = event.target;
@@ -587,31 +858,32 @@ async function handleManualInsert(event) {
 
         const result = await response.json();
         if (result.status === "success") {
-            showCustomAlert("✓ New record saved successfully!", "success");
+            showCustomAlert("New record saved successfully!", "success");
             form.reset();
             fetchAndRecordSwitchToTable();
         } else if (result.status === "duplicate") {
-            showCustomAlert(`⚠️ Duplicate Entry: LLR Number '${payload.llr_number}' already exists.`, "warning");
+            showCustomAlert(`Duplicate Entry: LLR Number '${escapeHtml(payload.llr_number)}' already exists.`, "warning");
         } else {
             throw new Error(result.message || "Failed to save record.");
         }
     } catch (err) {
-        showCustomAlert("Error saving record: " + err.message, "danger");
+        showCustomAlert("Error saving record: " + escapeHtml(err.message), "danger");
     } finally {
         submitBtn.disabled = false;
-        submitBtn.innerHTML = `<span>Save New Record</span> <i class="bi bi-cloud-arrow-up-fill"></i>`;
+        submitBtn.innerHTML = `<span>Save New Record</span> <i class="bi bi-cloud-arrow-up-fill ms-1"></i>`;
     }
 }
 
-// 7. Full Edit Modal Handling
+// 8. Full Edit Modal
 function openEditModal(row) {
+    document.getElementById("editRowIndex").value = row.row_index ?? "";
     document.getElementById("editLlrNumber").value = row.llr_number || "";
     document.getElementById("editVehicleClass").value = row.vehicle_class || "LMV";
-    document.getElementById("editIssueDate").value = formatDateToISO(row.issue_date) || "";
-    document.getElementById("editExpiryDate").value = formatDateToISO(row.expiry_date) || "";
-    document.getElementById("editApprovedDate").value = formatDateToISO(row.approved_date) || "";
+    document.getElementById("editIssueDate").value = formatDateToISO(row.issue_date);
+    document.getElementById("editExpiryDate").value = formatDateToISO(row.expiry_date);
+    document.getElementById("editApprovedDate").value = formatDateToISO(row.approved_date);
     document.getElementById("editName").value = row.name || "";
-    document.getElementById("editDob").value = formatDateToISO(row.date_of_birth) || "";
+    document.getElementById("editDob").value = formatDateToISO(row.date_of_birth);
     document.getElementById("editRelativeType").value = row.relative_type || "Father";
     document.getElementById("editRelativeName").value = row.relative_name || "";
     document.getElementById("editMobile").value = row.mobile_number || "";
@@ -627,8 +899,7 @@ function openEditModal(row) {
     document.getElementById("editFeesNumber").value = row.fees_number || "";
     document.getElementById("editFee").value = row.fee_amount || "";
 
-    const modal = new bootstrap.Modal(document.getElementById("editRecordModal"));
-    modal.show();
+    bootstrap.Modal.getOrCreateInstance(document.getElementById("editRecordModal")).show();
 }
 
 async function handleModalEditSubmit(event) {
@@ -658,21 +929,21 @@ async function handleModalEditSubmit(event) {
 
         const result = await response.json();
         if (result.status === "success") {
-            showCustomAlert("✓ Record updated successfully!", "success");
+            showCustomAlert("Record updated successfully!", "success");
             bootstrap.Modal.getInstance(document.getElementById("editRecordModal")).hide();
             fetchAndRecordWithLoader();
         } else {
             throw new Error(result.message || "Failed to update record.");
         }
     } catch (err) {
-        showCustomAlert("Error updating record: " + err.message, "danger");
+        showCustomAlert("Error updating record: " + escapeHtml(err.message), "danger");
     } finally {
         submitBtn.disabled = false;
-        submitBtn.innerHTML = `<span>Save Changes</span> <i class="bi bi-cloud-arrow-up-fill"></i>`;
+        submitBtn.innerHTML = `<span>Save Changes</span> <i class="bi bi-cloud-arrow-up-fill ms-1"></i>`;
     }
 }
 
-// 8. Delete Routine
+// 9. Delete Routine
 async function deleteDatabaseRecord(llrNumber) {
     if (!confirm(`Are you sure you want to delete LLR record: ${llrNumber}?`)) return;
 
@@ -688,39 +959,39 @@ async function deleteDatabaseRecord(llrNumber) {
             showCustomAlert("Record successfully deleted.", "success");
             fetchAndRecordWithLoader();
         } else {
-            showCustomAlert("Failed to delete: " + result.message, "danger");
+            showCustomAlert("Failed to delete: " + escapeHtml(result.message), "danger");
         }
     } catch (err) {
-        showCustomAlert("Network error during deletion: " + err.message, "danger");
+        showCustomAlert("Network error during deletion: " + escapeHtml(err.message), "danger");
     }
 }
 
-// 9. Profile View Modal (Symmetrical Enterprise UI)
+// 10. Profile View Modal
 function openViewModal(row) {
     currentViewedRecord = row;
     const body = document.getElementById("viewRecordModalBody");
     const isDlIssued = row.dl_issued === "Yes";
+    const safeLlr = escapeHtml(row.llr_number || "");
 
     body.innerHTML = `
         <div class="container-fluid p-0">
-            <!-- Header Identity Card -->
             <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center bg-light p-3 rounded-3 border mb-3 gap-2">
                 <div>
                     <div class="d-flex align-items-center gap-2 mb-1">
-                        <h5 class="fw-bold text-dark mb-0">${row.name || "N/A"}</h5>
-                        <span class="badge bg-dark font-monospace">${row.vehicle_class || "N/A"}</span>
-                        <span class="status-pill ${isDlIssued ? 'status-pill-yes' : 'status-pill-no'}">
+                        <h5 class="fw-bold text-dark mb-0">${escapeHtml(row.name) || "N/A"}</h5>
+                        <span class="badge bg-dark font-monospace">${escapeHtml(row.vehicle_class) || "N/A"}</span>
+                        <span class="status-pill ${isDlIssued ? "status-pill-yes" : "status-pill-no"}">
                             <i class="bi bi-circle-fill" style="font-size: 0.45rem;"></i>
-                            ${isDlIssued ? 'DL Issued' : 'Pending LLR'}
+                            ${isDlIssued ? "DL Issued" : "Pending LLR"}
                         </span>
                     </div>
                     <div class="font-monospace text-muted small">
-                        LLR: <span class="text-primary fw-bold">${row.llr_number || "-"}</span> 
-                        &bull; Invoice: <span>${row.fees_number || "-"}</span>
+                        LLR: <span class="text-primary fw-bold">${safeLlr || "-"}</span> 
+                        &bull; Invoice: <span>${escapeHtml(row.fees_number) || "-"}</span>
                     </div>
                 </div>
                 <div class="d-flex gap-2">
-                    <button type="button" class="btn btn-sm btn-outline-dark" onclick="copyToClipboard('${row.llr_number || ""}')">
+                    <button type="button" class="btn btn-sm btn-outline-dark" data-copy-text="${safeLlr}">
                         <i class="bi bi-clipboard me-1"></i> Copy LLR
                     </button>
                     <button type="button" class="btn btn-sm btn-primary px-3 fw-medium" onclick="switchToEditFromView()">
@@ -729,108 +1000,100 @@ function openViewModal(row) {
                 </div>
             </div>
 
-            <!-- Two-Column Symmetric Spec Sheet -->
             <div class="row g-3">
-                <!-- Personal Credentials -->
                 <div class="col-12 col-md-6">
                     <div class="p-3 border rounded-3 bg-white h-100 shadow-sm">
-                        <div class="d-flex align-items-center gap-2 mb-3 pb-2 border-bottom">
-                            <i class="bi bi-person-vcard text-primary"></i>
+                        <div class="mb-3 pb-2 border-bottom">
                             <h6 class="fw-bold text-dark mb-0 small text-uppercase">Applicant Bio</h6>
                         </div>
                         <div class="row g-2">
                             <div class="col-6">
                                 <div class="meta-label">Date of Birth</div>
-                                <div class="meta-value font-monospace">${row.date_of_birth || "-"}</div>
+                                <div class="meta-value font-monospace">${escapeHtml(row.date_of_birth) || "-"}</div>
                             </div>
                             <div class="col-6">
                                 <div class="meta-label">Blood Group</div>
-                                <div class="meta-value font-monospace text-danger fw-bold">${row.blood_group || "-"}</div>
+                                <div class="meta-value font-monospace text-danger fw-bold">${escapeHtml(row.blood_group) || "-"}</div>
                             </div>
                             <div class="col-6">
                                 <div class="meta-label">Relation</div>
-                                <div class="meta-value">${row.relative_type || "Father"}</div>
+                                <div class="meta-value">${escapeHtml(row.relative_type) || "Father"}</div>
                             </div>
                             <div class="col-6">
                                 <div class="meta-label">Relative Name</div>
-                                <div class="meta-value">${row.relative_name || "-"}</div>
+                                <div class="meta-value">${escapeHtml(row.relative_name) || "-"}</div>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Contact & Validity Status -->
                 <div class="col-12 col-md-6">
                     <div class="p-3 border rounded-3 bg-white h-100 shadow-sm">
-                        <div class="d-flex align-items-center gap-2 mb-3 pb-2 border-bottom">
-                            <i class="bi bi-shield-check text-success"></i>
+                        <div class="mb-3 pb-2 border-bottom">
                             <h6 class="fw-bold text-dark mb-0 small text-uppercase">License & Contact</h6>
                         </div>
                         <div class="row g-2">
                             <div class="col-6">
                                 <div class="meta-label">Primary Mobile</div>
-                                <div class="meta-value font-monospace">${row.mobile_number || "-"}</div>
+                                <div class="meta-value font-monospace">${escapeHtml(row.mobile_number) || "-"}</div>
                             </div>
                             <div class="col-6">
                                 <div class="meta-label">Emergency Contact</div>
-                                <div class="meta-value font-monospace">${row.emergency_mobile || "-"}</div>
+                                <div class="meta-value font-monospace">${escapeHtml(row.emergency_mobile) || "-"}</div>
                             </div>
                             <div class="col-6">
                                 <div class="meta-label">Permanent DL No</div>
-                                <div class="meta-value font-monospace text-success fw-bold">${row.dl_number && row.dl_number !== '-' ? row.dl_number : 'Not Generated'}</div>
+                                <div class="meta-value font-monospace text-success fw-bold">${row.dl_number && row.dl_number !== "-" ? escapeHtml(row.dl_number) : "Not Generated"}</div>
                             </div>
                             <div class="col-6">
                                 <div class="meta-label">Approved Date</div>
-                                <div class="meta-value font-monospace">${row.approved_date || "-"}</div>
+                                <div class="meta-value font-monospace">${escapeHtml(row.approved_date) || "-"}</div>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Complete Address Section -->
                 <div class="col-12">
                     <div class="p-3 border rounded-3 bg-white shadow-sm">
-                        <div class="d-flex align-items-center gap-2 mb-3 pb-2 border-bottom">
-                            <i class="bi bi-geo-alt text-dark"></i>
+                        <div class="mb-3 pb-2 border-bottom">
                             <h6 class="fw-bold text-dark mb-0 small text-uppercase">Address & Marks</h6>
                         </div>
                         <div class="row g-2">
                             <div class="col-12 col-md-6">
                                 <div class="meta-label">Present Address</div>
-                                <div class="meta-value text-muted" style="line-height: 1.45;">${row.present_address || "-"}</div>
+                                <div class="meta-value text-muted" style="line-height: 1.45;">${escapeHtml(row.present_address) || "-"}</div>
                             </div>
                             <div class="col-12 col-md-6">
                                 <div class="meta-label">Permanent Address</div>
-                                <div class="meta-value text-muted" style="line-height: 1.45;">${row.permanent_address || "-"}</div>
+                                <div class="meta-value text-muted" style="line-height: 1.45;">${escapeHtml(row.permanent_address) || "-"}</div>
                             </div>
                             <div class="col-12 col-md-6 mt-2">
                                 <div class="meta-label">Mark 1</div>
-                                <div class="meta-value small">${row.identification_mark_1 || "-"}</div>
+                                <div class="meta-value small">${escapeHtml(row.identification_mark_1) || "-"}</div>
                             </div>
                             <div class="col-12 col-md-6 mt-2">
                                 <div class="meta-label">Mark 2</div>
-                                <div class="meta-value small">${row.identification_mark_2 || "-"}</div>
+                                <div class="meta-value small">${escapeHtml(row.identification_mark_2) || "-"}</div>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Financial Ledger & Validity -->
                 <div class="col-12">
                     <div class="p-3 border rounded-3 bg-light d-flex flex-wrap justify-content-between align-items-center gap-3">
                         <div>
                             <div class="meta-label">Validity Period</div>
                             <div class="meta-value font-monospace small">
-                                <span class="text-success">${row.issue_date || "-"}</span> &rarr; <span class="text-danger">${row.expiry_date || "-"}</span>
+                                <span class="text-success">${escapeHtml(row.issue_date) || "-"}</span> &rarr; <span class="text-danger">${escapeHtml(row.expiry_date) || "-"}</span>
                             </div>
                         </div>
                         <div>
                             <div class="meta-label">Fees Paid</div>
-                            <div class="meta-value font-monospace">₹${row.fee_amount || "0"}</div>
+                            <div class="meta-value font-monospace">₹${escapeHtml(row.fee_amount) || "0"}</div>
                         </div>
                         <div class="flex-grow-1 text-md-end">
                             <div class="meta-label">Audit Remarks</div>
-                            <div class="meta-value small text-muted">${row.remarks && row.remarks !== '-' ? row.remarks : 'No remarks attached'}</div>
+                            <div class="meta-value small text-muted">${row.remarks && row.remarks !== "-" ? escapeHtml(row.remarks) : "No remarks attached"}</div>
                         </div>
                     </div>
                 </div>
@@ -838,8 +1101,7 @@ function openViewModal(row) {
         </div>
     `;
 
-    const modal = new bootstrap.Modal(document.getElementById("viewRecordModal"));
-    modal.show();
+    bootstrap.Modal.getOrCreateInstance(document.getElementById("viewRecordModal")).show();
 }
 
 function switchToEditFromView() {
@@ -852,7 +1114,7 @@ function switchToEditFromView() {
     }
 }
 
-// 10. Centralized Toast Alerts
+// 11. Toast Alerts
 function showCustomAlert(message, type = "success") {
     let alertContainer = document.getElementById("customAlertContainer");
     if (!alertContainer) {
@@ -864,14 +1126,24 @@ function showCustomAlert(message, type = "success") {
     }
 
     const alertId = "alert-" + Date.now();
-    const bgColors = { success: "bg-dark text-white", danger: "bg-danger text-white", warning: "bg-warning text-dark", info: "bg-dark text-white" };
-    const icons = { success: "bi-check-circle-fill text-success", danger: "bi-exclamation-triangle-fill text-white", warning: "bi-exclamation-octagon-fill text-dark", info: "bi-info-circle-fill text-info" };
+    const bgColors = {
+        success: "bg-dark text-white",
+        danger: "bg-danger text-white",
+        warning: "bg-warning text-dark",
+        info: "bg-dark text-white"
+    };
+    const icons = {
+        success: "bi-check-circle-fill text-success",
+        danger: "bi-exclamation-triangle-fill text-white",
+        warning: "bi-exclamation-octagon-fill text-dark",
+        info: "bi-info-circle-fill text-info"
+    };
 
     const alertEl = document.createElement("div");
     alertEl.id = alertId;
-    alertEl.className = `alert ${bgColors[type] || 'bg-dark text-white'} shadow-lg border-0 rounded-4 p-3 d-flex align-items-center gap-3 alert-dismissible fade show`;
+    alertEl.className = `alert ${bgColors[type] || "bg-dark text-white"} shadow-lg border-0 rounded-4 p-3 d-flex align-items-center gap-3 alert-dismissible fade show`;
     alertEl.innerHTML = `
-        <i class="bi ${icons[type] || 'bi-bell-fill'} fs-4"></i>
+        <i class="bi ${icons[type] || "bi-bell-fill"} fs-4"></i>
         <div class="flex-grow-1 small fw-semibold">${message}</div>
         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="alert" aria-label="Close"></button>
     `;
@@ -884,11 +1156,11 @@ function showCustomAlert(message, type = "success") {
             item.classList.remove("show");
             setTimeout(() => item.remove(), 300);
         }
-    }, 4000);
+    }, 3500);
 }
 
 function fetchAndRecordSwitchToTable() {
     fetchAndRecordWithLoader();
     const tableTab = document.getElementById("view-table-tab");
-    if (tableTab) new bootstrap.Tab(tableTab).show();
+    if (tableTab) bootstrap.Tab.getOrCreateInstance(tableTab).show();
 }

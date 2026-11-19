@@ -507,12 +507,12 @@ function getVehicleBadgeClass(vehicleClass) {
 function getVehicleIconPath(vehicleClass) {
     if (!vehicleClass) return "";
     const v = vehicleClass.toUpperCase().trim();
-    if (v === "MCWG") return "images/MCWG.PNG";
-    if (v === "MCWOG") return "images/MCWOG.PNG";
-    if (v === "LMV") return "images/LMV.PNG";
-    if (v === "TRANS") return "images/TRANS.PNG";
-    if (v.includes("MCWG") && v.includes("LMV")) return "images/MCWG-LMV.PNG";
-    if (v.includes("MCWOG") && v.includes("LMV")) return "images/MCWOG-LMV.PNG";
+    if (v === "MCWG") return "images/MCWG.png";
+    if (v === "MCWOG") return "images/MCWOG.png";
+    if (v === "LMV") return "images/LMV.png";
+    if (v === "TRANS") return "images/TRANS.png";
+    if (v.includes("MCWG") && v.includes("LMV")) return "images/MCWG-LMV.png";
+    if (v.includes("MCWOG") && v.includes("LMV")) return "images/MCWOG-LMV.png";
     return "";
 }
 
